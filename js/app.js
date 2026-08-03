@@ -505,7 +505,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const sizes = canvasSizesForProduct(product, config.baseSize);
     state.activeCanvasSize = config.baseSize;
     const host = document.getElementById('canvas-size-options');
-    host.innerHTML = sizes.map((size, index) => `<button class="size-option ${Utils.sameCanvasSize(size, config.baseSize) || (!index && !state.activeCanvasSize) ? 'is-active' : ''}" type="button" data-canvas-size="${Utils.escapeHTML(JSON.stringify(size))}">${Utils.escapeHTML(size.label)}</button>`).join('');
+    host.innerHTML = sizes.map((size, index) => {
+        let display = size.label;
+        const sh = String(size.shape || '').toLowerCase();
+        if (sh === 'square' && size.width) display = `${size.width} x ${size.width} in`;
+        else if (sh === 'rectangle' && size.width && size.height) display = `${size.width} x ${size.height} in`;
+        else if (sh === 'circle' && size.diameter) display = `${size.diameter} in`;
+        return `<button class="size-option ${Utils.sameCanvasSize(size, config.baseSize) || (!index && !state.activeCanvasSize) ? 'is-active' : ''}" type="button" data-canvas-size="${Utils.escapeHTML(JSON.stringify(size))}">${Utils.escapeHTML(display)}</button>`;
+      }).join('');
     document.getElementById('canvas-section')?.classList.remove('hidden');
     updateOrientationVisibility();
     updateCanvasPrice();
@@ -538,9 +545,15 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const product = state.activeProduct;
     if (!product || !state.activeCanvasSize) return;
     const baseSize = productCanvasConfig(product).baseSize;
+    
+    // Update Pricing
     state.activePrice = Utils.calculateCanvasPrice(product.actual_price, baseSize, state.activeCanvasSize);
     state.activeMRP = product.fake_price > product.actual_price ? Utils.calculateCanvasPrice(product.fake_price, baseSize, state.activeCanvasSize) : 0;
     updateProductPrice();
+
+    // Update Preparation Time
+    const dynamicPrep = getDynamicPrepTime(product.preparation_days, baseSize, state.activeCanvasSize);
+    setText('product-prep', `Prep: ${dynamicPrep}`);
   }
 
   function updateOrientationVisibility() {
@@ -684,9 +697,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function buildCartItem(product, selections = {}) {
-    const selectedSize = selections.selectedSize ? Utils.normaliseCanvasSize(selections.selectedSize) : null;
+    let selectedSize = selections.selectedSize ? Utils.normaliseCanvasSize(selections.selectedSize) : null;
+    if (selectedSize && selectedSize.shape) {
+      const sh = String(selectedSize.shape).toLowerCase();
+      if (sh === 'square' && selectedSize.width) selectedSize.label = `${selectedSize.width} x ${selectedSize.width} in`;
+      else if (sh === 'rectangle' && selectedSize.width && selectedSize.height) selectedSize.label = `${selectedSize.width} x ${selectedSize.height} in`;
+      else if (sh === 'circle' && selectedSize.diameter) selectedSize.label = `${selectedSize.diameter} in`;
+    }
     const orientation = selections.orientation || null;
     const note = String(selections.note || '').trim().slice(0, 180);
+    
+    const baseSize = isCanvasProduct(product) ? productCanvasConfig(product).baseSize : null;
+    const dynamicPrep = selectedSize ? getDynamicPrepTime(product.preparation_days, baseSize, selectedSize) : (product.preparation_days || 'Made to order');
+
     return {
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
@@ -695,7 +718,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
-      preparationDays: product.preparation_days || 'Made to order'
+      preparationDays: dynamicPrep
     };
   }
 
@@ -995,4 +1018,47 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function whatsappURL(message) { return `https://wa.me/${whatsappNumber()}?text=${encodeURIComponent(message)}`; }
   function setText(id, value) { const element = document.getElementById(id); if (element) element.textContent = value; }
   function setInputValue(id, value) { const element = document.getElementById(id); if (element) element.value = value; }
+
+  function getDynamicPrepTime(basePrep, baseSize, targetSize) {
+    const defaultPrep = basePrep || 'Made to order';
+    // If there is no target size, stick to the default time
+    if (!targetSize || !targetSize.width) return defaultPrep;
+
+    // Calculate the absolute area in square inches
+    const targetArea = (targetSize.width || 1) * (targetSize.height || targetSize.width || 1);
+
+    // Look for numbers in the prep time string (e.g., extracts "2" and "3" from "2-3 Days")
+    const match = defaultPrep.match(/(\d+)(?:\s*-\s*(\d+))?/);
+    if (!match) return defaultPrep;
+
+    let min = parseInt(match[1], 10);
+    let max = match[2] ? parseInt(match[2], 10) : min;
+
+    // Realistic area-based scaling (assuming base is 2-3 days)
+    let extraDays = 0;
+    
+    if (targetArea > 576) {
+      // Larger than 24x24 in (e.g., 24x36) -> +4 days (Total: 6-7 days)
+      extraDays = 4;
+    } else if (targetArea > 400) {
+      // 16x20 up to 20x20 in -> +3 days (Total: 5-6 days)
+      extraDays = 3;
+    } else if (targetArea > 225) {
+      // 16x16 up to ~15x20 in -> +2 days (Total: 4-5 days)
+      extraDays = 2; 
+    } else if (targetArea > 100) {
+      // 11x11 up to 15x15 in (121 to 225 sq inches) -> +1 day (Total: 3-4 days)
+      extraDays = 1;
+    }
+    // Anything 100 sq inches or less (10x10, 8x8, 5x5) adds 0 extra days.
+
+    if (extraDays === 0) return defaultPrep;
+
+    min += extraDays;
+    max += extraDays;
+
+    // Inject the new calculated numbers back into your original string format
+    return defaultPrep.replace(match[0], match[2] ? `${min}-${max}` : `${min}`);
+  }
+
 })();
