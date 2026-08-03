@@ -273,9 +273,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .product-panel { min-width: 0; padding: clamp(24px, 4vw, 42px); border: 1px solid rgba(255,255,255,.8); border-radius: var(--radius-lg); background: rgba(255,255,255,.65); box-shadow: var(--shadow-sm); }
 .product-badges { display: flex; flex-wrap: wrap; gap: 7px; }
 .soft-badge, .discount-pill { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 999px; background: rgba(120,139,126,.11); color: var(--sage); font-size: .61rem; font-weight: 900; }
-.product-title { margin-top: 14px; font-size: clamp(2.2rem, 4.8vw, 4rem); line-height: 1.02; }
+.product-title { margin-top: 14px; font-size: clamp(1.2rem, 4.8vw, 2rem); line-height: 1.02; }
 .price-line { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
-.product-price { font-size: 1.55rem; }
+.product-price { font-size: 1.85rem; }
 .product-mrp { color: #998f95; }
 .discount-pill { background: rgba(32,122,83,.1); color: var(--green); }
 .product-tax-note { margin: 10px 0 0; color: var(--muted); font-size: .69rem; line-height: 1.55; }

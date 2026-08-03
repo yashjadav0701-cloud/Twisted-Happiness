@@ -22,6 +22,13 @@
     suppressMRPTracking: false
   };
 
+  const CARE_GUIDES = {
+    'Whimsical Art': `Keep away from water and direct humidity.\nDust gently with a soft, dry brush or lint roller.\nAdjust stems and petals gently without over-bending.\nAvoid prolonged direct sunlight to prevent fading.\nKeep out of reach of pets to protect the pipe-cleaner fuzz.`,
+    'Painted Whispers': `Keep out of direct sunlight to protect the painted colours.\nWipe gently with a clean, dry microfiber cloth.\nAvoid high humidity areas to maintain canvas tension.\nHandle by the outer frame edges to avoid smudging.\nDo not lean sharp or heavy objects against the canvas.`,
+    'Clay Stories': `Keep strictly away from water and extreme moisture.\nDust gently using a small, soft-bristled brush.\nHandle delicate, sculpted details with extreme care.\nAvoid dropping on hard surfaces, as clay can chip.\nStore in a sturdy, dry box if not actively displayed.`,
+    'Standard': `Keep away from direct water contact and heat sources.\nDust gently with a clean, dry brush or soft cloth.\nHandle any delicate handmade elements with care.\nAvoid direct sunlight to maintain the original finish.\nProtect from heavy objects resting on or crushing the piece.`
+  };
+
   document.addEventListener('DOMContentLoaded', initialise);
 
   async function initialise() {
@@ -124,7 +131,13 @@
     document.getElementById('product-form')?.addEventListener('submit', saveProduct);
     document.getElementById('new-product')?.addEventListener('click', () => { resetProductForm(); document.getElementById('product-title')?.focus(); });
     document.getElementById('reset-product-form')?.addEventListener('click', resetProductForm);
-    document.getElementById('product-category')?.addEventListener('change', updateProductCategoryUI);
+    document.getElementById('product-category')?.addEventListener('change', (event) => {
+      updateProductCategoryUI();
+      const category = event.target.value || 'Standard';
+      if (CARE_GUIDES[category]) {
+        setValue('product-care', CARE_GUIDES[category]);
+      }
+    });
     document.getElementById('canvas-shape')?.addEventListener('change', updateCanvasFields);
     document.getElementById('product-price')?.addEventListener('change', handleSellingPriceChange);
     document.getElementById('product-mrp')?.addEventListener('input', () => { if (!state.suppressMRPTracking) state.mrpManuallyEdited = true; });
@@ -143,6 +156,9 @@
     if (error) { notify(error.message, 'error'); if (list) list.innerHTML = '<div class="admin-empty">Products could not be loaded.</div>'; return; }
     state.products = (data || []).map((product) => ({ ...product, images: Utils.normaliseImages(product.images), attributes: Utils.normaliseAttributes(product.attributes) }));
     renderProductList();
+    
+    // Update the subcategory dropdown now that we have the product data
+    if (state.page === 'products') updateProductCategoryUI();
   }
 
   function renderProductList() {
@@ -195,15 +211,35 @@
     state.productImages.forEach((image) => { if (image.isNew && image.preview?.startsWith('blob:')) URL.revokeObjectURL(image.preview); });
     state.productImages = [];
     const form = document.getElementById('product-form'); form?.reset(); if (!form) return;
-    setValue('product-id', ''); setValue('product-care', APP_CONFIG.DEFAULT_CARE_GUIDE); setValue('product-preparation', '2-3 Days'); setValue('product-sort-order', '100'); document.getElementById('product-active').checked = true;
+    
+    const defaultCategory = document.getElementById('product-category')?.value || 'Whimsical Art';
+    setValue('product-id', ''); setValue('product-care', CARE_GUIDES[defaultCategory] || APP_CONFIG.DEFAULT_CARE_GUIDE); setValue('product-preparation', '2-3 Days'); setValue('product-sort-order', '100'); document.getElementById('product-active').checked = true;
+    
     setText('product-form-title', 'Add product'); setText('product-edit-indicator', 'New creation'); setText('save-product', 'Save product'); updateProductCategoryUI(); renderImagePreviews();
   }
 
   function updateProductCategoryUI() {
     const category = document.getElementById('product-category')?.value || 'Standard';
     document.getElementById('canvas-fields')?.classList.toggle('hidden', category !== 'Painted Whispers');
+    
     const datalist = document.getElementById('subcategory-list');
-    if (datalist) datalist.innerHTML = (APP_CONFIG.CATEGORY_SUBCATEGORIES[category] || []).map((subcategory) => `<option value="${Utils.escapeHTML(subcategory)}"></option>`).join('');
+    if (datalist) {
+      // 1. Filter existing products by the selected main category
+      const relevantProducts = state.products.filter(p => p.main_category === category && p.sub_category);
+      
+      // 2. Count how many times each subcategory appears
+      const frequency = {};
+      relevantProducts.forEach(p => {
+        frequency[p.sub_category] = (frequency[p.sub_category] || 0) + 1;
+      });
+      
+      // 3. Sort subcategories by frequency (highest count first)
+      const sortedSubcategories = Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
+      
+      // 4. Inject into the datalist
+      datalist.innerHTML = sortedSubcategories.map((subcategory) => `<option value="${Utils.escapeHTML(subcategory)}"></option>`).join('');
+    }
+    
     updateCanvasFields();
   }
 

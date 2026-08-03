@@ -422,7 +422,22 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const careLines = String(product.care_instructions || '').split('\n').map((line) => line.trim()).filter(Boolean);
     if (careLines.length) {
       document.getElementById('care-section')?.classList.remove('hidden');
-      document.getElementById('product-care').innerHTML = careLines.map((line) => `<li><span aria-hidden="true">✨</span> ${Utils.escapeHTML(line)}</li>`).join('');
+      
+      const getCareIcon = (text) => {
+        const lower = text.toLowerCase();
+        if (lower.includes('water') || lower.includes('humidity') || lower.includes('moisture')) return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`;
+        if (lower.includes('sunlight') || lower.includes('fading')) return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`;
+        if (lower.includes('dust') || lower.includes('wipe') || lower.includes('brush') || lower.includes('cloth')) return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+        if (lower.includes('handle') || lower.includes('delicate') || lower.includes('drop') || lower.includes('adjust')) return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 11V4a2 2 0 0 0-4 0v7M10 11V5a2 2 0 0 0-4 0v10M6 15v-1a2 2 0 0 0-4 0v3c0 3.87 3.13 7 7 7h4c3.87 0 7-3.13 7-7v-5a2 2 0 0 0-4 0v3"/></svg>`;
+        // Default star/sparkle for everything else
+        return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L14.5 8.5L21 11L14.5 13.5L12 20L9.5 13.5L3 11L9.5 8.5L12 2Z"/></svg>`;
+      };
+
+      document.getElementById('product-care').innerHTML = careLines.map((line) => {
+        // This regex safely strips out any old raw SVG code you might have accidentally saved to products already!
+        const cleanText = line.replace(/<svg.*?<\/svg>/gi, '').trim();
+        return `<li style="display: flex; align-items: flex-start; gap: 8px;"><span style="flex-shrink: 0; margin-top: 1px;">${getCareIcon(cleanText)}</span> <span>${Utils.escapeHTML(cleanText)}</span></li>`;
+      }).join('');
     }
     setText('product-vip-text', vipProductNudge());
     document.getElementById('product-loading')?.classList.add('hidden');
