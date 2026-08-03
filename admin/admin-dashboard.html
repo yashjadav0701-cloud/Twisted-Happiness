@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#fcf7f8">
+  <title>Dashboard | Twisted Happiness Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body data-admin-page="dashboard">
+  <div id="admin-auth-root"></div>
+  <div id="admin-workspace" class="admin-shell hidden">
+    <aside class="admin-sidebar"><div><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><span><strong>Twisted Happiness</strong><small>Studio Admin</small></span></a><nav class="admin-nav"><a class="is-active" href="/admin/admin-dashboard.html">Overview</a><a href="/admin/admin-products.html">Products</a><a href="/admin/admin-enquiries.html">Enquiries</a><a href="/admin/admin-settings.html">Settings</a></nav></div><button id="admin-logout" class="admin-logout" type="button">Secure logout</button></aside>
+    <main class="admin-main">
+      <header class="admin-mobile-head"><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><strong>Studio Admin</strong></a><button type="button" data-admin-menu aria-label="Open navigation">☰</button></header>
+      <header class="admin-page-head"><div><p class="admin-eyebrow">Studio at a glance</p><h1>Overview</h1><p>Only the numbers that help you manage the catalog and WhatsApp enquiries.</p></div><a class="admin-button admin-button--dark" href="/admin/admin-products.html">Add product</a></header>
+
+      <section id="dashboard-metrics" class="dashboard-metrics" aria-live="polite">
+        <article class="metric-card"><span>Visible products</span><strong id="metric-products-active">—</strong><small id="metric-products-total">Loading catalog…</small></article>
+        <article class="metric-card"><span>New enquiries</span><strong id="metric-enquiries-new">—</strong><small id="metric-enquiries-total">Loading enquiries…</small></article>
+        <article class="metric-card"><span>Active coupons</span><strong id="metric-coupons-active">—</strong><small id="metric-coupons-total">Loading offers…</small></article>
+        <article class="metric-card"><span>Public reviews</span><strong id="metric-reviews-approved">—</strong><small id="metric-reviews-total">Loading reviews…</small></article>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="admin-card">
+          <header class="admin-card__head"><div><p class="admin-eyebrow">Needs attention</p><h2>Recent enquiries</h2></div><a href="/admin/admin-enquiries.html">View all</a></header>
+          <div id="dashboard-enquiries" class="dashboard-list"><div class="admin-empty">Loading recent enquiries…</div></div>
+        </section>
+        <section class="admin-card">
+          <header class="admin-card__head"><div><p class="admin-eyebrow">Fast actions</p><h2>Manage your studio</h2></div></header>
+          <div class="quick-actions">
+            <a href="/admin/admin-products.html"><span>🌷</span><strong>Products</strong><small>Add, edit, arrange or hide creations.</small></a>
+            <a href="/admin/admin-settings.html#coupons"><span>🎁</span><strong>Offers</strong><small>Control VIP tiers, coupons and delivery.</small></a>
+            <a href="/admin/admin-settings.html#reviews"><span>⭐</span><strong>Reviews</strong><small>Approve and maintain social proof.</small></a>
+            <a href="/" target="_blank" rel="noopener"><span>↗</span><strong>Open storefront</strong><small>See the live customer experience.</small></a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div id="admin-toast-region" class="admin-toast-region" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/admin/js/admin.js"></script>
+</body>
+</html>

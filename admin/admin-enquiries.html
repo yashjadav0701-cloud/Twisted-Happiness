@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#fcf7f8">
+  <title>Enquiries | Twisted Happiness Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body data-admin-page="enquiries">
+  <div id="admin-auth-root"></div>
+  <div id="admin-workspace" class="admin-shell hidden">
+    <aside class="admin-sidebar"><div><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><span><strong>Twisted Happiness</strong><small>Studio Admin</small></span></a><nav class="admin-nav"><a href="/admin/admin-dashboard.html">Overview</a><a href="/admin/admin-products.html">Products</a><a class="is-active" href="/admin/admin-enquiries.html">Enquiries</a><a href="/admin/admin-settings.html">Settings</a></nav></div><button id="admin-logout" class="admin-logout" type="button">Secure logout</button></aside>
+    <main class="admin-main">
+      <header class="admin-mobile-head"><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><strong>Studio Admin</strong></a><button type="button" data-admin-menu aria-label="Open navigation">☰</button></header>
+      <header class="admin-page-head"><div><p class="admin-eyebrow">Secure WhatsApp requests</p><h1>Enquiries</h1><p>Lightweight website enquiries only. Payment and final order confirmation still happen on WhatsApp.</p></div><button id="refresh-enquiries" class="admin-button admin-button--soft" type="button">Refresh</button></header>
+      <section class="admin-card"><div class="admin-toolbar enquiry-toolbar"><input id="enquiry-search" class="admin-input" type="search" placeholder="Search reference, name or phone…"><select id="enquiry-filter" class="admin-input"><option value="all">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div><div id="enquiry-list" class="enquiry-list"></div></section>
+    </main>
+  </div>
+  <div id="admin-toast-region" class="admin-toast-region" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/admin/js/admin.js"></script>
+</body>
+</html>

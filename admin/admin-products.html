@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#fcf7f8">
+  <title>Products | Twisted Happiness Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body data-admin-page="products">
+  <div id="admin-auth-root"></div>
+  <div id="admin-workspace" class="admin-shell hidden">
+    <aside class="admin-sidebar">
+      <div><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><span><strong>Twisted Happiness</strong><small>Studio Admin</small></span></a><nav class="admin-nav"><a href="/admin/admin-dashboard.html">Overview</a><a class="is-active" href="/admin/admin-products.html">Products</a><a href="/admin/admin-enquiries.html">Enquiries</a><a href="/admin/admin-settings.html">Settings</a></nav></div>
+      <button id="admin-logout" class="admin-logout" type="button">Secure logout</button>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-mobile-head"><a class="admin-brand" href="/"><img src="/assets/logo.webp" alt=""><strong>Studio Admin</strong></a><button type="button" data-admin-menu aria-label="Open navigation">☰</button></header>
+      <header class="admin-page-head"><div><p class="admin-eyebrow">Handmade catalog</p><h1>Products</h1><p>Create, update, arrange and hide products from one compact screen.</p></div><button id="new-product" class="admin-button admin-button--dark" type="button">New product</button></header>
+
+      <div class="admin-grid">
+        <section class="admin-card is-editor">
+          <header class="admin-card__head"><div><p class="admin-eyebrow" id="product-edit-indicator">New creation</p><h2 id="product-form-title">Add product</h2></div></header>
+          <div class="admin-card__body">
+            <form id="product-form" class="admin-form">
+              <input id="product-id" type="hidden">
+              <label class="admin-field is-wide"><span>Product title *</span><input id="product-title" class="admin-input" type="text" maxlength="150" required placeholder="Pastel Peony Bouquet"></label>
+              <label class="admin-field"><span>Selling price (₹) *</span><input id="product-price" class="admin-input" type="number" min="1" step="0.01" required></label>
+              <label class="admin-field"><span>MRP / strike price *</span><div class="input-action"><input id="product-mrp" class="admin-input" type="number" min="1" step="0.01" required><button id="generate-mrp" type="button">Auto</button></div><small id="mrp-hint">Generated once and stored. It changes only when the selling price changes or you edit it.</small></label>
+              <label class="admin-field"><span>Category *</span><select id="product-category" class="admin-input" required><option value="Whimsical Art">Whimsical Art</option><option value="Painted Whispers">Painted Whispers</option><option value="Clay Stories">Clay Stories</option><option value="Standard">Standard / Other</option></select></label>
+              <label class="admin-field"><span>Subcategory *</span><input id="product-subcategory" class="admin-input" type="text" maxlength="80" list="subcategory-list" required><datalist id="subcategory-list"></datalist></label>
+              <label class="admin-field"><span>Preparation time *</span><select id="product-preparation" class="admin-input" required><option>1-2 Days</option><option selected>2-3 Days</option><option>3-4 Days</option><option>5-6 Days</option><option>7-10 Days</option><option>10-14 Days</option></select></label>
+              <label class="admin-field"><span>Display order</span><input id="product-sort-order" class="admin-input" type="number" min="0" step="1" value="100"></label>
+
+              <fieldset id="canvas-fields" class="canvas-fields hidden">
+                <legend>Base canvas configuration</legend>
+                <label class="admin-field"><span>Shape</span><select id="canvas-shape" class="admin-input"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle</option></select></label>
+                <label id="canvas-width-field" class="admin-field"><span id="canvas-width-label">Size (inches)</span><input id="canvas-width" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
+                <label id="canvas-height-field" class="admin-field hidden"><span>Height (inches)</span><input id="canvas-height" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
+                <label id="canvas-diameter-field" class="admin-field hidden"><span>Diameter (inches)</span><input id="canvas-diameter" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
+                <label id="canvas-orientation-field" class="admin-field hidden"><span>Default orientation</span><select id="canvas-orientation" class="admin-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
+                <p class="admin-help is-wide">This is the exact stored base size. Returning to it always restores the exact selling price.</p>
+              </fieldset>
+
+              <label class="admin-field is-wide"><span>Description *</span><textarea id="product-description" class="admin-input" required maxlength="3000" rows="6" placeholder="Tell the story of this creation…"></textarea></label>
+              <label class="admin-field is-wide"><span>Care guide</span><textarea id="product-care" class="admin-input" maxlength="2000" rows="4"></textarea><small>One instruction per line.</small></label>
+
+              <label id="upload-zone" class="upload-zone"><input id="product-images" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple><span><strong>Add product images</strong><small>Up to 8 images. Every image is converted to WebP and kept at 500 KB or less.</small></span></label>
+              <div id="image-preview-list" class="image-preview-list"></div>
+
+              <label class="switch-field is-wide"><input id="product-active" type="checkbox" checked><span><strong>Visible in customer catalog</strong><small>Turn this off to hide the product without deleting it.</small></span></label>
+              <div class="admin-form-actions"><button id="reset-product-form" class="admin-button admin-button--soft" type="button">Reset</button><button id="save-product" class="admin-button admin-button--dark" type="submit">Save product</button></div>
+            </form>
+          </div>
+        </section>
+
+        <section class="admin-card catalog-card">
+          <header class="admin-card__head"><div><p class="admin-eyebrow">Current catalog</p><h2>Your products</h2></div><span id="product-count" class="admin-count">0</span></header>
+          <div class="admin-toolbar"><input id="product-search" class="admin-input" type="search" placeholder="Search products…"><select id="product-filter" class="admin-input"><option value="all">All products</option><option value="active">Visible</option><option value="hidden">Hidden</option></select></div>
+          <div id="product-list" class="product-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div id="admin-toast-region" class="admin-toast-region" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/admin/js/admin.js"></script>
+</body>
+</html>

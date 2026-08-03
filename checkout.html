@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover"><meta name="theme-color" content="#fcf7f8">
+  <meta name="description" content="Review your Twisted Happiness saving bag and confirm your handcrafted order on WhatsApp.">
+  <link rel="icon" href="/assets/logo.webp" type="image/webp">
+  <title>Review Saving Bag | Twisted Happiness</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body data-page="checkout">
+  <div id="announcement-bar" class="announcement-bar hidden" role="status"><span id="announcement-text"></span><button id="announcement-close" type="button" aria-label="Dismiss announcement">×</button></div>
+  <header class="site-header"><div class="site-shell header-main"><a class="brand" href="/"><span class="brand-logo"><img src="/assets/logo.webp" alt=""></span><span class="brand-copy"><strong>Twisted Happiness</strong><small>Handcrafted Art Studio</small></span></a><a class="icon-pill" href="/#collection">← <span class="desktop-label">Continue shopping</span></a></div></header>
+
+  <main class="checkout-page site-shell">
+    <header class="checkout-head"><p class="eyebrow">No account · No online payment</p><h1 class="checkout-title">Review your saving bag</h1><p>We securely recheck live product prices, canvas sizes, VIP savings and coupons before opening WhatsApp.</p></header>
+
+    <section id="checkout-empty" class="empty-state hidden"><span>🛍️</span><h2>Your bag is empty</h2><p>Add a few handcrafted creations to unlock automatic savings.</p><a class="app-button app-button--dark" href="/#collection">Browse collection</a></section>
+
+    <div id="checkout-content" class="checkout-layout hidden">
+      <div class="checkout-stack">
+        <section class="checkout-card"><div class="checkout-card__head"><div><p class="eyebrow">Your selection</p><h2>Creations in your bag</h2></div><button id="clear-cart" class="clear-cart-button" type="button">Clear bag</button></div><div id="checkout-items"></div></section>
+
+        <section class="checkout-card"><div class="checkout-card__head"><div><p class="eyebrow">For a clean WhatsApp message</p><h2>Your details</h2></div></div>
+          <form id="checkout-form" class="simple-form">
+            <label><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Your name"></label>
+            <label><span>WhatsApp number *</span><input id="customer-phone" class="simple-input" type="tel" maxlength="16" required inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number"></label>
+            <label><span>City <small>(optional)</small></span><input id="customer-city" class="simple-input" type="text" maxlength="80" autocomplete="address-level2" placeholder="Delivery city"></label>
+            <label class="is-wide"><span>Order note <small>(optional)</small></span><textarea id="customer-note" class="simple-input" rows="3" maxlength="260" placeholder="Gifting date, colour preference or another request…"></textarea></label>
+          </form>
+        </section>
+
+        <section id="checkout-recommendations-card" class="checkout-card hidden"><div class="checkout-card__head"><div><p class="eyebrow">One more thoughtful piece?</p><h2>Complete the gift</h2></div></div><div id="checkout-recommendations" class="recommendation-row no-scrollbar"></div></section>
+      </div>
+
+      <aside class="checkout-summary checkout-card">
+        <p class="eyebrow">Savings summary</p><h2>Your estimate</h2>
+        <div class="savings-card"><div class="savings-card__icon">♕</div><div><strong id="checkout-savings-title">Buy more, save more</strong><span id="checkout-savings-message">Add 2 items to unlock your first saving.</span><div class="progress-track"><i id="checkout-savings-progress" style="width:0%"></i></div></div></div>
+        <div id="checkout-shipping-progress" class="shipping-progress"></div>
+        <div class="coupon-control"><input id="checkout-coupon" type="text" maxlength="40" placeholder="Coupon code"><button id="checkout-apply-coupon" class="app-button app-button--dark app-button--small" type="button">Apply</button></div>
+        <p id="checkout-coupon-status" class="coupon-status" aria-live="polite"></p>
+        <div class="cart-totals"><div class="cart-total-row"><span>Products subtotal</span><strong id="checkout-subtotal">₹0</strong></div><div id="checkout-vip-row" class="cart-total-row is-saving hidden"><span id="checkout-vip-label">VIP discount</span><strong id="checkout-vip-discount">−₹0</strong></div><div id="checkout-coupon-row" class="cart-total-row is-saving hidden"><span id="checkout-coupon-label">Coupon</span><strong id="checkout-coupon-discount">−₹0</strong></div><div class="cart-total-row"><span>Estimated delivery</span><strong id="checkout-shipping">₹0</strong></div><div class="cart-total-row is-total"><span>Estimated total</span><strong id="checkout-total">₹0</strong></div></div>
+        <div class="secure-quote-note"><span>✓</span><p><strong>Secure final calculation</strong><small>The database recalculates the final order before WhatsApp opens.</small></p></div>
+        <button id="checkout-whatsapp" class="app-button app-button--whatsapp app-button--full" type="submit" form="checkout-form">Confirm & open WhatsApp</button>
+        <p class="summary-disclaimer">Submitting creates a lightweight enquiry reference. It does not take payment or confirm an order automatically.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/js/app.js"></script>
+</body>
+</html>
