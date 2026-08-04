@@ -46,18 +46,32 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   document.addEventListener('DOMContentLoaded', initialise);
 
   async function initialise() {
-    injectSharedCart();
-    bindSharedCartEvents();
-    bindGlobalEvents();
-    setCurrentYear();
-    await fetchStoreConfiguration();
-    applyStoreConfiguration();
-    await fetchProducts();
-    renderCart();
+    try {
+      injectSharedCart();
+      bindSharedCartEvents();
+      bindGlobalEvents();
+      setCurrentYear();
+      
+      try { await fetchStoreConfiguration(); } catch (e) { console.warn('Store config warning:', e); }
+      try { applyStoreConfiguration(); } catch (e) { console.warn('Apply config warning:', e); }
+      
+      await fetchProducts();
+      renderCart();
 
-    if (state.page === 'catalog') initialiseCatalog();
-    if (state.page === 'product') initialiseProduct();
-    if (state.page === 'checkout') initialiseCheckout();
+      if (state.page === 'catalog' || !document.body.dataset.page) {
+        try { initialiseCatalog(); } catch (e) { 
+          console.error('Catalog init error:', e); 
+          document.getElementById('catalog-loading')?.classList.add('hidden');
+          renderCatalogProducts();
+        }
+      }
+      if (state.page === 'product') initialiseProduct();
+      if (state.page === 'checkout') initialiseCheckout();
+    } catch (error) {
+      console.error('Critical initialization error:', error);
+      document.getElementById('catalog-loading')?.classList.add('hidden');
+      showCatalogError('Unable to load the collection. Please refresh.');
+    }
   }
 
   function readStorage(key, fallback) {
@@ -244,8 +258,10 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function renderHomeVipTiers() {
     const host = document.getElementById('home-vip-tiers');
     if (!host) return;
-    host.innerHTML = state.store.vip_tiers.map((tier, index) => {
-      const next = state.store.vip_tiers[index + 1];
+    const tiers = Array.isArray(state.store?.vip_tiers) ? state.store.vip_tiers : [];
+    if (!tiers.length) return;
+    host.innerHTML = tiers.map((tier, index) => {
+      const next = tiers[index + 1];
       const range = next ? `${tier.minimumQuantity}${next.minimumQuantity - tier.minimumQuantity > 1 ? `–${next.minimumQuantity - 1}` : ''}` : `${tier.minimumQuantity}+`;
       return `<div class="vip-tier"><span>${Utils.escapeHTML(range)}</span><div><strong>${tier.percent ? `${tier.percent}% off` : 'Standard price'}</strong><small>${tier.percent ? 'Applied automatically' : 'Start your bag'}</small></div></div>`;
     }).join('');
@@ -295,7 +311,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function renderCategoryChips() {
     const host = document.getElementById('category-chips');
     if (!host) return;
-    const categories = ['All', ...new Set(state.products.map((product) => product.main_category).filter(Boolean))];
+    const products = Array.isArray(state.products) ? state.products : [];
+    const categories = ['All', ...new Set(products.map((product) => product.main_category).filter(Boolean))];
     host.innerHTML = categories.map((category) => `<button type="button" class="category-chip ${state.category === category ? 'is-active' : ''}" data-category="${Utils.escapeHTML(category)}">${Utils.escapeHTML(category)}</button>`).join('');
     host.querySelectorAll('[data-category]').forEach((button) => button.addEventListener('click', () => {
       state.category = button.dataset.category;
@@ -741,11 +758,24 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function handleCartItemClick(event) {
     const action = event.target.closest('[data-cart-action]');
     if (!action) return;
-    const item = state.cart.find((entry) => entry.key === action.closest('[data-cart-key]')?.dataset.cartKey);
+    
+    const row = action.closest('[data-cart-key]');
+    if (!row) return;
+    
+    const key = row.dataset.cartKey;
+    const item = state.cart.find((entry) => entry.key === key);
     if (!item) return;
-    if (action.dataset.cartAction === 'increase') item.quantity = Math.floor(Utils.clamp(item.quantity + 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
-    if (action.dataset.cartAction === 'decrease') item.quantity = Math.floor(Utils.clamp(item.quantity - 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
-    if (action.dataset.cartAction === 'remove') state.cart = state.cart.filter((entry) => entry.key !== item.key);
+    
+    const actionType = action.dataset.cartAction;
+    
+    if (actionType === 'increase') {
+      item.quantity = Math.floor(Utils.clamp(item.quantity + 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
+    } else if (actionType === 'decrease') {
+      item.quantity = Math.floor(Utils.clamp(item.quantity - 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
+    } else if (actionType === 'remove') {
+      state.cart = state.cart.filter((entry) => entry.key !== key);
+    }
+    
     persistCart();
   }
 
@@ -921,7 +951,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function initialiseCheckout() {
     if (state.checkoutMode === 'single' && !state.quickOrder) state.checkoutMode = 'cart';
     const stored = readStorage(APP_CONFIG.STORAGE_KEYS.customer, {});
-    setInputValue('customer-name', stored.name || ''); setInputValue('customer-phone', stored.phone || ''); setInputValue('customer-city', stored.city || '');
+    setInputValue('customer-name', stored.name || ''); 
+    setInputValue('customer-phone', stored.phone || ''); 
+    setInputValue('customer-email', stored.email || ''); 
+    setInputValue('customer-address-1', stored.address_line_1 || ''); 
+    setInputValue('customer-address-2', stored.address_line_2 || ''); 
+    setInputValue('customer-city', stored.city || ''); 
+    setInputValue('customer-state', stored.state || ''); 
+    setInputValue('customer-pincode', stored.pincode || '');
     document.getElementById('checkout-items')?.addEventListener('click', handleCheckoutItemClick);
     document.getElementById('checkout-apply-coupon')?.addEventListener('click', () => applyCoupon('checkout'));
     document.getElementById('checkout-recommendations')?.addEventListener('click', handleRecommendationClick);
@@ -943,13 +980,28 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function handleCheckoutItemClick(event) {
     const action = event.target.closest('[data-checkout-action]'); if (!action) return;
     const items = activeCheckoutItems(); const item = items.find((entry) => entry.key === action.closest('[data-cart-key]')?.dataset.cartKey); if (!item) return;
-    if (action.dataset.checkoutAction === 'increase') item.quantity = Math.floor(Utils.clamp(item.quantity + 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
-    if (action.dataset.checkoutAction === 'decrease') item.quantity = Math.floor(Utils.clamp(item.quantity - 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
-    if (action.dataset.checkoutAction === 'remove') {
-      if (state.checkoutMode === 'single') { state.quickOrder = null; sessionStorage.removeItem(QUICK_ORDER_KEY); }
-      else state.cart = state.cart.filter((entry) => entry.key !== item.key);
+    
+    if (action.dataset.checkoutAction === 'increase') {
+      item.quantity = Math.floor(Utils.clamp(item.quantity + 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
+      if (state.checkoutMode === 'single') {
+        state.quickOrder = item;
+        writeSession(QUICK_ORDER_KEY, item);
+      }
+    } else if (action.dataset.checkoutAction === 'decrease') {
+      item.quantity = Math.floor(Utils.clamp(item.quantity - 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
+      if (state.checkoutMode === 'single') {
+        state.quickOrder = item;
+        writeSession(QUICK_ORDER_KEY, item);
+      }
+    } else if (action.dataset.checkoutAction === 'remove') {
+      if (state.checkoutMode === 'single') {
+        state.quickOrder = null;
+        sessionStorage.removeItem(QUICK_ORDER_KEY);
+      } else {
+        state.cart = state.cart.filter((entry) => entry.key !== item.key);
+        persistCart();
+      }
     }
-    if (state.checkoutMode === 'single' && state.quickOrder) writeSession(QUICK_ORDER_KEY, item); else persistCart();
     renderCheckout();
   }
 
@@ -964,13 +1016,26 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   async function checkoutWhatsApp(event) {
     event.preventDefault();
     const items = activeCheckoutItems(); if (!items.length) return;
+    
     const name = document.getElementById('customer-name')?.value.trim();
     const phone = document.getElementById('customer-phone')?.value.replace(/\D/g, '');
+    const email = document.getElementById('customer-email')?.value.trim();
+    const address_line_1 = document.getElementById('customer-address-1')?.value.trim();
+    const address_line_2 = document.getElementById('customer-address-2')?.value.trim();
     const city = document.getElementById('customer-city')?.value.trim();
+    const stateStr = document.getElementById('customer-state')?.value.trim();
+    const pincode = document.getElementById('customer-pincode')?.value.trim();
     const note = document.getElementById('customer-note')?.value.trim().slice(0, 260);
+
     if (!name) return focusError('customer-name', 'Please enter your name.');
     if (!phone || phone.length < 10 || phone.length > 15) return focusError('customer-phone', 'Enter a valid WhatsApp number.');
-    writeStorage(APP_CONFIG.STORAGE_KEYS.customer, { name, phone, city });
+    if (!email || !email.includes('@')) return focusError('customer-email', 'Enter a valid email address.');
+    if (!address_line_1) return focusError('customer-address-1', 'Complete your full address details.');
+    if (!city) return focusError('customer-city', 'Enter your delivery city.');
+    if (!stateStr) return focusError('customer-state', 'Enter your state.');
+    if (!/^\d{6}$/.test(pincode)) return focusError('customer-pincode', 'Enter a valid 6-digit Indian Pincode.');
+
+    writeStorage(APP_CONFIG.STORAGE_KEYS.customer, { name, phone, email, address_line_1, address_line_2, city, state: stateStr, pincode });
 
     const button = document.getElementById('checkout-whatsapp');
     button.disabled = true; button.textContent = 'Securing your final total…';
@@ -982,7 +1047,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         orientation: item.orientation,
         note: item.note
       }));
-      const customerPayload = { name, phone, city: city || null, note: note || null };
+      const customerPayload = { name, phone, email, address_line_1, address_line_2, city, state: stateStr, pincode, note: note || null };
       const { data, error } = await supabaseClient.rpc(APP_CONFIG.RPC.createEnquiry, {
         p_cart: cartPayload,
         p_customer: customerPayload,

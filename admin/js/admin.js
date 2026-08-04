@@ -52,37 +52,74 @@
 
   function bindGlobalAdminEvents() {
     document.getElementById('admin-logout')?.addEventListener('click', async () => {
-      await supabaseClient.auth.signOut(); state.session = null; showLogin('You have signed out safely.');
+      await supabaseClient.auth.signOut(); 
+      state.session = null; 
+      showLogin('You have signed out safely.');
     });
-    document.querySelector('[data-admin-menu]')?.addEventListener('click', () => document.querySelector('.admin-sidebar')?.classList.toggle('is-open'));
+    document.querySelector('[data-admin-menu]')?.addEventListener('click', () => {
+      document.querySelector('.admin-sidebar')?.classList.toggle('is-open');
+    });
     document.addEventListener('click', (event) => {
       const sidebar = document.querySelector('.admin-sidebar');
-      if (sidebar?.classList.contains('is-open') && !event.target.closest('.admin-sidebar') && !event.target.closest('[data-admin-menu]')) sidebar.classList.remove('is-open');
+      if (sidebar?.classList.contains('is-open') && !event.target.closest('.admin-sidebar') && !event.target.closest('[data-admin-menu]')) {
+        sidebar.classList.remove('is-open');
+      }
     });
   }
 
   function showLogin(message = '') {
     document.getElementById('admin-workspace')?.classList.add('hidden');
     const root = document.getElementById('admin-auth-root');
-    root.innerHTML = `<section class="admin-auth"><div class="admin-auth-card"><img src="/assets/logo.webp" alt=""><p class="admin-eyebrow">Twisted Happiness</p><h1>Studio access</h1><p>The shortcut and private route are conveniences only. Supabase authentication, admin roles and RLS provide the real protection.</p><form id="admin-login-form"><label class="admin-field"><span>Email</span><input id="admin-email" class="admin-input" type="email" required autocomplete="username"></label><label class="admin-field"><span>Password</span><input id="admin-password" class="admin-input" type="password" required minlength="6" autocomplete="current-password"></label><button id="admin-login-button" class="admin-button admin-button--dark" type="submit">Sign in securely</button><p id="admin-auth-message" class="admin-auth-message">${Utils.escapeHTML(message)}</p></form></div></section>`;
+    root.innerHTML = `
+      <section class="admin-auth">
+        <div class="admin-auth-card">
+          <img src="/assets/logo.webp" alt="">
+          <p class="admin-eyebrow">Twisted Happiness</p>
+          <h1>Studio access</h1>
+          <p>The shortcut and private route are conveniences only. Supabase authentication, admin roles and RLS provide the real protection.</p>
+          <form id="admin-login-form">
+            <label class="admin-field"><span>Email</span><input id="admin-email" class="admin-input" type="email" required autocomplete="username"></label>
+            <label class="admin-field"><span>Password</span><input id="admin-password" class="admin-input" type="password" required minlength="6" autocomplete="current-password"></label>
+            <button id="admin-login-button" class="admin-button admin-button--dark" type="submit">Sign in securely</button>
+            <p id="admin-auth-message" class="admin-auth-message">${Utils.escapeHTML(message)}</p>
+          </form>
+        </div>
+      </section>`;
     root.classList.remove('hidden');
     document.getElementById('admin-login-form').addEventListener('submit', login);
   }
 
   async function login(event) {
     event.preventDefault();
-    const button = document.getElementById('admin-login-button'); const message = document.getElementById('admin-auth-message');
-    setLoading(button, true, 'Signing in…'); message.textContent = '';
+    const button = document.getElementById('admin-login-button'); 
+    const message = document.getElementById('admin-auth-message');
+    setLoading(button, true, 'Signing in…'); 
+    message.textContent = '';
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email: document.getElementById('admin-email').value.trim(), password: document.getElementById('admin-password').value });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+        email: document.getElementById('admin-email').value.trim(), 
+        password: document.getElementById('admin-password').value 
+      });
       if (error || !data.session) throw error || new Error('Sign-in failed.');
-      if (!await hasAdminRole(data.user.id)) { await supabaseClient.auth.signOut(); throw new Error('This account does not have admin access.'); }
-      state.session = data.session; showWorkspace(); await initialisePage();
-    } catch (error) { message.textContent = error.message || 'Unable to sign in.'; }
-    finally { setLoading(button, false); }
+      if (!await hasAdminRole(data.user.id)) { 
+        await supabaseClient.auth.signOut(); 
+        throw new Error('This account does not have admin access.'); 
+      }
+      state.session = data.session; 
+      showWorkspace(); 
+      await initialisePage();
+    } catch (error) { 
+      message.textContent = error.message || 'Unable to sign in.'; 
+    } finally { 
+      setLoading(button, false); 
+    }
   }
 
-  function showWorkspace() { document.getElementById('admin-auth-root')?.classList.add('hidden'); document.getElementById('admin-workspace')?.classList.remove('hidden'); }
+  function showWorkspace() { 
+    document.getElementById('admin-auth-root')?.classList.add('hidden'); 
+    document.getElementById('admin-workspace')?.classList.remove('hidden'); 
+  }
+
   async function initialisePage() {
     if (state.page === 'dashboard') await initialiseDashboard();
     if (state.page === 'products') await initialiseProducts();
@@ -119,12 +156,21 @@
     const host = document.getElementById('dashboard-enquiries');
     if (!host) return;
     const recent = recentResult.data || [];
-    host.innerHTML = recent.length ? recent.map((enquiry) => `<a class="dashboard-enquiry" href="/admin/admin-enquiries.html"><div><h3>${Utils.escapeHTML(enquiry.reference)}</h3><p>${Utils.escapeHTML(enquiry.customer_name)} · ${Utils.escapeHTML(enquiry.status)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</p></div><strong>${Utils.formatCurrency(enquiry.total_amount)}</strong></a>`).join('') : '<div class="admin-empty">No WhatsApp enquiries yet.</div>';
+    host.innerHTML = recent.length ? recent.map((enquiry) => `
+      <a class="dashboard-enquiry" href="/admin/admin-enquiries.html">
+        <div>
+          <h3>${Utils.escapeHTML(enquiry.reference)}</h3>
+          <p>${Utils.escapeHTML(enquiry.customer_name)} · ${Utils.escapeHTML(enquiry.status)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</p>
+        </div>
+        <strong>${Utils.formatCurrency(enquiry.total_amount)}</strong>
+      </a>`).join('') : '<div class="admin-empty">No WhatsApp enquiries yet.</div>';
   }
 
   /* ---------------- Products ---------------- */
   async function initialiseProducts() {
-    bindProductEvents(); resetProductForm(); await loadProducts();
+    bindProductEvents(); 
+    resetProductForm(); 
+    await loadProducts();
   }
 
   function bindProductEvents() {
@@ -151,13 +197,17 @@
   }
 
   async function loadProducts() {
-    const list = document.getElementById('product-list'); if (list) list.innerHTML = '<div class="admin-empty">Loading products…</div>';
+    const list = document.getElementById('product-list'); 
+    if (list) list.innerHTML = '<div class="admin-empty">Loading products…</div>';
+    
     const { data, error } = await supabaseClient.from('products').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false });
-    if (error) { notify(error.message, 'error'); if (list) list.innerHTML = '<div class="admin-empty">Products could not be loaded.</div>'; return; }
+    if (error) { 
+      notify(error.message, 'error'); 
+      if (list) list.innerHTML = '<div class="admin-empty">Products could not be loaded.</div>'; 
+      return; 
+    }
     state.products = (data || []).map((product) => ({ ...product, images: Utils.normaliseImages(product.images), attributes: Utils.normaliseAttributes(product.attributes) }));
     renderProductList();
-    
-    // Update the subcategory dropdown now that we have the product data
     if (state.page === 'products') updateProductCategoryUI();
   }
 
@@ -165,13 +215,30 @@
     const host = document.getElementById('product-list'); if (!host) return;
     const search = document.getElementById('product-search')?.value.trim().toLowerCase() || '';
     const filter = document.getElementById('product-filter')?.value || 'all';
+    
     const filtered = state.products.filter((product) => {
       const text = `${product.title || ''} ${product.main_category || ''} ${product.sub_category || ''}`.toLowerCase();
       return (!search || text.includes(search)) && (filter === 'all' || (filter === 'active' && product.is_active) || (filter === 'hidden' && !product.is_active));
     });
+    
     document.getElementById('product-count').textContent = String(filtered.length);
     if (!filtered.length) { host.innerHTML = '<div class="admin-empty">No products match this view.</div>'; return; }
-    host.innerHTML = filtered.map((product) => `<article class="product-row" data-product-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt=""><div><h3>${Utils.escapeHTML(product.title)}</h3><p>${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No preparation time')}</p><span class="status-pill ${product.is_active ? 'is-active' : ''}">${product.is_active ? 'Visible' : 'Hidden'}</span></div><div class="product-row__actions"><button type="button" data-product-action="edit">Edit</button><button type="button" data-product-action="duplicate">Duplicate</button><button type="button" data-product-action="toggle">${product.is_active ? 'Hide' : 'Show'}</button><button type="button" class="is-danger" data-product-action="delete">Delete</button></div></article>`).join('');
+    
+    host.innerHTML = filtered.map((product) => `
+      <article class="product-row" data-product-id="${Utils.escapeHTML(product.id)}">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt="">
+        <div>
+          <h3>${Utils.escapeHTML(product.title)}</h3>
+          <p>${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep time')}</p>
+          <span class="status-pill ${product.is_active ? 'is-active' : ''}">${product.is_active ? 'Visible' : 'Hidden'}</span>
+        </div>
+        <div class="product-row__actions">
+          <button type="button" data-product-action="edit">Edit</button>
+          <button type="button" data-product-action="duplicate">Duplicate</button>
+          <button type="button" data-product-action="toggle">${product.is_active ? 'Hide' : 'Show'}</button>
+          <button type="button" class="is-danger" data-product-action="delete">Delete</button>
+        </div>
+      </article>`).join('');
   }
 
   function handleProductAction(event) {
@@ -184,12 +251,25 @@
   }
 
   function editProduct(product) {
-    state.editingProduct = product; state.originalPrice = Number(product.actual_price); state.mrpManuallyEdited = Boolean(product.mrp_generated_from_price === null);
-    setValue('product-id', product.id); setValue('product-title', product.title || ''); setValue('product-price', product.actual_price ?? ''); setValue('product-mrp', product.fake_price ?? '');
-    setValue('product-category', product.main_category || 'Standard'); setValue('product-subcategory', product.sub_category || ''); setValue('product-preparation', product.preparation_days || '2-3 Days'); setValue('product-sort-order', product.sort_order ?? 100); setValue('product-description', product.description || ''); setValue('product-care', product.care_instructions || APP_CONFIG.DEFAULT_CARE_GUIDE);
+    state.editingProduct = product; 
+    state.originalPrice = Number(product.actual_price); 
+    state.mrpManuallyEdited = Boolean(product.mrp_generated_from_price === null);
+    
+    setValue('product-id', product.id); 
+    setValue('product-title', product.title || ''); 
+    setValue('product-price', product.actual_price ?? ''); 
+    setValue('product-mrp', product.fake_price ?? '');
+    setValue('product-category', product.main_category || 'Standard'); 
+    setValue('product-subcategory', product.sub_category || ''); 
+    setValue('product-preparation', product.preparation_days || '2-3 Days'); 
+    setValue('product-sort-order', product.sort_order ?? 100); 
+    setValue('product-description', product.description || ''); 
+    setValue('product-care', product.care_instructions || APP_CONFIG.DEFAULT_CARE_GUIDE);
+    
     document.getElementById('product-active').checked = product.is_active !== false;
     state.productImages = product.images.map((url) => ({ url, preview: url, isNew: false, file: null }));
     updateProductCategoryUI();
+    
     const canvas = productCanvasConfig(product);
     if (product.main_category === 'Painted Whispers' && canvas.baseSize) {
       setValue('canvas-shape', canvas.baseSize.shape); updateCanvasFields();
@@ -197,25 +277,53 @@
       else { setValue('canvas-width', canvas.baseSize.width); setValue('canvas-height', canvas.baseSize.height); }
       setValue('canvas-orientation', canvas.orientation || 'Portrait');
     }
-    renderImagePreviews(); setText('product-form-title', 'Edit product'); setText('product-edit-indicator', 'Editing'); setText('save-product', 'Update product'); window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    renderImagePreviews(); 
+    setText('product-form-title', 'Edit product'); 
+    setText('product-edit-indicator', 'Editing'); 
+    
+    const saveBtn = document.getElementById('save-product');
+    if (saveBtn) { saveBtn.textContent = 'Update product'; saveBtn.dataset.label = 'Update product'; }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function duplicateProduct(product) {
     editProduct({ ...product, id: '', title: `${product.title} Copy`, is_active: false });
-    state.editingProduct = null; state.originalPrice = null; state.mrpManuallyEdited = false; setValue('product-id', '');
-    setText('product-form-title', 'Duplicate product'); setText('product-edit-indicator', 'Hidden copy'); document.getElementById('product-active').checked = false;
+    state.editingProduct = null; 
+    state.originalPrice = null; 
+    state.mrpManuallyEdited = false; 
+    setValue('product-id', '');
+    setText('product-form-title', 'Duplicate product'); 
+    setText('product-edit-indicator', 'Hidden copy'); 
+    document.getElementById('product-active').checked = false;
   }
 
   function resetProductForm() {
-    state.editingProduct = null; state.originalPrice = null; state.mrpManuallyEdited = false;
+    state.editingProduct = null; 
+    state.originalPrice = null; 
+    state.mrpManuallyEdited = false;
     state.productImages.forEach((image) => { if (image.isNew && image.preview?.startsWith('blob:')) URL.revokeObjectURL(image.preview); });
     state.productImages = [];
-    const form = document.getElementById('product-form'); form?.reset(); if (!form) return;
+    
+    const form = document.getElementById('product-form'); 
+    if (form) form.reset(); 
     
     const defaultCategory = document.getElementById('product-category')?.value || 'Whimsical Art';
-    setValue('product-id', ''); setValue('product-care', CARE_GUIDES[defaultCategory] || APP_CONFIG.DEFAULT_CARE_GUIDE); setValue('product-preparation', '2-3 Days'); setValue('product-sort-order', '100'); document.getElementById('product-active').checked = true;
+    setValue('product-id', ''); 
+    setValue('product-care', CARE_GUIDES[defaultCategory] || APP_CONFIG.DEFAULT_CARE_GUIDE); 
+    setValue('product-preparation', '2-3 Days'); 
+    setValue('product-sort-order', '100'); 
+    document.getElementById('product-active').checked = true;
     
-    setText('product-form-title', 'Add product'); setText('product-edit-indicator', 'New creation'); const saveBtn = document.getElementById('save-product'); if(saveBtn) { saveBtn.textContent = 'Save product'; saveBtn.dataset.label = 'Save product'; } updateProductCategoryUI(); renderImagePreviews();
+    setText('product-form-title', 'Add product'); 
+    setText('product-edit-indicator', 'New creation'); 
+    
+    const saveBtn = document.getElementById('save-product');
+    if (saveBtn) { saveBtn.textContent = 'Save product'; saveBtn.dataset.label = 'Save product'; }
+    
+    updateProductCategoryUI(); 
+    renderImagePreviews();
   }
 
   function updateProductCategoryUI() {
@@ -224,22 +332,12 @@
     
     const datalist = document.getElementById('subcategory-list');
     if (datalist) {
-      // 1. Filter existing products by the selected main category
       const relevantProducts = state.products.filter(p => p.main_category === category && p.sub_category);
-      
-      // 2. Count how many times each subcategory appears
       const frequency = {};
-      relevantProducts.forEach(p => {
-        frequency[p.sub_category] = (frequency[p.sub_category] || 0) + 1;
-      });
-      
-      // 3. Sort subcategories by frequency (highest count first)
+      relevantProducts.forEach(p => { frequency[p.sub_category] = (frequency[p.sub_category] || 0) + 1; });
       const sortedSubcategories = Object.keys(frequency).sort((a, b) => frequency[b] - frequency[a]);
-      
-      // 4. Inject into the datalist
       datalist.innerHTML = sortedSubcategories.map((subcategory) => `<option value="${Utils.escapeHTML(subcategory)}"></option>`).join('');
     }
-    
     updateCanvasFields();
   }
 
@@ -263,8 +361,12 @@
     const price = Number(document.getElementById('product-price')?.value || 0);
     if (!Number.isFinite(price) || price <= 0) return notify('Enter the selling price first.', 'error');
     const mrp = generateBelievableMRP(price);
-    state.suppressMRPTracking = true; setValue('product-mrp', mrp); state.suppressMRPTracking = false;
+    state.suppressMRPTracking = true; 
+    setValue('product-mrp', mrp); 
+    state.suppressMRPTracking = false;
+    
     if (manualRequest) state.mrpManuallyEdited = true;
+    
     setText('mrp-hint', `Generated MRP ${Utils.formatCurrency(mrp)}. It will be stored permanently.`);
   }
 
@@ -281,8 +383,10 @@
   }
 
   async function handleImageSelection(event) {
-    const files = Array.from(event.target.files || []); const available = APP_CONFIG.MAX_PRODUCT_IMAGES - state.productImages.length;
+    const files = Array.from(event.target.files || []); 
+    const available = APP_CONFIG.MAX_PRODUCT_IMAGES - state.productImages.length;
     if (available <= 0) { notify(`Maximum ${APP_CONFIG.MAX_PRODUCT_IMAGES} images allowed.`, 'error'); return; }
+    
     const selected = files.slice(0, available); notify('Optimising images…');
     try {
       for (const file of selected) {
@@ -290,84 +394,139 @@
         state.productImages.push({ file: compressed, preview: URL.createObjectURL(compressed), url: null, isNew: true });
       }
       renderImagePreviews(); notify('Images are ready to upload.', 'success');
-    } catch (error) { notify(error.message, 'error'); }
+    } catch (error) { 
+      notify(error.message, 'error'); 
+    }
     event.target.value = '';
   }
 
   function renderImagePreviews() {
     const host = document.getElementById('image-preview-list'); if (!host) return;
     if (!state.productImages.length) { host.innerHTML = '<span class="admin-help">No images selected yet.</span>'; return; }
-    host.innerHTML = state.productImages.map((image, index) => `<article class="image-preview" data-image-index="${index}"><img src="${Utils.escapeHTML(image.preview)}" alt="Product preview"><span class="image-preview__label">${index === 0 ? 'Cover image' : `Image ${index + 1}`}</span><div class="image-preview__actions"><button type="button" data-image-action="left" aria-label="Move left">←</button><button type="button" data-image-action="right" aria-label="Move right">→</button><button class="is-danger" type="button" data-image-action="remove" aria-label="Remove">×</button></div></article>`).join('');
+    
+    host.innerHTML = state.productImages.map((image, index) => `
+      <article class="image-preview" data-image-index="${index}">
+        <img src="${Utils.escapeHTML(image.preview)}" alt="Product preview">
+        <span class="image-preview__label">${index === 0 ? 'Cover image' : `Image ${index + 1}`}</span>
+        <div class="image-preview__actions">
+          <button type="button" data-image-action="left" aria-label="Move left">←</button>
+          <button type="button" data-image-action="right" aria-label="Move right">→</button>
+          <button class="is-danger" type="button" data-image-action="remove" aria-label="Remove">×</button>
+        </div>
+      </article>`).join('');
   }
 
   function handleImagePreviewAction(event) {
     const button = event.target.closest('[data-image-action]'); if (!button) return;
-    const index = Number(button.closest('[data-image-index]')?.dataset.imageIndex); if (!Number.isInteger(index) || !state.productImages[index]) return;
-    if (button.dataset.imageAction === 'remove') { const [removed] = state.productImages.splice(index, 1); if (removed.isNew && removed.preview?.startsWith('blob:')) URL.revokeObjectURL(removed.preview); }
-    if (button.dataset.imageAction === 'left' && index > 0) [state.productImages[index - 1], state.productImages[index]] = [state.productImages[index], state.productImages[index - 1]];
-    if (button.dataset.imageAction === 'right' && index < state.productImages.length - 1) [state.productImages[index + 1], state.productImages[index]] = [state.productImages[index], state.productImages[index + 1]];
+    const index = Number(button.closest('[data-image-index]')?.dataset.imageIndex); 
+    if (!Number.isInteger(index) || !state.productImages[index]) return;
+    
+    if (button.dataset.imageAction === 'remove') { 
+      const [removed] = state.productImages.splice(index, 1); 
+      if (removed.isNew && removed.preview?.startsWith('blob:')) URL.revokeObjectURL(removed.preview); 
+    }
+    if (button.dataset.imageAction === 'left' && index > 0) {
+      [state.productImages[index - 1], state.productImages[index]] = [state.productImages[index], state.productImages[index - 1]];
+    }
+    if (button.dataset.imageAction === 'right' && index < state.productImages.length - 1) {
+      [state.productImages[index + 1], state.productImages[index]] = [state.productImages[index], state.productImages[index + 1]];
+    }
     renderImagePreviews();
   }
 
   async function saveProduct(event) {
-    event.preventDefault(); const button = document.getElementById('save-product'); setLoading(button, true, 'Saving…');
-    const productId = document.getElementById('product-id').value || crypto.randomUUID(); const originalImages = state.editingProduct?.images || []; const uploadedDuringAttempt = [];
+    event.preventDefault(); 
+    const button = document.getElementById('save-product'); 
+    setLoading(button, true, 'Saving…');
+    
+    const productId = document.getElementById('product-id').value || crypto.randomUUID(); 
+    const originalImages = state.editingProduct?.images || []; 
+    const uploadedDuringAttempt = [];
+    
     try {
       if (!state.productImages.length) throw new Error('Add at least one product image.');
       const price = Number(document.getElementById('product-price').value);
-      if (!document.getElementById('product-mrp').value || (!state.mrpManuallyEdited && (state.originalPrice === null || Math.abs(price - state.originalPrice) > .0001))) generateAndSetMRP(false);
+      if (!document.getElementById('product-mrp').value || (!state.mrpManuallyEdited && (state.originalPrice === null || Math.abs(price - state.originalPrice) > .0001))) {
+        generateAndSetMRP(false);
+      }
+      
       const uploadedImages = [];
       for (const image of state.productImages) {
         if (!image.isNew) { uploadedImages.push(image.url); continue; }
         const path = `products/${productId}/${crypto.randomUUID()}.webp`;
         const { error: uploadError } = await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).upload(path, image.file, { cacheControl: '31536000', upsert: false, contentType: 'image/webp' });
         if (uploadError) throw uploadError;
-        const { data } = supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).getPublicUrl(path); uploadedImages.push(data.publicUrl); uploadedDuringAttempt.push(data.publicUrl);
+        const { data } = supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).getPublicUrl(path); 
+        uploadedImages.push(data.publicUrl); 
+        uploadedDuringAttempt.push(data.publicUrl);
       }
-      const category = document.getElementById('product-category').value; const actualPrice = Number(document.getElementById('product-price').value); const fakePrice = Number(document.getElementById('product-mrp').value);
+      
+      const category = document.getElementById('product-category').value; 
+      const actualPrice = Number(document.getElementById('product-price').value); 
+      const fakePrice = Number(document.getElementById('product-mrp').value);
+      
       const payload = {
         id: productId,
         title: document.getElementById('product-title').value.trim(),
         slug: Utils.slugify(document.getElementById('product-title').value),
-        actual_price: Utils.roundMoney(actualPrice), fake_price: Utils.roundMoney(fakePrice),
+        actual_price: Utils.roundMoney(actualPrice), 
+        fake_price: Utils.roundMoney(fakePrice),
         mrp_generated_from_price: state.mrpManuallyEdited ? null : Utils.roundMoney(actualPrice),
-        main_category: category, sub_category: document.getElementById('product-subcategory').value.trim(),
+        main_category: category, 
+        sub_category: document.getElementById('product-subcategory').value.trim(),
         preparation_days: document.getElementById('product-preparation').value,
         sort_order: Math.max(0, Math.floor(Number(document.getElementById('product-sort-order').value || 100))),
-        description: document.getElementById('product-description').value.trim(), care_instructions: document.getElementById('product-care').value.trim(),
+        description: document.getElementById('product-description').value.trim(), 
+        care_instructions: document.getElementById('product-care').value.trim(),
         attributes: category === 'Painted Whispers' ? { canvas: buildCanvasConfig() } : {},
-        images: uploadedImages, is_active: document.getElementById('product-active').checked, updated_at: new Date().toISOString()
+        images: uploadedImages, 
+        is_active: document.getElementById('product-active').checked, 
+        updated_at: new Date().toISOString()
       };
+      
       if (!payload.title || !payload.sub_category || !payload.description || !Number.isFinite(payload.actual_price) || payload.actual_price <= 0) throw new Error('Complete every required field with a valid price.');
       if (!Number.isFinite(payload.fake_price) || payload.fake_price <= payload.actual_price) throw new Error('MRP must be higher than the selling price.');
       if (category === 'Painted Whispers' && !payload.attributes.canvas.base_size) throw new Error('Complete the base canvas dimensions.');
-      const { error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id' }); if (error) throw error;
+      
+      const { error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id' }); 
+      if (error) throw error;
+      
       await removeOrphanedImages(originalImages.filter((url) => !uploadedImages.includes(url)), productId);
-      notify(state.editingProduct ? 'Product updated successfully.' : 'Product saved successfully.', 'success'); resetProductForm(); await loadProducts();
-    } catch (error) { await removeOrphanedImages(uploadedDuringAttempt, null, true); notify(error.message || 'Product could not be saved.', 'error'); }
-    finally { setLoading(button, false); }
+      notify(state.editingProduct ? 'Product updated successfully.' : 'Product saved successfully.', 'success'); 
+      resetProductForm(); 
+      await loadProducts();
+    } catch (error) { 
+      await removeOrphanedImages(uploadedDuringAttempt, null, true); 
+      notify(error.message || 'Product could not be saved.', 'error'); 
+    } finally { 
+      setLoading(button, false); 
+    }
   }
 
   function buildCanvasConfig() {
     const shape = document.getElementById('canvas-shape').value;
     let baseSize = null;
     if (shape === 'circle') {
-      const diameter = Number(document.getElementById('canvas-diameter').value); if (diameter > 0) baseSize = { id: `circle-${diameter}`, shape, diameter, label: `${Utils.cleanNumber(diameter)} in diameter` };
+      const diameter = Number(document.getElementById('canvas-diameter').value); 
+      if (diameter > 0) baseSize = { id: `circle-${diameter}`, shape, diameter, label: `${Utils.cleanNumber(diameter)} in diameter` };
     } else {
-      const width = Number(document.getElementById('canvas-width').value); const height = shape === 'square' ? width : Number(document.getElementById('canvas-height').value);
+      const width = Number(document.getElementById('canvas-width').value); 
+      const height = shape === 'square' ? width : Number(document.getElementById('canvas-height').value);
       if (width > 0 && height > 0) baseSize = { id: `${shape}-${width}-${height}`, shape, width, height, label: `${Utils.cleanNumber(width)} × ${Utils.cleanNumber(height)} in` };
     }
     return { shape, base_size: baseSize, orientation: shape === 'rectangle' ? document.getElementById('canvas-orientation').value : null, pricing_method: 'area' };
   }
 
   function productCanvasConfig(product) {
-    const attributes = Utils.normaliseAttributes(product.attributes); const canvas = attributes.canvas || {};
+    const attributes = Utils.normaliseAttributes(product.attributes); 
+    const canvas = attributes.canvas || {};
     return { baseSize: Utils.normaliseCanvasSize(canvas.base_size || attributes.canvas_size), orientation: canvas.orientation || attributes.canvas_orientation || 'Portrait' };
   }
 
   async function toggleProduct(product) {
     const { error } = await supabaseClient.from('products').update({ is_active: !product.is_active, updated_at: new Date().toISOString() }).eq('id', product.id);
-    if (error) notify(error.message, 'error'); else { notify(product.is_active ? 'Product hidden.' : 'Product is visible.', 'success'); await loadProducts(); }
+    if (error) notify(error.message, 'error'); 
+    else { notify(product.is_active ? 'Product hidden.' : 'Product is visible.', 'success'); await loadProducts(); }
   }
 
   async function deleteProduct(product) {
@@ -375,20 +534,30 @@
     if (choice !== 'primary') return;
     const { error } = await supabaseClient.from('products').delete().eq('id', product.id);
     if (error) return notify(error.message, 'error');
-    await removeOrphanedImages(product.images, product.id); notify('Product and unused images deleted.', 'success'); await loadProducts();
+    await removeOrphanedImages(product.images, product.id); 
+    notify('Product and unused images deleted.', 'success'); 
+    await loadProducts();
   }
 
   async function removeOrphanedImages(urls, excludingProductId = null, force = false) {
     const unique = [...new Set((urls || []).filter(Boolean))];
     const removable = force ? unique : unique.filter((url) => !state.products.some((product) => String(product.id) !== String(excludingProductId) && (product.images || []).includes(url)));
-    const paths = removable.map(storagePath).filter(Boolean); if (paths.length) await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).remove(paths);
+    const paths = removable.map(storagePath).filter(Boolean); 
+    if (paths.length) await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).remove(paths);
   }
 
-  function storagePath(url) { const marker = `/storage/v1/object/public/${APP_CONFIG.STORAGE_BUCKET}/`; const index = String(url || '').indexOf(marker); return index >= 0 ? decodeURIComponent(String(url).slice(index + marker.length)) : null; }
+  function storagePath(url) { 
+    const marker = `/storage/v1/object/public/${APP_CONFIG.STORAGE_BUCKET}/`; 
+    const index = String(url || '').indexOf(marker); 
+    return index >= 0 ? decodeURIComponent(String(url).slice(index + marker.length)) : null; 
+  }
 
   /* ---------------- Settings ---------------- */
   async function initialiseSettings() {
-    bindSettingsEvents(); await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews()]); resetCouponForm(); resetReviewForm();
+    bindSettingsEvents(); 
+    await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews()]); 
+    resetCouponForm(); 
+    resetReviewForm();
   }
 
   function bindSettingsEvents() {
@@ -415,108 +584,565 @@
     const { data, error } = await supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle();
     if (error) return notify(error.message, 'error');
     state.settings = data || { id: 1 };
-    setValue('setting-store-name', state.settings.store_name || APP_CONFIG.DEFAULTS.storeName); setValue('setting-whatsapp', state.settings.admin_whatsapp || APP_CONFIG.DEFAULTS.whatsapp); setValue('setting-delivery-fee', state.settings.standard_delivery_fee ?? APP_CONFIG.DEFAULTS.deliveryFee); setValue('setting-free-delivery', state.settings.free_shipping_threshold ?? APP_CONFIG.DEFAULTS.freeShippingThreshold); setValue('setting-announcement', state.settings.announcement_banner_text || '');
-    document.getElementById('setting-announcement-active').checked = Boolean(state.settings.announcement_banner_active); document.getElementById('setting-vacation').checked = Boolean(state.settings.vacation_mode);
-    state.canvasSizes = Utils.normaliseCanvasSizes(state.settings.global_canvas_sizes, APP_CONFIG.DEFAULTS.canvasSizes); state.vipTiers = Utils.normaliseVipTiers(state.settings.vip_tiers, APP_CONFIG.DEFAULTS.vipTiers); renderCanvasSizes(); renderVipTiers();
+    
+    setValue('setting-store-name', state.settings.store_name || APP_CONFIG.DEFAULTS.storeName); 
+    setValue('setting-whatsapp', state.settings.admin_whatsapp || APP_CONFIG.DEFAULTS.whatsapp); 
+    setValue('setting-delivery-fee', state.settings.standard_delivery_fee ?? APP_CONFIG.DEFAULTS.deliveryFee); 
+    setValue('setting-free-delivery', state.settings.free_shipping_threshold ?? APP_CONFIG.DEFAULTS.freeShippingThreshold); 
+    setValue('setting-announcement', state.settings.announcement_banner_text || '');
+    
+    document.getElementById('setting-announcement-active').checked = Boolean(state.settings.announcement_banner_active); 
+    document.getElementById('setting-vacation').checked = Boolean(state.settings.vacation_mode);
+    
+    state.canvasSizes = Utils.normaliseCanvasSizes(state.settings.global_canvas_sizes, APP_CONFIG.DEFAULTS.canvasSizes); 
+    state.vipTiers = Utils.normaliseVipTiers(state.settings.vip_tiers, APP_CONFIG.DEFAULTS.vipTiers); 
+    renderCanvasSizes(); 
+    renderVipTiers();
   }
 
   async function saveSettings(event) {
-    event.preventDefault(); const button = document.getElementById('save-settings'); setLoading(button, true, 'Saving…');
+    event.preventDefault(); 
+    const button = document.getElementById('save-settings'); 
+    setLoading(button, true, 'Saving…');
+    
     const whatsapp = document.getElementById('setting-whatsapp').value.replace(/\D/g, '');
     if (whatsapp.length < 10) { notify('Enter a WhatsApp number with country code.', 'error'); setLoading(button, false); return; }
-    const payload = { id: 1, store_name: document.getElementById('setting-store-name').value.trim() || APP_CONFIG.DEFAULTS.storeName, admin_whatsapp: whatsapp, support_whatsapp: whatsapp, standard_delivery_fee: Number(document.getElementById('setting-delivery-fee').value || 0), free_shipping_threshold: Number(document.getElementById('setting-free-delivery').value || 0), announcement_banner_text: document.getElementById('setting-announcement').value.trim(), announcement_banner_active: document.getElementById('setting-announcement-active').checked, vacation_mode: document.getElementById('setting-vacation').checked, updated_at: new Date().toISOString() };
+    
+    const payload = { 
+      id: 1, 
+      store_name: document.getElementById('setting-store-name').value.trim() || APP_CONFIG.DEFAULTS.storeName, 
+      admin_whatsapp: whatsapp, 
+      support_whatsapp: whatsapp, 
+      standard_delivery_fee: Number(document.getElementById('setting-delivery-fee').value || 0), 
+      free_shipping_threshold: Number(document.getElementById('setting-free-delivery').value || 0), 
+      announcement_banner_text: document.getElementById('setting-announcement').value.trim(), 
+      announcement_banner_active: document.getElementById('setting-announcement-active').checked, 
+      vacation_mode: document.getElementById('setting-vacation').checked, 
+      updated_at: new Date().toISOString() 
+    };
+    
     const { error } = await supabaseClient.from('store_settings').upsert(payload, { onConflict: 'id' });
-    if (error) notify(error.message, 'error'); else notify('Store essentials saved.', 'success'); setLoading(button, false);
+    if (error) notify(error.message, 'error'); 
+    else notify('Store essentials saved.', 'success'); 
+    setLoading(button, false);
   }
 
   function renderCanvasSizes() {
     const host = document.getElementById('canvas-size-list'); if (!host) return;
-    host.innerHTML = state.canvasSizes.map((size, index) => `<div class="structured-row" data-canvas-index="${index}"><label><span>Shape</span><select class="admin-input" data-canvas-field="shape"><option value="square" ${size.shape === 'square' ? 'selected' : ''}>Square</option><option value="rectangle" ${size.shape === 'rectangle' ? 'selected' : ''}>Rectangle</option><option value="circle" ${size.shape === 'circle' ? 'selected' : ''}>Circle</option></select></label><label><span>${size.shape === 'circle' ? 'Diameter' : 'Width'} (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.shape === 'circle' ? size.diameter : size.width}"></label><label class="${size.shape !== 'rectangle' ? 'hidden' : ''}"><span>Height (in)</span><input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || ''}"></label><button type="button" data-canvas-action="remove" aria-label="Remove size">×</button></div>`).join('');
+    host.innerHTML = state.canvasSizes.map((size, index) => `
+      <div class="structured-row" data-canvas-index="${index}">
+        <label><span>Shape</span>
+          <select class="admin-input" data-canvas-field="shape">
+            <option value="square" ${size.shape === 'square' ? 'selected' : ''}>Square</option>
+            <option value="rectangle" ${size.shape === 'rectangle' ? 'selected' : ''}>Rectangle</option>
+            <option value="circle" ${size.shape === 'circle' ? 'selected' : ''}>Circle</option>
+          </select>
+        </label>
+        <label><span>${size.shape === 'circle' ? 'Diameter' : 'Width'} (in)</span>
+          <input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.shape === 'circle' ? size.diameter : size.width}">
+        </label>
+        <label class="${size.shape !== 'rectangle' ? 'hidden' : ''}"><span>Height (in)</span>
+          <input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || ''}">
+        </label>
+        <button type="button" data-canvas-action="remove" aria-label="Remove size">×</button>
+      </div>`).join('');
   }
 
   function updateStructuredCanvasState(event) {
-    const row = event.target.closest('[data-canvas-index]'); if (!row) return; const index = Number(row.dataset.canvasIndex); const size = state.canvasSizes[index]; if (!size) return;
+    const row = event.target.closest('[data-canvas-index]'); if (!row) return; 
+    const index = Number(row.dataset.canvasIndex); 
+    const size = state.canvasSizes[index]; if (!size) return;
     const field = event.target.dataset.canvasField;
-    if (field === 'shape') { size.shape = event.target.value; if (size.shape === 'circle') { size.diameter = size.width || 8; delete size.width; delete size.height; } else { size.width = size.diameter || 8; size.height = size.shape === 'square' ? size.width : size.width; delete size.diameter; } renderCanvasSizes(); return; }
-    if (field === 'primary') { if (size.shape === 'circle') size.diameter = Number(event.target.value); else { size.width = Number(event.target.value); if (size.shape === 'square') size.height = size.width; } }
+    
+    if (field === 'shape') { 
+      size.shape = event.target.value; 
+      if (size.shape === 'circle') { size.diameter = size.width || 8; delete size.width; delete size.height; } 
+      else { size.width = size.diameter || 8; size.height = size.shape === 'square' ? size.width : size.width; delete size.diameter; } 
+      renderCanvasSizes(); return; 
+    }
+    if (field === 'primary') { 
+      if (size.shape === 'circle') size.diameter = Number(event.target.value); 
+      else { size.width = Number(event.target.value); if (size.shape === 'square') size.height = size.width; } 
+    }
     if (field === 'height') size.height = Number(event.target.value);
   }
 
-  function handleCanvasSizeAction(event) { const button = event.target.closest('[data-canvas-action]'); if (!button) return; const index = Number(button.closest('[data-canvas-index]').dataset.canvasIndex); state.canvasSizes.splice(index, 1); renderCanvasSizes(); }
+  function handleCanvasSizeAction(event) { 
+    const button = event.target.closest('[data-canvas-action]'); if (!button) return; 
+    const index = Number(button.closest('[data-canvas-index]').dataset.canvasIndex); 
+    state.canvasSizes.splice(index, 1); 
+    renderCanvasSizes(); 
+  }
+  
   async function saveCanvasSizes() {
     const sizes = state.canvasSizes.map((size, index) => Utils.normaliseCanvasSize({ ...size, id: size.id || `size-${index}` }, index)).filter(Boolean);
     if (!sizes.length) return notify('Add at least one valid canvas size.', 'error');
-    const button = document.getElementById('save-canvas-sizes'); setLoading(button, true, 'Saving…');
+    
+    const button = document.getElementById('save-canvas-sizes'); 
+    setLoading(button, true, 'Saving…');
+    
     const { error } = await supabaseClient.from('store_settings').update({ global_canvas_sizes: sizes, updated_at: new Date().toISOString() }).eq('id', 1);
-    if (error) notify(error.message, 'error'); else { state.canvasSizes = sizes; renderCanvasSizes(); notify('Canvas sizes saved.', 'success'); } setLoading(button, false);
+    if (error) notify(error.message, 'error'); 
+    else { state.canvasSizes = sizes; renderCanvasSizes(); notify('Canvas sizes saved.', 'success'); } 
+    setLoading(button, false);
   }
 
   function renderVipTiers() {
     const host = document.getElementById('vip-tier-list'); if (!host) return;
-    host.innerHTML = state.vipTiers.map((tier, index) => `<div class="structured-row is-vip" data-vip-index="${index}"><label><span>Minimum quantity</span><input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}></label><label><span>Discount %</span><input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}"></label><button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''}>×</button></div>`).join('');
+    host.innerHTML = state.vipTiers.map((tier, index) => `
+      <div class="structured-row is-vip" data-vip-index="${index}">
+        <label><span>Minimum quantity</span><input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}></label>
+        <label><span>Discount %</span><input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}"></label>
+        <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''}>×</button>
+      </div>`).join('');
   }
-  function updateVipState(event) { const row = event.target.closest('[data-vip-index]'); if (!row) return; const tier = state.vipTiers[Number(row.dataset.vipIndex)]; if (!tier) return; tier[event.target.dataset.vipField] = Number(event.target.value); }
-  function handleVipAction(event) { const button = event.target.closest('[data-vip-action]'); if (!button || button.disabled) return; state.vipTiers.splice(Number(button.closest('[data-vip-index]').dataset.vipIndex), 1); renderVipTiers(); }
+  
+  function updateVipState(event) { 
+    const row = event.target.closest('[data-vip-index]'); if (!row) return; 
+    const tier = state.vipTiers[Number(row.dataset.vipIndex)]; if (!tier) return; 
+    tier[event.target.dataset.vipField] = Number(event.target.value); 
+  }
+  
+  function handleVipAction(event) { 
+    const button = event.target.closest('[data-vip-action]'); if (!button || button.disabled) return; 
+    state.vipTiers.splice(Number(button.closest('[data-vip-index]').dataset.vipIndex), 1); 
+    renderVipTiers(); 
+  }
+  
   async function saveVipTiers() {
-    const tiers = Utils.normaliseVipTiers(state.vipTiers, APP_CONFIG.DEFAULTS.vipTiers); if (new Set(tiers.map((tier) => tier.minimumQuantity)).size !== tiers.length) return notify('Each VIP tier needs a different minimum quantity.', 'error');
-    const button = document.getElementById('save-vip-tiers'); setLoading(button, true, 'Saving…');
+    const tiers = Utils.normaliseVipTiers(state.vipTiers, APP_CONFIG.DEFAULTS.vipTiers); 
+    if (new Set(tiers.map((tier) => tier.minimumQuantity)).size !== tiers.length) return notify('Each VIP tier needs a different minimum quantity.', 'error');
+    
+    const button = document.getElementById('save-vip-tiers'); 
+    setLoading(button, true, 'Saving…');
+    
     const { error } = await supabaseClient.from('store_settings').update({ vip_tiers: tiers, updated_at: new Date().toISOString() }).eq('id', 1);
-    if (error) notify(error.message, 'error'); else { state.vipTiers = tiers; renderVipTiers(); notify('VIP tiers saved.', 'success'); } setLoading(button, false);
+    if (error) notify(error.message, 'error'); 
+    else { state.vipTiers = tiers; renderVipTiers(); notify('VIP tiers saved.', 'success'); } 
+    setLoading(button, false);
   }
 
   /* Coupons */
-  async function loadCoupons() { const { data, error } = await supabaseClient.from('coupons').select('*').order('created_at', { ascending: false }); if (error) return notify(error.message, 'error'); state.coupons = data || []; renderCoupons(); }
+  async function loadCoupons() { 
+    const { data, error } = await supabaseClient.from('coupons').select('*').order('created_at', { ascending: false }); 
+    if (error) return notify(error.message, 'error'); 
+    state.coupons = data || []; 
+    renderCoupons(); 
+  }
+  
   function renderCoupons() {
     const host = document.getElementById('coupon-list'); if (!host) return;
     if (!state.coupons.length) { host.innerHTML = '<div class="admin-empty">No coupon codes yet.</div>'; return; }
-    host.innerHTML = state.coupons.map((coupon) => { const value = coupon.discount_type === 'shipping' ? 'Free delivery' : coupon.discount_type === 'percent' ? `${coupon.discount_value}% off` : `${Utils.formatCurrency(coupon.discount_value)} off`; return `<article class="coupon-row" data-coupon-id="${Utils.escapeHTML(coupon.id)}"><div><h3>${Utils.escapeHTML(coupon.code)}</h3><p>${Utils.escapeHTML(value)} · Minimum ${Utils.formatCurrency(coupon.min_spend_amount || 0)} · ${coupon.is_active ? 'Active' : 'Inactive'} · Used ${coupon.used_count || 0}${coupon.usage_limit ? `/${coupon.usage_limit}` : ''}${coupon.expires_at ? ` · Ends ${Utils.escapeHTML(new Date(coupon.expires_at).toLocaleDateString('en-IN'))}` : ''}</p></div><div class="coupon-row__actions"><button type="button" data-coupon-action="edit">Edit</button><button type="button" data-coupon-action="toggle">${coupon.is_active ? 'Disable' : 'Enable'}</button><button class="is-danger" type="button" data-coupon-action="delete">Delete</button></div></article>`; }).join('');
+    
+    host.innerHTML = state.coupons.map((coupon) => { 
+      const value = coupon.discount_type === 'shipping' ? 'Free delivery' : coupon.discount_type === 'percent' ? `${coupon.discount_value}% off` : `${Utils.formatCurrency(coupon.discount_value)} off`; 
+      return `
+        <article class="coupon-row" data-coupon-id="${Utils.escapeHTML(coupon.id)}">
+          <div>
+            <h3>${Utils.escapeHTML(coupon.code)}</h3>
+            <p>${Utils.escapeHTML(value)} · Minimum ${Utils.formatCurrency(coupon.min_spend_amount || 0)} · ${coupon.is_active ? 'Active' : 'Inactive'} · Used ${coupon.used_count || 0}${coupon.usage_limit ? `/${coupon.usage_limit}` : ''}${coupon.expires_at ? ` · Ends ${Utils.escapeHTML(new Date(coupon.expires_at).toLocaleDateString('en-IN'))}` : ''}</p>
+          </div>
+          <div class="coupon-row__actions">
+            <button type="button" data-coupon-action="edit">Edit</button>
+            <button type="button" data-coupon-action="toggle">${coupon.is_active ? 'Disable' : 'Enable'}</button>
+            <button class="is-danger" type="button" data-coupon-action="delete">Delete</button>
+          </div>
+        </article>`; 
+    }).join('');
   }
-  function handleCouponAction(event) { const button = event.target.closest('[data-coupon-action]'); if (!button) return; const coupon = state.coupons.find((item) => String(item.id) === button.closest('[data-coupon-id]').dataset.couponId); if (!coupon) return; if (button.dataset.couponAction === 'edit') editCoupon(coupon); if (button.dataset.couponAction === 'toggle') toggleCoupon(coupon); if (button.dataset.couponAction === 'delete') deleteCoupon(coupon); }
-  function editCoupon(coupon) { setValue('coupon-id', coupon.id); setValue('coupon-code', coupon.code || ''); setValue('coupon-type', coupon.discount_type || 'percent'); setValue('coupon-value', coupon.discount_value ?? 0); setValue('coupon-minimum', coupon.min_spend_amount ?? 0); setValue('coupon-maximum', coupon.max_discount ?? ''); setValue('coupon-usage-limit', coupon.usage_limit ?? ''); setValue('coupon-customer-limit', coupon.per_phone_limit ?? 1); setValue('coupon-starts', toLocalInput(coupon.starts_at)); setValue('coupon-expires', toLocalInput(coupon.expires_at)); setValue('coupon-label', coupon.display_label || ''); document.getElementById('coupon-stack-vip').checked = coupon.stack_with_vip !== false; document.getElementById('coupon-active').checked = coupon.is_active !== false; setText('save-coupon', 'Update coupon'); updateCouponTypeUI(); }
-  function resetCouponForm() { const form = document.getElementById('coupon-form'); form?.reset(); if (!form) return; setValue('coupon-id', ''); setValue('coupon-minimum', 0); setValue('coupon-customer-limit', 1); document.getElementById('coupon-stack-vip').checked = true; document.getElementById('coupon-active').checked = true; setText('save-coupon', 'Save coupon'); updateCouponTypeUI(); }
-  function updateCouponTypeUI() { const shipping = document.getElementById('coupon-type')?.value === 'shipping'; const value = document.getElementById('coupon-value'); if (value) { value.disabled = shipping; if (shipping) value.value = '0'; else if (!value.value || Number(value.value) === 0) value.value = '10'; } }
+  
+  function handleCouponAction(event) { 
+    const button = event.target.closest('[data-coupon-action]'); if (!button) return; 
+    const coupon = state.coupons.find((item) => String(item.id) === button.closest('[data-coupon-id]').dataset.couponId); if (!coupon) return; 
+    if (button.dataset.couponAction === 'edit') editCoupon(coupon); 
+    if (button.dataset.couponAction === 'toggle') toggleCoupon(coupon); 
+    if (button.dataset.couponAction === 'delete') deleteCoupon(coupon); 
+  }
+  
+  function editCoupon(coupon) { 
+    setValue('coupon-id', coupon.id); 
+    setValue('coupon-code', coupon.code || ''); 
+    setValue('coupon-type', coupon.discount_type || 'percent'); 
+    setValue('coupon-value', coupon.discount_value ?? 0); 
+    setValue('coupon-minimum', coupon.min_spend_amount ?? 0); 
+    setValue('coupon-maximum', coupon.max_discount ?? ''); 
+    setValue('coupon-usage-limit', coupon.usage_limit ?? ''); 
+    setValue('coupon-customer-limit', coupon.per_phone_limit ?? 1); 
+    setValue('coupon-starts', toLocalInput(coupon.starts_at)); 
+    setValue('coupon-expires', toLocalInput(coupon.expires_at)); 
+    setValue('coupon-label', coupon.display_label || ''); 
+    document.getElementById('coupon-stack-vip').checked = coupon.stack_with_vip !== false; 
+    document.getElementById('coupon-active').checked = coupon.is_active !== false; 
+    setText('save-coupon', 'Update coupon'); 
+    updateCouponTypeUI(); 
+  }
+  
+  function resetCouponForm() { 
+    const form = document.getElementById('coupon-form'); form?.reset(); if (!form) return; 
+    setValue('coupon-id', ''); setValue('coupon-minimum', 0); setValue('coupon-customer-limit', 1); 
+    document.getElementById('coupon-stack-vip').checked = true; 
+    document.getElementById('coupon-active').checked = true; 
+    setText('save-coupon', 'Save coupon'); 
+    updateCouponTypeUI(); 
+  }
+  
+  function updateCouponTypeUI() { 
+    const shipping = document.getElementById('coupon-type')?.value === 'shipping'; 
+    const value = document.getElementById('coupon-value'); 
+    if (value) { 
+      value.disabled = shipping; 
+      if (shipping) value.value = '0'; 
+      else if (!value.value || Number(value.value) === 0) value.value = '10'; 
+    } 
+  }
+  
   async function saveCoupon(event) {
-    event.preventDefault(); const button = document.getElementById('save-coupon'); setLoading(button, true, 'Saving…'); const id = document.getElementById('coupon-id').value; const type = document.getElementById('coupon-type').value;
-    const payload = { code: document.getElementById('coupon-code').value.trim().toUpperCase(), discount_type: type, discount_value: type === 'shipping' ? 0 : Number(document.getElementById('coupon-value').value), min_spend_amount: Number(document.getElementById('coupon-minimum').value || 0), max_discount: document.getElementById('coupon-maximum').value ? Number(document.getElementById('coupon-maximum').value) : null, usage_limit: document.getElementById('coupon-usage-limit').value ? Math.floor(Number(document.getElementById('coupon-usage-limit').value)) : null, per_phone_limit: document.getElementById('coupon-customer-limit').value ? Math.floor(Number(document.getElementById('coupon-customer-limit').value)) : null, starts_at: document.getElementById('coupon-starts').value ? new Date(document.getElementById('coupon-starts').value).toISOString() : null, expires_at: document.getElementById('coupon-expires').value ? new Date(document.getElementById('coupon-expires').value).toISOString() : null, display_label: document.getElementById('coupon-label').value.trim(), stack_with_vip: document.getElementById('coupon-stack-vip').checked, is_active: document.getElementById('coupon-active').checked, updated_at: new Date().toISOString() };
+    event.preventDefault(); 
+    const button = document.getElementById('save-coupon'); 
+    setLoading(button, true, 'Saving…'); 
+    const id = document.getElementById('coupon-id').value; 
+    const type = document.getElementById('coupon-type').value;
+    
+    const payload = { 
+      code: document.getElementById('coupon-code').value.trim().toUpperCase(), 
+      discount_type: type, 
+      discount_value: type === 'shipping' ? 0 : Number(document.getElementById('coupon-value').value), 
+      min_spend_amount: Number(document.getElementById('coupon-minimum').value || 0), 
+      max_discount: document.getElementById('coupon-maximum').value ? Number(document.getElementById('coupon-maximum').value) : null, 
+      usage_limit: document.getElementById('coupon-usage-limit').value ? Math.floor(Number(document.getElementById('coupon-usage-limit').value)) : null, 
+      per_phone_limit: document.getElementById('coupon-customer-limit').value ? Math.floor(Number(document.getElementById('coupon-customer-limit').value)) : null, 
+      starts_at: document.getElementById('coupon-starts').value ? new Date(document.getElementById('coupon-starts').value).toISOString() : null, 
+      expires_at: document.getElementById('coupon-expires').value ? new Date(document.getElementById('coupon-expires').value).toISOString() : null, 
+      display_label: document.getElementById('coupon-label').value.trim(), 
+      stack_with_vip: document.getElementById('coupon-stack-vip').checked, 
+      is_active: document.getElementById('coupon-active').checked, 
+      updated_at: new Date().toISOString() 
+    };
+    
     try {
       if (!payload.code || (type !== 'shipping' && (!Number.isFinite(payload.discount_value) || payload.discount_value <= 0))) throw new Error('Enter a valid coupon code and value.');
       if (type === 'percent' && payload.discount_value > 100) throw new Error('Percentage coupons cannot exceed 100%.');
       if (payload.starts_at && payload.expires_at && new Date(payload.expires_at) <= new Date(payload.starts_at)) throw new Error('Expiry must be after the start time.');
       const response = id ? await supabaseClient.from('coupons').update(payload).eq('id', id) : await supabaseClient.from('coupons').insert(payload); if (response.error) throw response.error;
       notify('Coupon saved.', 'success'); resetCouponForm(); await loadCoupons();
-    } catch (error) { notify(error.code === '23505' ? 'That coupon code already exists.' : error.message, 'error'); }
+    } catch (error) { 
+      notify(error.code === '23505' ? 'That coupon code already exists.' : error.message, 'error'); 
+    }
     setLoading(button, false);
   }
-  async function toggleCoupon(coupon) { const { error } = await supabaseClient.from('coupons').update({ is_active: !coupon.is_active, updated_at: new Date().toISOString() }).eq('id', coupon.id); if (error) notify(error.message, 'error'); else { notify('Coupon status updated.', 'success'); await loadCoupons(); } }
-  async function deleteCoupon(coupon) { const choice = await Utils.choice({ title: `Delete ${coupon.code}?`, message: 'This coupon will stop working immediately. Historical enquiries keep their saved discount snapshot.', icon: '🎁', primaryLabel: 'Delete coupon', secondaryLabel: 'Cancel' }); if (choice !== 'primary') return; const { error } = await supabaseClient.from('coupons').delete().eq('id', coupon.id); if (error) notify(error.message, 'error'); else { notify('Coupon deleted.', 'success'); await loadCoupons(); } }
+  
+  async function toggleCoupon(coupon) { 
+    const { error } = await supabaseClient.from('coupons').update({ is_active: !coupon.is_active, updated_at: new Date().toISOString() }).eq('id', coupon.id); 
+    if (error) notify(error.message, 'error'); 
+    else { notify('Coupon status updated.', 'success'); await loadCoupons(); } 
+  }
+  
+  async function deleteCoupon(coupon) { 
+    const choice = await Utils.choice({ title: `Delete ${coupon.code}?`, message: 'This coupon will stop working immediately. Historical enquiries keep their saved discount snapshot.', icon: '🎁', primaryLabel: 'Delete coupon', secondaryLabel: 'Cancel' }); 
+    if (choice !== 'primary') return; 
+    const { error } = await supabaseClient.from('coupons').delete().eq('id', coupon.id); 
+    if (error) notify(error.message, 'error'); 
+    else { notify('Coupon deleted.', 'success'); await loadCoupons(); } 
+  }
 
   /* Reviews */
-  async function loadReviews() { const { data, error } = await supabaseClient.from('reviews').select('*').order('created_at', { ascending: false }); if (error) return notify(error.message, 'error'); state.reviews = data || []; renderReviewProductOptions(); renderReviews(); }
-  function renderReviewProductOptions() { const select = document.getElementById('review-product'); if (!select) return; select.innerHTML = '<option value="">Choose product</option>' + state.products.map((product) => `<option value="${Utils.escapeHTML(product.id)}">${Utils.escapeHTML(product.title)}</option>`).join(''); }
-  function renderReviews() { const host = document.getElementById('review-list'); if (!host) return; if (!state.reviews.length) { host.innerHTML = '<div class="admin-empty">No reviews yet.</div>'; return; } host.innerHTML = state.reviews.map((review) => { const product = state.products.find((item) => item.id === review.product_id); return `<article class="review-row" data-review-id="${Utils.escapeHTML(review.id)}"><div><h3>${Utils.escapeHTML(review.customer_name)} · ${'★'.repeat(Number(review.rating))}</h3><p>${Utils.escapeHTML(product?.title || 'Archived product')} · ${review.is_approved ? 'Public' : 'Hidden'}<br>${Utils.escapeHTML(review.review_text)}</p></div><div class="coupon-row__actions"><button type="button" data-review-action="edit">Edit</button><button type="button" data-review-action="toggle">${review.is_approved ? 'Hide' : 'Approve'}</button><button class="is-danger" type="button" data-review-action="delete">Delete</button></div></article>`; }).join(''); }
-  function handleReviewAction(event) { const button = event.target.closest('[data-review-action]'); if (!button) return; const review = state.reviews.find((item) => String(item.id) === button.closest('[data-review-id]').dataset.reviewId); if (!review) return; if (button.dataset.reviewAction === 'edit') editReview(review); if (button.dataset.reviewAction === 'toggle') toggleReview(review); if (button.dataset.reviewAction === 'delete') deleteReview(review); }
-  function editReview(review) { setValue('review-id', review.id); setValue('review-product', review.product_id || ''); setValue('review-name', review.customer_name || ''); setValue('review-rating', review.rating || 5); setValue('review-text', review.review_text || ''); document.getElementById('review-approved').checked = review.is_approved !== false; setText('save-review', 'Update review'); }
-  function resetReviewForm() { const form = document.getElementById('review-form'); form?.reset(); if (!form) return; setValue('review-id', ''); setValue('review-rating', 5); document.getElementById('review-approved').checked = true; setText('save-review', 'Save review'); }
-  async function saveReview(event) { event.preventDefault(); const button = document.getElementById('save-review'); setLoading(button, true, 'Saving…'); const id = document.getElementById('review-id').value; const payload = { product_id: document.getElementById('review-product').value, customer_name: document.getElementById('review-name').value.trim(), rating: Number(document.getElementById('review-rating').value), review_text: document.getElementById('review-text').value.trim(), is_approved: document.getElementById('review-approved').checked, updated_at: new Date().toISOString() }; const response = id ? await supabaseClient.from('reviews').update(payload).eq('id', id) : await supabaseClient.from('reviews').insert(payload); if (response.error) notify(response.error.message, 'error'); else { notify('Review saved.', 'success'); resetReviewForm(); await loadReviews(); } setLoading(button, false); }
-  async function toggleReview(review) { const { error } = await supabaseClient.from('reviews').update({ is_approved: !review.is_approved, updated_at: new Date().toISOString() }).eq('id', review.id); if (error) notify(error.message, 'error'); else await loadReviews(); }
-  async function deleteReview(review) { const choice = await Utils.choice({ title: 'Delete this review?', message: 'This action cannot be undone.', icon: '⭐', primaryLabel: 'Delete review', secondaryLabel: 'Cancel' }); if (choice !== 'primary') return; const { error } = await supabaseClient.from('reviews').delete().eq('id', review.id); if (error) notify(error.message, 'error'); else { notify('Review deleted.', 'success'); await loadReviews(); } }
+  async function loadReviews() { 
+    const { data, error } = await supabaseClient.from('reviews').select('*').order('created_at', { ascending: false }); 
+    if (error) return notify(error.message, 'error'); 
+    state.reviews = data || []; 
+    renderReviewProductOptions(); 
+    renderReviews(); 
+  }
+  
+  function renderReviewProductOptions() { 
+    const select = document.getElementById('review-product'); if (!select) return; 
+    select.innerHTML = '<option value="">Choose product</option>' + state.products.map((product) => `<option value="${Utils.escapeHTML(product.id)}">${Utils.escapeHTML(product.title)}</option>`).join(''); 
+  }
+  
+  function renderReviews() { 
+    const host = document.getElementById('review-list'); if (!host) return; 
+    if (!state.reviews.length) { host.innerHTML = '<div class="admin-empty">No reviews yet.</div>'; return; } 
+    
+    host.innerHTML = state.reviews.map((review) => { 
+      const product = state.products.find((item) => item.id === review.product_id); 
+      return `
+        <article class="review-row" data-review-id="${Utils.escapeHTML(review.id)}">
+          <div>
+            <h3>${Utils.escapeHTML(review.customer_name)} · ${'★'.repeat(Number(review.rating))}</h3>
+            <p>${Utils.escapeHTML(product?.title || 'Archived product')} · ${review.is_approved ? 'Public' : 'Hidden'}<br>${Utils.escapeHTML(review.review_text)}</p>
+          </div>
+          <div class="coupon-row__actions">
+            <button type="button" data-review-action="edit">Edit</button>
+            <button type="button" data-review-action="toggle">${review.is_approved ? 'Hide' : 'Approve'}</button>
+            <button class="is-danger" type="button" data-review-action="delete">Delete</button>
+          </div>
+        </article>`; 
+    }).join(''); 
+  }
+  
+  function handleReviewAction(event) { 
+    const button = event.target.closest('[data-review-action]'); if (!button) return; 
+    const review = state.reviews.find((item) => String(item.id) === button.closest('[data-review-id]').dataset.reviewId); if (!review) return; 
+    if (button.dataset.reviewAction === 'edit') editReview(review); 
+    if (button.dataset.reviewAction === 'toggle') toggleReview(review); 
+    if (button.dataset.reviewAction === 'delete') deleteReview(review); 
+  }
+  
+  function editReview(review) { 
+    setValue('review-id', review.id); 
+    setValue('review-product', review.product_id || ''); 
+    setValue('review-name', review.customer_name || ''); 
+    setValue('review-rating', review.rating || 5); 
+    setValue('review-text', review.review_text || ''); 
+    document.getElementById('review-approved').checked = review.is_approved !== false; 
+    setText('save-review', 'Update review'); 
+  }
+  
+  function resetReviewForm() { 
+    const form = document.getElementById('review-form'); form?.reset(); if (!form) return; 
+    setValue('review-id', ''); setValue('review-rating', 5); document.getElementById('review-approved').checked = true; setText('save-review', 'Save review'); 
+  }
+  
+  async function saveReview(event) { 
+    event.preventDefault(); 
+    const button = document.getElementById('save-review'); 
+    setLoading(button, true, 'Saving…'); 
+    const id = document.getElementById('review-id').value; 
+    const payload = { 
+      product_id: document.getElementById('review-product').value, 
+      customer_name: document.getElementById('review-name').value.trim(), 
+      rating: Number(document.getElementById('review-rating').value), 
+      review_text: document.getElementById('review-text').value.trim(), 
+      is_approved: document.getElementById('review-approved').checked, 
+      updated_at: new Date().toISOString() 
+    }; 
+    const response = id ? await supabaseClient.from('reviews').update(payload).eq('id', id) : await supabaseClient.from('reviews').insert(payload); 
+    if (response.error) notify(response.error.message, 'error'); 
+    else { notify('Review saved.', 'success'); resetReviewForm(); await loadReviews(); } 
+    setLoading(button, false); 
+  }
+  
+  async function toggleReview(review) { 
+    const { error } = await supabaseClient.from('reviews').update({ is_approved: !review.is_approved, updated_at: new Date().toISOString() }).eq('id', review.id); 
+    if (error) notify(error.message, 'error'); 
+    else await loadReviews(); 
+  }
+  
+  async function deleteReview(review) { 
+    const choice = await Utils.choice({ title: 'Delete this review?', message: 'This action cannot be undone.', icon: '⭐', primaryLabel: 'Delete review', secondaryLabel: 'Cancel' }); 
+    if (choice !== 'primary') return; 
+    const { error } = await supabaseClient.from('reviews').delete().eq('id', review.id); 
+    if (error) notify(error.message, 'error'); 
+    else { notify('Review deleted.', 'success'); await loadReviews(); } 
+  }
 
-  /* ---------------- Enquiries ---------------- */
+  /* ---------------- Enquiries & Shiprocket ---------------- */
   async function initialiseEnquiries() {
     document.getElementById('refresh-enquiries')?.addEventListener('click', loadEnquiries);
     document.getElementById('enquiry-search')?.addEventListener('input', renderEnquiries);
     document.getElementById('enquiry-filter')?.addEventListener('change', renderEnquiries);
     document.getElementById('enquiry-list')?.addEventListener('change', handleEnquiryStatusChange);
+    document.getElementById('enquiry-list')?.addEventListener('click', handleShiprocketPush); 
     await loadEnquiries();
   }
-  async function loadEnquiries() { const host = document.getElementById('enquiry-list'); if (host) host.innerHTML = '<div class="admin-empty">Loading enquiries…</div>'; const { data, error } = await supabaseClient.from('whatsapp_enquiries').select('*').order('created_at', { ascending: false }).limit(500); if (error) { notify(error.message, 'error'); if (host) host.innerHTML = '<div class="admin-empty">Enquiries could not be loaded.</div>'; return; } state.enquiries = data || []; renderEnquiries(); }
-  function renderEnquiries() { const host = document.getElementById('enquiry-list'); if (!host) return; const search = document.getElementById('enquiry-search')?.value.trim().toLowerCase() || ''; const filter = document.getElementById('enquiry-filter')?.value || 'all'; const list = state.enquiries.filter((enquiry) => { const text = `${enquiry.reference} ${enquiry.customer_name} ${enquiry.customer_phone}`.toLowerCase(); return (!search || text.includes(search)) && (filter === 'all' || enquiry.status === filter); }); if (!list.length) { host.innerHTML = '<div class="admin-empty">No enquiries match this view.</div>'; return; } host.innerHTML = list.map((enquiry) => `<article class="enquiry-row" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}"><div><div class="enquiry-row__top"><h2>${Utils.escapeHTML(enquiry.reference)}</h2><span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span></div><div class="enquiry-meta"><span>${Utils.escapeHTML(enquiry.customer_name)}</span><span>${Utils.escapeHTML(enquiry.customer_phone)}</span>${enquiry.customer_city ? `<span>${Utils.escapeHTML(enquiry.customer_city)}</span>` : ''}<span>${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span></div><div class="enquiry-items">${(enquiry.items || []).map((item) => `<span>${Utils.escapeHTML(item.title)} × ${item.quantity}${item.selected_size?.label ? ` · ${Utils.escapeHTML(item.selected_size.label)}` : ''}</span>`).join('')}</div><strong class="enquiry-total">${Utils.formatCurrency(enquiry.total_amount)}${enquiry.coupon_code ? ` · ${Utils.escapeHTML(enquiry.coupon_code)}` : ''}</strong></div><div class="enquiry-row__actions"><select class="enquiry-status" data-enquiry-status>${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}</select><a href="https://wa.me/${String(enquiry.customer_phone).replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" target="_blank" rel="noopener">Open WhatsApp</a></div></article>`).join(''); }
-  async function handleEnquiryStatusChange(event) { if (!event.target.matches('[data-enquiry-status]')) return; const id = event.target.closest('[data-enquiry-id]').dataset.enquiryId; const { error } = await supabaseClient.from('whatsapp_enquiries').update({ status: event.target.value, updated_at: new Date().toISOString() }).eq('id', id); if (error) notify(error.message, 'error'); else { notify('Enquiry status updated.', 'success'); const enquiry = state.enquiries.find((item) => item.id === id); if (enquiry) enquiry.status = event.target.value; } }
+  
+  async function loadEnquiries() { 
+    const host = document.getElementById('enquiry-list'); 
+    if (host) host.innerHTML = '<div class="admin-empty">Loading enquiries…</div>'; 
+    const { data, error } = await supabaseClient.from('whatsapp_enquiries').select('*').order('created_at', { ascending: false }).limit(500); 
+    if (error) { 
+      notify(error.message, 'error'); 
+      if (host) host.innerHTML = '<div class="admin-empty">Enquiries could not be loaded.</div>'; 
+      return; 
+    } 
+    state.enquiries = data || []; 
+    renderEnquiries(); 
+  }
+  
+  function renderEnquiries() { 
+    const host = document.getElementById('enquiry-list'); if (!host) return; 
+    const search = document.getElementById('enquiry-search')?.value.trim().toLowerCase() || ''; 
+    const filter = document.getElementById('enquiry-filter')?.value || 'all'; 
+    const list = state.enquiries.filter((enquiry) => { 
+      const text = `${enquiry.reference} ${enquiry.customer_name} ${enquiry.customer_phone}`.toLowerCase(); 
+      return (!search || text.includes(search)) && (filter === 'all' || enquiry.status === filter); 
+    }); 
+    if (!list.length) { host.innerHTML = '<div class="admin-empty">No enquiries match this view.</div>'; return; } 
+    
+    host.innerHTML = list.map((enquiry) => {
+      // Conditionally render the Shiprocket button
+      let shiprocketButton = '';
+      if (enquiry.shiprocket_order_id) {
+        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener">Track on Shiprocket</a>`;
+      } else if (enquiry.status === 'completed') {
+        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}">Push to Shiprocket</button>`;
+      }
+
+      // Render the full row with the correct native WhatsApp link format
+      return `
+        <article class="enquiry-row" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}">
+          <div>
+            <div class="enquiry-row__top">
+              <h2>${Utils.escapeHTML(enquiry.reference)}</h2>
+              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
+            </div>
+            <div class="enquiry-meta">
+              <span>${Utils.escapeHTML(enquiry.customer_name)}</span>
+              <span>${Utils.escapeHTML(enquiry.customer_phone)}</span>
+              ${enquiry.customer_city ? `<span>${Utils.escapeHTML(enquiry.customer_city)}</span>` : ''}
+              <span>${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span>
+            </div>
+            <div class="enquiry-items">
+              ${(enquiry.items || []).map((item) => `<span>${Utils.escapeHTML(item.title)} × ${item.quantity}${item.selected_size?.label ? ` · ${Utils.escapeHTML(item.selected_size.label)}` : ''}</span>`).join('')}
+            </div>
+            <strong class="enquiry-total">${Utils.formatCurrency(enquiry.total_amount)}${enquiry.coupon_code ? ` · ${Utils.escapeHTML(enquiry.coupon_code)}` : ''}</strong>
+          </div>
+          <div class="enquiry-row__actions">
+            <select class="enquiry-status" data-enquiry-status>
+              ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+            </select>
+            <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button admin-button--soft" target="_blank" rel="noopener">Open WhatsApp</a>
+            ${shiprocketButton}
+          </div>
+        </article>`;
+    }).join(''); 
+  }
+  
+  async function handleEnquiryStatusChange(event) { 
+    if (!event.target.matches('[data-enquiry-status]')) return; 
+    const id = event.target.closest('[data-enquiry-id]').dataset.enquiryId; 
+    const { error } = await supabaseClient.from('whatsapp_enquiries').update({ status: event.target.value, updated_at: new Date().toISOString() }).eq('id', id); 
+    if (error) notify(error.message, 'error'); 
+    else { 
+      notify('Enquiry status updated.', 'success'); 
+      const enquiry = state.enquiries.find((item) => item.id === id); 
+      if (enquiry) enquiry.status = event.target.value; 
+      renderEnquiries(); // Re-render to show/hide Shiprocket button if needed
+    } 
+  }
+
+  // 1. A beautiful, custom-styled modal to collect all details at once
+  function promptShiprocketDetails() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      // Using inline layout styles to ensure it floats perfectly in the center of the screen
+      // while recycling your existing admin CSS classes for the inputs and buttons!
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;';
+      
+      overlay.innerHTML = `
+        <div style="background:#fff;padding:24px;border-radius:16px;width:90%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,0.15);transform:translateY(10px);transition:transform 0.2s ease;">
+          <div style="text-align:center;margin-bottom:20px;">
+             <span style="font-size:24px;display:block;margin-bottom:8px;">📦</span>
+             <h2 style="margin:0;font-family:'Lora',serif;font-size:1.4rem;color:var(--charcoal);">Package Details</h2>
+             <p style="margin:4px 0 0;color:var(--muted);font-size:0.8rem;">Enter the exact dimensions for the courier.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+             <label class="admin-field"><span>Weight (kg) *</span><input id="sr-weight" class="admin-input" type="number" step="0.01" value="0.5"></label>
+             <label class="admin-field"><span>Length (cm) *</span><input id="sr-length" class="admin-input" type="number" step="1" value="10"></label>
+             <label class="admin-field"><span>Breadth (cm) *</span><input id="sr-breadth" class="admin-input" type="number" step="1" value="10"></label>
+             <label class="admin-field"><span>Height (cm) *</span><input id="sr-height" class="admin-input" type="number" step="1" value="10"></label>
+          </div>
+          <div style="display:flex;gap:10px;">
+             <button id="sr-cancel" class="admin-button admin-button--soft" style="flex:1;" type="button">Cancel</button>
+             <button id="sr-confirm" class="admin-button admin-button--dark" style="flex:1;" type="button">Push order</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      // Trigger a tiny delay so the fade-in animation plays smoothly
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        overlay.firstElementChild.style.transform = 'translateY(0)';
+      });
+
+      // Handle Cancel
+      document.getElementById('sr-cancel').onclick = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.remove(); resolve(null); }, 200);
+      };
+
+      // Handle Confirm
+      document.getElementById('sr-confirm').onclick = () => {
+        const weight = parseFloat(document.getElementById('sr-weight').value) || 0.5;
+        const length = parseFloat(document.getElementById('sr-length').value) || 10;
+        const breadth = parseFloat(document.getElementById('sr-breadth').value) || 10;
+        const height = parseFloat(document.getElementById('sr-height').value) || 10;
+        
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.remove(); resolve({ weight, length, breadth, height }); }, 200);
+      };
+    });
+  }
+
+  // 2. The updated push function that calls the beautiful modal
+  async function handleShiprocketPush(event) {
+    const button = event.target.closest('[data-push-shiprocket]');
+    if (!button) return;
+    
+    const enquiryId = button.dataset.pushShiprocket;
+
+    // Trigger the custom modal instead of the browser prompts!
+    const boxDetails = await promptShiprocketDetails();
+    if (!boxDetails) return; // Stop if the user clicked Cancel
+
+    setLoading(button, true, 'Pushing...');
+    
+    try {
+      // Transmit to Edge Function with custom box details
+      const { data, error } = await supabaseClient.functions.invoke('push_to_shiprocket', {
+        body: { 
+          recordId: enquiryId,
+          weight: boxDetails.weight,
+          length: boxDetails.length,
+          breadth: boxDetails.breadth,
+          height: boxDetails.height
+        }
+      });
+      
+      if (error) throw error;
+      if (data && data.error) throw new Error(data.error);
+
+      notify('Order pushed to Shiprocket successfully!', 'success');
+      
+      // Update local memory to display the tracking link button
+      const enquiry = state.enquiries.find((item) => item.id === enquiryId);
+      if (enquiry) enquiry.shiprocket_order_id = data.order_id;
+      
+      renderEnquiries();
+      
+    } catch (error) {
+      notify(error.message || 'Failed to push to Shiprocket.', 'error');
+    } finally {
+      setLoading(button, false);
+    }
+  }
 
   /* ---------------- Helpers ---------------- */
-  function setLoading(button, loading, text = 'Working…') { if (!button) return; if (loading) { button.dataset.label = button.textContent; button.textContent = text; button.disabled = true; } else { button.textContent = button.dataset.label || button.textContent; button.disabled = false; } }
-  function notify(message, type = 'default') { const region = document.getElementById('admin-toast-region'); if (!region) return; const toast = document.createElement('div'); toast.className = `admin-toast ${type === 'success' ? 'is-success' : type === 'error' ? 'is-error' : ''}`; toast.textContent = message; region.appendChild(toast); requestAnimationFrame(() => toast.classList.add('is-visible')); setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 220); }, 3300); }
+  function setLoading(button, loading, text = 'Working…') { 
+    if (!button) return; 
+    if (loading) { 
+      button.dataset.label = button.textContent; 
+      button.textContent = text; 
+      button.disabled = true; 
+    } else { 
+      button.textContent = button.dataset.label || button.textContent; 
+      button.disabled = false; 
+    } 
+  }
+  
+  function notify(message, type = 'default') { 
+    const region = document.getElementById('admin-toast-region'); if (!region) return; 
+    const toast = document.createElement('div'); 
+    toast.className = `admin-toast ${type === 'success' ? 'is-success' : type === 'error' ? 'is-error' : ''}`; 
+    toast.textContent = message; 
+    region.appendChild(toast); 
+    requestAnimationFrame(() => toast.classList.add('is-visible')); 
+    setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 220); }, 3300); 
+  }
+  
   function setValue(id, value) { const element = document.getElementById(id); if (element) element.value = value ?? ''; }
   function setText(id, value) { const element = document.getElementById(id); if (element) element.textContent = value; }
   function toLocalInput(value) { if (!value) return ''; const date = new Date(value); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000); return local.toISOString().slice(0,16); }
+
 })();

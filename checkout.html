@@ -6,7 +6,7 @@
   <link rel="icon" href="/assets/logo.webp" type="image/webp">
   <title>Review Saving Bag | Twisted Happiness</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/app.css?v=20260804"><link rel="stylesheet" href="/css/responsive.css?v=20260804">
 </head>
 <body data-page="checkout">
   <div id="announcement-bar" class="announcement-bar hidden" role="status"><span id="announcement-text"></span><button id="announcement-close" type="button" aria-label="Dismiss announcement">×</button></div>
@@ -23,9 +23,18 @@
 
         <section class="checkout-card"><div class="checkout-card__head"><div><p class="eyebrow">For a clean WhatsApp message</p><h2>Your details</h2></div></div>
           <form id="checkout-form" class="simple-form">
-            <label><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Your name"></label>
+            <label><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Full name"></label>
             <label><span>WhatsApp number *</span><input id="customer-phone" class="simple-input" type="tel" maxlength="16" required inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number"></label>
-            <label><span>City <small>(optional)</small></span><input id="customer-city" class="simple-input" type="text" maxlength="80" autocomplete="address-level2" placeholder="Delivery city"></label>
+            
+            <label class="is-wide"><span>Email address *</span><input id="customer-email" class="simple-input" type="email" maxlength="120" required autocomplete="email" placeholder="Required for delivery tracking updates"></label>
+            
+            <label class="is-wide"><span>Address line 1 *</span><input id="customer-address-1" class="simple-input" type="text" maxlength="150" required autocomplete="address-line1" placeholder="House/Flat No., Building name, Street"></label>
+            <label class="is-wide"><span>Address line 2 *</span><input id="customer-address-2" class="simple-input" type="text" maxlength="150" required autocomplete="address-line2" placeholder="Locality, Area, Landmark"></label>
+            
+            <label><span>City *</span><input id="customer-city" class="simple-input" type="text" maxlength="80" required autocomplete="address-level2" placeholder="Delivery city"></label>
+            <label><span>State *</span><input id="customer-state" class="simple-input" type="text" maxlength="80" required autocomplete="address-level1" placeholder="e.g. Gujarat"></label>
+            <label><span>Pincode *</span><input id="customer-pincode" class="simple-input" type="text" maxlength="6" required inputmode="numeric" autocomplete="postal-code" placeholder="6-digit pincode"></label>
+            
             <label class="is-wide"><span>Order note <small>(optional)</small></span><textarea id="customer-note" class="simple-input" rows="3" maxlength="260" placeholder="Gifting date, colour preference or another request…"></textarea></label>
           </form>
         </section>
@@ -47,6 +56,6 @@
     </div>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=20260804"></script><script src="/js/common.js?v=20260804"></script><script src="/js/app.js?v=20260804"></script>
 </body>
 </html>
