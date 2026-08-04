@@ -215,7 +215,7 @@
     const defaultCategory = document.getElementById('product-category')?.value || 'Whimsical Art';
     setValue('product-id', ''); setValue('product-care', CARE_GUIDES[defaultCategory] || APP_CONFIG.DEFAULT_CARE_GUIDE); setValue('product-preparation', '2-3 Days'); setValue('product-sort-order', '100'); document.getElementById('product-active').checked = true;
     
-    setText('product-form-title', 'Add product'); setText('product-edit-indicator', 'New creation'); setText('save-product', 'Save product'); updateProductCategoryUI(); renderImagePreviews();
+    setText('product-form-title', 'Add product'); setText('product-edit-indicator', 'New creation'); const saveBtn = document.getElementById('save-product'); if(saveBtn) { saveBtn.textContent = 'Save product'; saveBtn.dataset.label = 'Save product'; } updateProductCategoryUI(); renderImagePreviews();
   }
 
   function updateProductCategoryUI() {
@@ -264,7 +264,7 @@
     if (!Number.isFinite(price) || price <= 0) return notify('Enter the selling price first.', 'error');
     const mrp = generateBelievableMRP(price);
     state.suppressMRPTracking = true; setValue('product-mrp', mrp); state.suppressMRPTracking = false;
-    if (manualRequest) state.mrpManuallyEdited = false;
+    if (manualRequest) state.mrpManuallyEdited = true;
     setText('mrp-hint', `Generated MRP ${Utils.formatCurrency(mrp)}. It will be stored permanently.`);
   }
 
