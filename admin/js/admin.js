@@ -628,24 +628,67 @@
   }
 
   function renderCanvasSizes() {
-    const host = document.getElementById('canvas-size-list'); if (!host) return;
-    host.innerHTML = state.canvasSizes.map((size, index) => `
-      <div class="structured-row" data-canvas-index="${index}">
-        <label><span>Shape</span>
-          <select class="admin-input" data-canvas-field="shape">
-            <option value="square" ${size.shape === 'square' ? 'selected' : ''}>Square</option>
-            <option value="rectangle" ${size.shape === 'rectangle' ? 'selected' : ''}>Rectangle</option>
-            <option value="circle" ${size.shape === 'circle' ? 'selected' : ''}>Circle</option>
-          </select>
-        </label>
-        <label><span>${size.shape === 'circle' ? 'Diameter' : 'Width'} (in)</span>
-          <input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.shape === 'circle' ? size.diameter : size.width}">
-        </label>
-        <label class="${size.shape !== 'rectangle' ? 'hidden' : ''}"><span>Height (in)</span>
-          <input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || ''}">
-        </label>
-        <button type="button" data-canvas-action="remove" aria-label="Remove size">×</button>
-      </div>`).join('');
+    const host = document.getElementById('canvas-size-list'); 
+    if (!host) return;
+    
+    const squares = [];
+    const rectangles = [];
+    const circles = [];
+
+    state.canvasSizes.forEach((size, index) => {
+      const shape = size.shape || 'square';
+      const itemHTML = `
+        <div class="structured-row" data-canvas-index="${index}" style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;">
+          <div style="display:grid;gap:4px;">
+            ${shape === 'circle' 
+              ? `<label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Diameter (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.diameter || 8}"></label>`
+              : shape === 'rectangle'
+              ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                   <label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Width (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>
+                   <label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Height (in)</span><input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || 10}"></label>
+                 </div>`
+              : `<label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Size (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>`
+            }
+          </div>
+          <button type="button" data-canvas-action="remove" aria-label="Remove size" style="width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:14px;">×</button>
+        </div>`;
+      
+      if (shape === 'square') squares.push(itemHTML);
+      else if (shape === 'rectangle') rectangles.push(itemHTML);
+      else circles.push(itemHTML);
+    });
+
+    host.innerHTML = `
+      <div class="canvas-columns-grid">
+        <div class="canvas-column">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-family:'Lora',serif;font-size:0.95rem;">Square</strong>
+            <button type="button" class="admin-button admin-button--soft admin-button--small" data-add-shape="square">+ Add</button>
+          </div>
+          <div class="canvas-column-scroll" style="display:grid;gap:8px;">
+            ${squares.length ? squares.join('') : '<p class="admin-help" style="font-size:0.6rem;">No square sizes</p>'}
+          </div>
+        </div>
+        <div class="canvas-column">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-family:'Lora',serif;font-size:0.95rem;">Rectangle</strong>
+            <button type="button" class="admin-button admin-button--soft admin-button--small" data-add-shape="rectangle">+ Add</button>
+          </div>
+          <div class="canvas-column-scroll" style="display:grid;gap:8px;">
+            ${rectangles.length ? rectangles.join('') : '<p class="admin-help" style="font-size:0.6rem;">No rectangle sizes</p>'}
+          </div>
+        </div>
+        <div class="canvas-column">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <strong style="font-family:'Lora',serif;font-size:0.95rem;">Circle</strong>
+            <button type="button" class="admin-button admin-button--soft admin-button--small" data-add-shape="circle">+ Add</button>
+          </div>
+          <div class="canvas-column-scroll" style="display:grid;gap:8px;">
+            ${circles.length ? circles.join('') : '<p class="admin-help" style="font-size:0.6rem;">No circle sizes</p>'}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function updateStructuredCanvasState(event) {
@@ -654,22 +697,38 @@
     const size = state.canvasSizes[index]; if (!size) return;
     const field = event.target.dataset.canvasField;
     
-    if (field === 'shape') { 
-      size.shape = event.target.value; 
-      if (size.shape === 'circle') { size.diameter = size.width || 8; delete size.width; delete size.height; } 
-      else { size.width = size.diameter || 8; size.height = size.shape === 'square' ? size.width : size.width; delete size.diameter; } 
-      renderCanvasSizes(); return; 
-    }
     if (field === 'primary') { 
       if (size.shape === 'circle') size.diameter = Number(event.target.value); 
-      else { size.width = Number(event.target.value); if (size.shape === 'square') size.height = size.width; } 
+      else { 
+        size.width = Number(event.target.value); 
+        if (size.shape === 'square') size.height = size.width; 
+      } 
     }
-    if (field === 'height') size.height = Number(event.target.value);
+    if (field === 'height') {
+      size.height = Number(event.target.value);
+    }
   }
 
   function handleCanvasSizeAction(event) { 
-    const button = event.target.closest('[data-canvas-action]'); if (!button) return; 
-    const index = Number(button.closest('[data-canvas-index]').dataset.canvasIndex); 
+    const addBtn = event.target.closest('[data-add-shape]');
+    if (addBtn) {
+      const shape = addBtn.getAttribute('data-add-shape');
+      if (shape === 'square') {
+        state.canvasSizes.push({ id: crypto.randomUUID(), shape: 'square', width: 8, height: 8, label: '8 × 8 in' });
+      } else if (shape === 'rectangle') {
+        state.canvasSizes.push({ id: crypto.randomUUID(), shape: 'rectangle', width: 8, height: 10, label: '8 × 10 in' });
+      } else if (shape === 'circle') {
+        state.canvasSizes.push({ id: crypto.randomUUID(), shape: 'circle', diameter: 8, label: '8 in diameter' });
+      }
+      renderCanvasSizes();
+      return;
+    }
+
+    const button = event.target.closest('[data-canvas-action]'); 
+    if (!button) return; 
+    const row = button.closest('[data-canvas-index]');
+    if (!row) return;
+    const index = Number(row.dataset.canvasIndex); 
     state.canvasSizes.splice(index, 1); 
     renderCanvasSizes(); 
   }
@@ -688,13 +747,26 @@
   }
 
   function renderVipTiers() {
-    const host = document.getElementById('vip-tier-list'); if (!host) return;
-    host.innerHTML = state.vipTiers.map((tier, index) => `
-      <div class="structured-row is-vip" data-vip-index="${index}">
-        <label><span>Minimum quantity</span><input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}></label>
-        <label><span>Discount %</span><input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}"></label>
-        <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''}>×</button>
+    const host = document.getElementById('vip-tier-list'); 
+    if (!host) return;
+    
+    const cards = state.vipTiers.map((tier, index) => `
+      <div class="structured-row is-vip" data-vip-index="${index}" style="display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;position:relative;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <strong style="font-size:0.65rem;color:var(--muted);">Tier ${index + 1}</strong>
+          <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''} style="width:24px;height:24px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:12px;${index === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}">×</button>
+        </div>
+        <label style="display:grid;gap:2px;">
+          <span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Min quantity</span>
+          <input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}>
+        </label>
+        <label style="display:grid;gap:2px;">
+          <span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Discount %</span>
+          <input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}">
+        </label>
       </div>`).join('');
+
+    host.innerHTML = `<div class="vip-columns-grid">${cards}</div>`;
   }
   
   function updateVipState(event) { 
@@ -854,9 +926,89 @@
     renderReviews(); 
   }
   
-  function renderReviewProductOptions() { 
-    const select = document.getElementById('review-product'); if (!select) return; 
-    select.innerHTML = '<option value="">Choose product</option>' + state.products.map((product) => `<option value="${Utils.escapeHTML(product.id)}">${Utils.escapeHTML(product.title)}</option>`).join(''); 
+  function renderReviewProductOptions() {
+    const container = document.getElementById('review-product')?.parentElement;
+    if (!container) return;
+
+    let hiddenInput = document.getElementById('review-product');
+    let textInput = document.getElementById('review-product-input');
+
+    if (!textInput) {
+      container.innerHTML = `
+        <div style="position:relative;">
+          <input id="review-product-input" class="admin-input" type="text" placeholder="Type to search product..." autocomplete="off">
+          <input type="hidden" id="review-product" value="">
+          <div id="review-product-suggestions" class="hidden" style="position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:95;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-md);max-height:200px;overflow-y:auto;"></div>
+        </div>
+      `;
+      
+      textInput = document.getElementById('review-product-input');
+      hiddenInput = document.getElementById('review-product');
+      const suggestionsBox = document.getElementById('review-product-suggestions');
+
+      textInput.addEventListener('input', () => {
+        const query = textInput.value.trim().toLowerCase();
+        hiddenInput.value = ''; 
+        if (!query) {
+          suggestionsBox.classList.add('hidden');
+          return;
+        }
+        const matches = state.products.filter(p => (p.title || '').toLowerCase().includes(query)).slice(0, 8);
+        if (!matches.length) {
+          suggestionsBox.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:0.68rem;">No products found</div>';
+          suggestionsBox.classList.remove('hidden');
+          return;
+        }
+        suggestionsBox.innerHTML = matches.map(p => `
+          <div data-product-id="${Utils.escapeHTML(p.id)}" data-product-title="${Utils.escapeHTML(p.title)}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:0.7rem;">
+            <img src="${Utils.escapeHTML(p.images?.[0] || '/assets/logo.webp')}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+            <div>
+              <strong>${Utils.escapeHTML(p.title)}</strong>
+              <div style="color:var(--muted);font-size:0.58rem;">${Utils.escapeHTML(p.main_category || 'Handcrafted')}</div>
+            </div>
+          </div>
+        `).join('');
+        suggestionsBox.classList.remove('hidden');
+      });
+
+      suggestionsBox.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-product-id]');
+        if (!item) return;
+        hiddenInput.value = item.dataset.productId;
+        textInput.value = item.dataset.productTitle;
+        suggestionsBox.classList.add('hidden');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#review-product-input') && !e.target.closest('#review-product-suggestions')) {
+          suggestionsBox.classList.add('hidden');
+        }
+      });
+    }
+  }
+
+  function editReview(review) { 
+    setValue('review-id', review.id); 
+    setValue('review-product', review.product_id || ''); 
+    const product = state.products.find(p => String(p.id) === String(review.product_id));
+    const textInput = document.getElementById('review-product-input');
+    if (textInput) textInput.value = product ? product.title : '';
+    setValue('review-name', review.customer_name || ''); 
+    setValue('review-rating', review.rating || 5); 
+    setValue('review-text', review.review_text || ''); 
+    document.getElementById('review-approved').checked = review.is_approved !== false; 
+    setText('save-review', 'Update review'); 
+  }
+  
+  function resetReviewForm() { 
+    const form = document.getElementById('review-form'); form?.reset(); if (!form) return; 
+    setValue('review-id', ''); 
+    setValue('review-product', ''); 
+    const textInput = document.getElementById('review-product-input');
+    if (textInput) textInput.value = '';
+    setValue('review-rating', 5); 
+    document.getElementById('review-approved').checked = true; 
+    setText('save-review', 'Save review'); 
   }
   
   function renderReviews() { 

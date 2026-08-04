@@ -224,6 +224,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .main-gallery {
   position: relative;
+  min-width: 0;
 }
 
 .gallery-viewport {
@@ -232,6 +233,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: #f3edef;
   box-shadow: var(--shadow-sm);
   touch-action: pan-y;
+  width: 100%;
 }
 
 .gallery-track {
@@ -250,10 +252,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .main-gallery-slide img {
   width: 100%;
-  height: min(600px, 52vw);
-  min-height: 360px;
-  max-height: 500px;
-  aspect-ratio: auto;
+  height: 460px;
   object-fit: contain;
   object-position: center;
   user-select: none;
@@ -266,7 +265,45 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .gallery-dots { position: absolute; left: 50%; bottom: 12px; z-index: 4; display: flex; gap: 6px; transform: translateX(-50%); }
 .gallery-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.62); transition: width .2s ease, background .2s ease; }
 .gallery-dot.is-active { width: 18px; border-radius: 999px; background: #fff; }
-.thumbnail-row { display: flex; gap: 8px; overflow-x: auto; padding-top: 10px; }
+
+/* Hide thumbnails completely on mobile view */
+#gallery-thumbnails {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  /* PC View: Amazon-style vertical thumbnails on the left */
+  .gallery-main-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  #gallery-thumbnails {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 460px;
+    padding: 0;
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .main-gallery {
+    flex: 1;
+    order: 2;
+    min-width: 0;
+  }
+
+  .thumbnail {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+  }
+}
+
 .thumbnail { flex: 0 0 70px; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 13px; background: transparent; cursor: pointer; }
 .thumbnail.is-active { border-color: var(--charcoal); }
 .thumbnail img { width: 100%; aspect-ratio: 1; object-fit: cover; }
@@ -435,6 +472,10 @@ textarea.simple-input { resize: vertical; }
 .app-toast--success { background: var(--green); }
 .app-toast--error { background: #9e3346; }
 .app-toast.is-visible { opacity: 1; transform: translateY(0); }
+
+.product-gallery .breadcrumbs {
+  margin-bottom: 12px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

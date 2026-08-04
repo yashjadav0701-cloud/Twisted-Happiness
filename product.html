@@ -14,8 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css">
-  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/app.css?v=20260804.2"><link rel="stylesheet" href="/css/responsive.css?v=20260804.2">
 </head>
 <body data-page="product">
   <div id="announcement-bar" class="announcement-bar hidden" role="status"><span id="announcement-text"></span><button id="announcement-close" type="button" aria-label="Dismiss announcement">×</button></div>
@@ -30,20 +29,21 @@
   </header>
 
   <main class="product-page site-shell">
-    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><a href="/#collection">Collection</a><span>›</span><span id="breadcrumb-product">Product</span></nav>
-
     <div id="product-loading" class="product-skeleton"><div class="skeleton"></div><div class="skeleton"></div></div>
     <section id="product-error" class="empty-state hidden"><span>🌷</span><h2>This creation is unavailable</h2><p>It may be hidden or no longer available.</p><a class="app-button app-button--dark" href="/#collection">Browse collection</a></section>
 
     <section id="product-detail" class="product-layout hidden" aria-live="polite">
       <div class="product-gallery">
-        <div id="main-gallery" class="main-gallery">
-          <button id="gallery-prev" class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Previous image">‹</button>
-          <div id="gallery-viewport" class="gallery-viewport"><div id="gallery-track" class="gallery-track"></div></div>
-          <button id="gallery-next" class="gallery-arrow gallery-arrow--next" type="button" aria-label="Next image">›</button>
-          <div id="gallery-dots" class="gallery-dots"></div>
+        <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><a href="/#collection">Collection</a><span>›</span><span id="breadcrumb-product">Product</span></nav>
+        <div class="gallery-main-layout">
+          <div id="gallery-thumbnails" class="thumbnail-row no-scrollbar"></div>
+          <div id="main-gallery" class="main-gallery">
+            <button id="gallery-prev" class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Previous image">‹</button>
+            <div id="gallery-viewport" class="gallery-viewport"><div id="gallery-track" class="gallery-track"></div></div>
+            <button id="gallery-next" class="gallery-arrow gallery-arrow--next" type="button" aria-label="Next image">›</button>
+            <div id="gallery-dots" class="gallery-dots"></div>
+          </div>
         </div>
-        <div id="gallery-thumbnails" class="thumbnail-row no-scrollbar"></div>
       </div>
 
       <article class="product-panel">
@@ -99,6 +99,6 @@
     </button>
 </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js"></script><script src="/js/common.js"></script><script src="/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=20260804.2"></script><script src="/js/common.js?v=20260804.2"></script><script src="/js/app.js?v=20260804.2"></script>
 </body>
 </html>
