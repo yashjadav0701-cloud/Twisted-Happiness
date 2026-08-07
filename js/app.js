@@ -114,7 +114,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/logo.webp'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -280,7 +280,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
     host.innerHTML = results.map((product, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" data-search-product="${Utils.escapeHTML(product.id)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt="">
+        <img src="${Utils.escapeHTML(product.images[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt="">
         <span><strong>${Utils.escapeHTML(product.title)}</strong><small>${Utils.escapeHTML(product.sub_category || product.main_category || 'Handcrafted')}</small></span>
         <span>${Utils.formatCurrency(product.actual_price)}</span>
       </button>`).join('') + '<button class="search-suggestions__all" type="button" data-search-all>View all matching creations</button>';
@@ -383,7 +383,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const isCanvas = isCanvasProduct(product);
     return `<article class="product-card" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -463,7 +463,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/logo.webp'];
+    const images = product.images.length ? product.images : ['data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -731,7 +731,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/logo.webp',
+      image: product.images?.[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -802,7 +802,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/logo.webp')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt="${Utils.escapeHTML(item.title)}">
       <div><h3>${Utils.escapeHTML(item.title)}</h3>${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}${item.note ? `<p>Note: ${Utils.escapeHTML(item.note)}</p>` : ''}<p>${Utils.formatCurrency(item.estimatedPrice)} each · Prep ${Utils.escapeHTML(item.preparationDays)}</p><div><span class="quantity-control"><button type="button" data-${actionPrefix}-action="decrease" aria-label="Decrease quantity">−</button><input ${location === 'checkout' ? 'readonly' : 'data-cart-quantity'} type="number" min="1" max="${APP_CONFIG.MAX_ITEM_QUANTITY}" value="${item.quantity}" aria-label="Quantity"><button type="button" data-${actionPrefix}-action="increase" aria-label="Increase quantity">+</button></span><button class="remove-link" type="button" data-${actionPrefix}-action="remove">Remove</button></div></div>
       <strong class="${location === 'checkout' ? '' : 'cart-item__price'}">${Utils.formatCurrency(item.estimatedPrice * item.quantity)}</strong>
     </article>`;
@@ -890,7 +890,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {

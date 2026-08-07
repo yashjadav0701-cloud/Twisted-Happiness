@@ -73,7 +73,7 @@
     root.innerHTML = `
       <section class="admin-auth">
         <div class="admin-auth-card">
-          <img src="/assets/logo.webp" alt="">
+          <div class="th-icon-box" style="width: 76px; height: 76px; margin: 0 auto 16px; background: #fff; border-radius: 50%; box-shadow: 0 10px 30px rgba(49,38,43,.08);"><svg class="th-svg-clean" style="width: 60%; height: 60%;" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><g class="th-bow-paths" stroke="#ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 16 30 C 12 37, 6 41, 2 43 L 9 39 L 13 45 C 14 39, 17 34, 20.5 30.5" /><path d="M 34 30 C 38 37, 44 41, 48 43 L 41 39 L 37 45 C 36 39, 33 34, 29.5 30.5" /><path d="M 20.5 17 C 8 11, 1 20, 5 30 C 8 36, 17 34, 20.5 28 C 14 30, 8 26, 5 21" /><path d="M 29.5 17 C 42 11, 49 20, 45 30 C 42 36, 33 34, 29.5 28 C 36 30, 42 26, 45 21" /><ellipse cx="25" cy="23" rx="4.5" ry="7.5" /><path d="M 11 18 Q 16 21 20.5 21.5" /><path d="M 12 25 Q 16 24 20.5 23.5" /><path d="M 39 18 Q 34 21 29.5 21.5" /><path d="M 38 25 Q 34 24 29.5 23.5" /></g></svg></div>
           <p class="admin-eyebrow">Twisted Happiness</p>
           <h1>Studio access</h1>
           <p>The shortcut and private route are conveniences only. Supabase authentication, admin roles and RLS provide the real protection.</p>
@@ -235,7 +235,7 @@
     
     host.innerHTML = filtered.map((product) => `
       <article class="product-row" data-product-id="${Utils.escapeHTML(product.id)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/logo.webp')}" alt="">
+        <img src="${Utils.escapeHTML(product.images[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt="">
         <div>
           <h3>${Utils.escapeHTML(product.title)}</h3>
           <p>${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep time')}</p>
@@ -979,7 +979,7 @@
         }
         suggestionsBox.innerHTML = matches.map(p => `
           <div data-product-id="${Utils.escapeHTML(p.id)}" data-product-title="${Utils.escapeHTML(p.title)}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:0.7rem;">
-            <img src="${Utils.escapeHTML(p.images?.[0] || '/assets/logo.webp')}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+            <img src="${Utils.escapeHTML(p.images?.[0] || 'data:image/svg+xml;utf8,<svg viewBox="0 0 50 50" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><g stroke="%23ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 30C12 37 6 41 2 43L9 39L13 45C14 39 17 34 20.5 30.5"/><path d="M34 30C38 37 44 41 48 43L41 39L37 45C36 39 33 34 29.5 30.5"/><path d="M20.5 17C8 11 1 20 5 30C8 36 17 34 20.5 28C14 30 8 26 5 21"/><path d="M29.5 17C42 11 49 20 45 30C42 36 33 34 29.5 28C36 30 42 26 45 21"/><ellipse cx="25" cy="23" rx="4.5" ry="7.5"/><path d="M11 18Q16 21 20.5 21.5"/><path d="M12 25Q16 24 20.5 23.5"/><path d="M39 18Q34 21 29.5 21.5"/><path d="M38 25Q34 24 29.5 23.5"/></g></svg>')}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
             <div>
               <strong>${Utils.escapeHTML(p.title)}</strong>
               <div style="color:var(--muted);font-size:0.58rem;">${Utils.escapeHTML(p.main_category || 'Handcrafted')}</div>

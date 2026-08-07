@@ -166,40 +166,7 @@ textarea:focus-visible {
   backdrop-filter: blur(18px);
 }
 
-.admin-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  padding: 6px;
-}
-
-.admin-brand img {
-  flex: 0 0 39px;
-  width: 39px;
-  height: 39px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.admin-brand strong,
-.admin-brand small {
-  display: block;
-}
-
-.admin-brand strong {
-  font-family: "Lora", serif;
-  font-size: 0.94rem;
-}
-
-.admin-brand small {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+/* Legacy .admin-brand classes removed - replaced by .th-minimal-logo */
 
 .admin-nav {
   display: grid;
@@ -1109,13 +1076,7 @@ textarea.admin-input {
     border-bottom: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.7);
   }
-  .admin-mobile-head .admin-brand {
-    padding: 0;
-  }
-  .admin-mobile-head .admin-brand img {
-    width: 34px;
-    height: 34px;
-  }
+  /* Legacy mobile brand rules removed */
   .admin-mobile-head button {
     width: 38px;
     height: 38px;
@@ -1299,4 +1260,36 @@ textarea.admin-input {
 
 .admin-form .canvas-fields > .admin-help {
   grid-column: 1 / -1;
+}
+
+/* =========================================
+   TWISTED HAPPINESS SVG LOGO
+   ========================================= */
+.th-minimal-logo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; cursor: pointer; user-select: none; background: transparent; transition: opacity 0.3s ease; white-space: nowrap; }
+.th-minimal-logo:hover { opacity: 0.8; }
+.th-text-box { display: flex; flex-direction: column; align-items: stretch; justify-content: center; line-height: 1; }
+.th-main-name { font-family: 'Lobster Two', cursive; font-size: 1.3rem; font-weight: 700; color: var(--pink-deep, #c85f85); letter-spacing: 0.02em; padding-bottom: 2px; text-align: center; margin: 0; }
+.th-sub-name { font-family: 'Quicksand', sans-serif; font-size: 0.6rem; font-weight: 800; color: var(--muted, #766e73); text-transform: uppercase; display: block; width: 100%; text-align: center; text-align-last: center; margin: 0; }
+.th-icon-box { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.th-svg-clean { width: 100%; height: 100%; overflow: visible; }
+.th-bow-paths path, .th-bow-paths ellipse { stroke-dasharray: 150; stroke-dashoffset: 150; animation: th-simple-draw 4s ease-in-out infinite; }
+@keyframes th-simple-draw { 0% { stroke-dashoffset: 150; opacity: 0; } 15% { opacity: 1; } 50% { stroke-dashoffset: 0; opacity: 1; } 85% { opacity: 1; } 100% { stroke-dashoffset: -150; opacity: 0; } }
+
+/* Loader Base & Float Fix */
+.app-loader { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: var(--cream); transition: opacity .38s ease, visibility .38s ease; }
+.app-loader.is-leaving { opacity: 0; visibility: hidden; }
+.app-loader__inner { position: relative; display: grid; justify-items: center; gap: 14px; }
+.app-loader__halo { position: absolute; top: -10px; left: 50%; margin-left: -70px; width: 140px; height: 140px; border: 1px solid rgba(244, 143, 177, .35); border-radius: 50%; animation: loaderHalo 1.8s ease-out infinite; }
+.app-loader__text { color: var(--lavender); font-size: .8rem; font-weight: 700; letter-spacing: .08em; margin-top: 10px; }
+@keyframes loaderFloat { 50% { transform: translateY(-5px) scale(1.02); } }
+@keyframes loaderHalo { 0% { transform: scale(.82); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
+
+.app-loader__inner .th-icon-box, .standalone-state .th-icon-box { width: 120px; height: 120px; position: relative; z-index: 2; background: #fff; border-radius: 50%; box-shadow: 0 10px 30px rgba(49,38,43,.08); display: grid; place-items: center; }
+.app-loader__inner .th-icon-box { animation: loaderFloat 1.8s ease-in-out infinite; }
+.app-loader__inner .th-svg-clean, .standalone-state .th-svg-clean { width: 75%; height: 75%; }
+
+@media (max-width: 576px) { 
+  .th-main-name { font-size: 1.15rem; } 
+  .th-sub-name { font-size: 0.5rem; } 
+  .th-icon-box { width: 30px; height: 30px; } 
 }

@@ -253,7 +253,7 @@
       loader.innerHTML = `
         <div class="app-loader__inner">
           <span class="app-loader__halo"></span>
-          <img src="/assets/logo.webp" alt="Twisted Happiness">
+          <div class="th-icon-box"><svg class="th-svg-clean" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><g class="th-bow-paths" stroke="#ff668a" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M 16 30 C 12 37, 6 41, 2 43 L 9 39 L 13 45 C 14 39, 17 34, 20.5 30.5" /><path d="M 34 30 C 38 37, 44 41, 48 43 L 41 39 L 37 45 C 36 39, 33 34, 29.5 30.5" /><path d="M 20.5 17 C 8 11, 1 20, 5 30 C 8 36, 17 34, 20.5 28 C 14 30, 8 26, 5 21" /><path d="M 29.5 17 C 42 11, 49 20, 45 30 C 42 36, 33 34, 29.5 28 C 36 30, 42 26, 45 21" /><ellipse cx="25" cy="23" rx="4.5" ry="7.5" /><path d="M 11 18 Q 16 21 20.5 21.5" /><path d="M 12 25 Q 16 24 20.5 23.5" /><path d="M 39 18 Q 34 21 29.5 21.5" /><path d="M 38 25 Q 34 24 29.5 23.5" /></g></svg></div>
           <span class="app-loader__text">Crafting your experience…</span>
         </div>`;
       document.body.prepend(loader);
@@ -358,6 +358,7 @@
   window.Utils = Object.freeze(Utils);
   Utils.installLoader();
   Utils.installAdminShortcut();
-  window.addEventListener('load', () => window.setTimeout(Utils.hideLoader, 120), { once: true });
-  window.setTimeout(Utils.hideLoader, 5000);
+  
+  // Force the loader to remain visible for exactly 3 seconds
+  window.setTimeout(Utils.hideLoader, 3000);
 })();

@@ -16,9 +16,9 @@
   body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); font-size: 14px; }
   .site-shell { width: min(100% - 22px, 1180px); }
   .header-main { min-height: 64px; }
-  .brand-logo { flex-basis: 38px; width: 38px; height: 38px; }
-  .brand-copy strong { font-size: .96rem; }
-  .brand-copy small { display: none; }
+  .th-icon-box { flex-basis: 34px; width: 34px; height: 34px; }
+  .th-main-name { font-size: 1.05rem; }
+  .th-sub-name { display: none !important; }
   .desktop-label { display: none; }
   .icon-pill { width: 40px; min-height: 40px; padding: 0; }
   .icon-pill--bag { width: auto; padding-inline: 10px; }
