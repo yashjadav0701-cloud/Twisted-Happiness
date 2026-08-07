@@ -170,7 +170,16 @@
   async function initialiseProducts() {
     bindProductEvents(); 
     resetProductForm(); 
+    await loadCanvasSizesForDropdown();
     await loadProducts();
+  }
+
+  async function loadCanvasSizesForDropdown() {
+    const { data } = await supabaseClient.from('store_settings').select('global_canvas_sizes').eq('id', 1).maybeSingle();
+    if (data) {
+      state.canvasSizes = Utils.normaliseCanvasSizes(data.global_canvas_sizes, APP_CONFIG.DEFAULTS.canvasSizes);
+    }
+    updateCanvasFields();
   }
 
   function bindProductEvents() {
@@ -272,9 +281,9 @@
     
     const canvas = productCanvasConfig(product);
     if (product.main_category === 'Painted Whispers' && canvas.baseSize) {
-      setValue('canvas-shape', canvas.baseSize.shape); updateCanvasFields();
-      if (canvas.baseSize.shape === 'circle') setValue('canvas-diameter', canvas.baseSize.diameter);
-      else { setValue('canvas-width', canvas.baseSize.width); setValue('canvas-height', canvas.baseSize.height); }
+      setValue('canvas-shape', canvas.baseSize.shape || 'square'); 
+      updateCanvasFields();
+      setValue('canvas-size-select', canvas.baseSize.id);
       setValue('canvas-orientation', canvas.orientation || 'Portrait');
     }
     
@@ -343,11 +352,21 @@
 
   function updateCanvasFields() {
     const shape = document.getElementById('canvas-shape')?.value || 'square';
-    document.getElementById('canvas-width-field')?.classList.toggle('hidden', shape === 'circle');
-    document.getElementById('canvas-height-field')?.classList.toggle('hidden', shape !== 'rectangle');
-    document.getElementById('canvas-diameter-field')?.classList.toggle('hidden', shape !== 'circle');
+    const sizeSelect = document.getElementById('canvas-size-select');
+    
+    if (sizeSelect && state.canvasSizes) {
+      const relevantSizes = state.canvasSizes.filter(s => (s.shape || 'square') === shape);
+      if (!relevantSizes.length) {
+        sizeSelect.innerHTML = '<option value="">No sizes added in settings</option>';
+      } else {
+        sizeSelect.innerHTML = relevantSizes.map(size => {
+          const label = shape === 'circle' ? `${size.diameter} in diameter` : `${size.width} × ${size.height || size.width} in`;
+          return `<option value="${size.id}">${label}</option>`;
+        }).join('');
+      }
+    }
+
     document.getElementById('canvas-orientation-field')?.classList.toggle('hidden', shape !== 'rectangle');
-    setText('canvas-width-label', shape === 'square' ? 'Size (inches)' : 'Width (inches)');
   }
 
   function handleSellingPriceChange() {
@@ -505,16 +524,15 @@
 
   function buildCanvasConfig() {
     const shape = document.getElementById('canvas-shape').value;
-    let baseSize = null;
-    if (shape === 'circle') {
-      const diameter = Number(document.getElementById('canvas-diameter').value); 
-      if (diameter > 0) baseSize = { id: `circle-${diameter}`, shape, diameter, label: `${Utils.cleanNumber(diameter)} in diameter` };
-    } else {
-      const width = Number(document.getElementById('canvas-width').value); 
-      const height = shape === 'square' ? width : Number(document.getElementById('canvas-height').value);
-      if (width > 0 && height > 0) baseSize = { id: `${shape}-${width}-${height}`, shape, width, height, label: `${Utils.cleanNumber(width)} × ${Utils.cleanNumber(height)} in` };
-    }
-    return { shape, base_size: baseSize, orientation: shape === 'rectangle' ? document.getElementById('canvas-orientation').value : null, pricing_method: 'area' };
+    const sizeId = document.getElementById('canvas-size-select').value;
+    const selectedSize = state.canvasSizes.find(s => String(s.id) === String(sizeId));
+    
+    return { 
+      shape, 
+      base_size: selectedSize || null, 
+      orientation: shape === 'rectangle' ? document.getElementById('canvas-orientation').value : null, 
+      pricing_method: 'area' 
+    };
   }
 
   function productCanvasConfig(product) {

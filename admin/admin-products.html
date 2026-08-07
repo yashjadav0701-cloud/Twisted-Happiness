@@ -39,11 +39,9 @@
               <fieldset id="canvas-fields" class="canvas-fields hidden">
                 <legend>Base canvas configuration</legend>
                 <label class="admin-field"><span>Shape</span><select id="canvas-shape" class="admin-input"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle</option></select></label>
-                <label id="canvas-width-field" class="admin-field"><span id="canvas-width-label">Size (inches)</span><input id="canvas-width" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
-                <label id="canvas-height-field" class="admin-field hidden"><span>Height (inches)</span><input id="canvas-height" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
-                <label id="canvas-diameter-field" class="admin-field hidden"><span>Diameter (inches)</span><input id="canvas-diameter" class="admin-input" type="number" min="1" max="100" step="0.5"></label>
+                <label class="admin-field"><span>Select size *</span><select id="canvas-size-select" class="admin-input" required><option value="">Loading sizes...</option></select></label>
                 <label id="canvas-orientation-field" class="admin-field hidden"><span>Default orientation</span><select id="canvas-orientation" class="admin-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
-                <p class="admin-help is-wide">This is the exact stored base size. Returning to it always restores the exact selling price.</p>
+                <p class="admin-help is-wide">Select the base size from your globally defined canvas options.</p>
               </fieldset>
 
               <label class="admin-field"><span>Description *</span><textarea id="product-description" class="admin-input" required maxlength="3000" rows="5" placeholder="Tell the story of this creation…"></textarea></label>

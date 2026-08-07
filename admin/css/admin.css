@@ -1287,3 +1287,16 @@ textarea.admin-input {
   background: var(--line-strong);
   border-radius: 999px;
 }
+
+/* Dynamic Side-by-Side Grid for Canvas Options */
+.canvas-fields {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-form .canvas-fields > .admin-field {
+  grid-column: span 1;
+}
+
+.admin-form .canvas-fields > .admin-help {
+  grid-column: 1 / -1;
+}
