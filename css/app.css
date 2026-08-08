@@ -67,7 +67,24 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .announcement-bar button { position: absolute; right: 14px; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 1.1rem; }
 .site-header { position: sticky; top: 0; z-index: 80; border-bottom: 1px solid rgba(255,255,255,.7); background: rgba(252, 247, 248, .88); backdrop-filter: blur(18px); }
 .header-main { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-/* Legacy .brand classes removed - replaced by .th-minimal-logo */
+.brand { display: inline-flex; align-items: center; min-width: 0; transition: opacity 0.2s ease; }
+.brand:hover { opacity: 0.85; }
+.brand-logo-wide { 
+  height: 54px; 
+  width: auto; 
+  object-fit: contain; 
+  margin-top: 4px; 
+  opacity: 0;
+  animation: img-bloom 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes img-bloom {
+  0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo-wide { animation: none; opacity: 1; transform: none; }
+}
 .header-actions { display: flex; align-items: center; gap: 9px; }
 .icon-pill { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.78); cursor: pointer; font-size: .72rem; font-weight: 800; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
 .icon-pill:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); background: #fff; }
@@ -474,26 +491,13 @@ textarea.simple-input { resize: vertical; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
-/* =========================================
-   TWISTED HAPPINESS SVG LOGO
-   ========================================= */
-.th-minimal-logo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; cursor: pointer; user-select: none; background: transparent; transition: opacity 0.3s ease; white-space: nowrap; }
-.th-minimal-logo:hover { opacity: 0.8; }
-.th-text-box { display: flex; flex-direction: column; align-items: stretch; justify-content: center; line-height: 1; }
-.th-main-name { font-family: 'Lobster Two', cursive; font-size: 1.3rem; font-weight: 700; color: var(--pink-deep, #c85f85); letter-spacing: 0.02em; padding-bottom: 2px; text-align: center; margin: 0; }
-.th-sub-name { font-family: 'Quicksand', sans-serif; font-size: 0.6rem; font-weight: 800; color: var(--muted, #766e73); text-transform: uppercase; display: block; width: 100%; text-align: center; text-align-last: center; margin: 0; }
-.th-icon-box { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.th-svg-clean { width: 100%; height: 100%; overflow: visible; }
-.th-bow-paths path, .th-bow-paths ellipse { stroke-dasharray: 150; stroke-dashoffset: 150; animation: th-simple-draw 4s ease-in-out infinite; }
-@keyframes th-simple-draw { 0% { stroke-dashoffset: 150; opacity: 0; } 15% { opacity: 1; } 50% { stroke-dashoffset: 0; opacity: 1; } 85% { opacity: 1; } 100% { stroke-dashoffset: -150; opacity: 0; } }
+/* Loader Base & Float Fix */
+.app-loader { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: var(--cream); transition: opacity .38s ease, visibility .38s ease; }
+.app-loader.is-leaving { opacity: 0; visibility: hidden; }
+.app-loader__inner { position: relative; display: grid; justify-items: center; gap: 14px; }
+.app-loader__halo { position: absolute; top: -10px; left: 50%; margin-left: -70px; width: 140px; height: 140px; border: 1px solid rgba(244, 143, 177, .35); border-radius: 50%; animation: loaderHalo 1.8s ease-out infinite; }
+.app-loader__text { color: var(--lavender); font-size: .8rem; font-weight: 700; letter-spacing: .08em; margin-top: 10px; }
+@keyframes loaderFloat { 50% { transform: translateY(-5px) scale(1.02); } }
+@keyframes loaderHalo { 0% { transform: scale(.82); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
 
-/* Fix loader & standalone float compatibility */
-.app-loader__inner .th-icon-box, .standalone-state .th-icon-box { width: 120px; height: 120px; position: relative; z-index: 2; background: #fff; border-radius: 50%; box-shadow: 0 10px 30px rgba(49,38,43,.08); display: grid; place-items: center; }
-.app-loader__inner .th-icon-box { animation: loaderFloat 1.8s ease-in-out infinite; }
-.app-loader__inner .th-svg-clean, .standalone-state .th-svg-clean { width: 75%; height: 75%; }
-
-@media (max-width: 576px) { 
-  .th-main-name { font-size: 1.15rem; } 
-  .th-sub-name { font-size: 0.5rem; } 
-  .th-icon-box { width: 30px; height: 30px; } 
-}
+.app-loader__inner img { position: relative; z-index: 2; width: 120px; height: 120px; object-fit: contain; animation: loaderFloat 1.8s ease-in-out infinite; filter: drop-shadow(0 10px 30px rgba(49,38,43,.08)); }
