@@ -253,7 +253,7 @@
       loader.innerHTML = `
         <div class="app-loader__inner">
           <span class="app-loader__halo"></span>
-          <img src="/assets/th_logo.svg" alt="Twisted Happiness">
+          <img src="/assets/th_logo.svg" alt="Twisted Happiness" style="width: 120px; height: 120px; object-fit: contain; position: relative; z-index: 2;">
           <span class="app-loader__text">Crafting your experience…</span>
         </div>`;
       document.body.prepend(loader);
@@ -270,7 +270,7 @@
       document.addEventListener('keydown', (event) => {
         if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'k') {
           event.preventDefault();
-          window.location.assign(window.APP_CONFIG?.ADMIN_ROUTE || '/khushifieed/');
+          window.location.assign('/admin/admin-dashboard.html');
         }
       });
     },

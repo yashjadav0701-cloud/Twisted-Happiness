@@ -67,12 +67,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .announcement-bar button { position: absolute; right: 14px; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 1.1rem; }
 .site-header { position: sticky; top: 0; z-index: 80; border-bottom: 1px solid rgba(255,255,255,.7); background: rgba(252, 247, 248, .88); backdrop-filter: blur(18px); }
 .header-main { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-.brand { display: inline-flex; align-items: center; min-width: 0; transition: opacity 0.2s ease; }
+.brand { display: inline-flex; align-items: center; min-width: 0; flex-shrink: 0; transition: opacity 0.2s ease; }
 .brand:hover { opacity: 0.85; }
 .brand-logo-wide { 
+  display: block;
   height: 54px; 
-  width: auto; 
+  width: 216px; 
   object-fit: contain; 
+  object-position: left center;
   margin-top: 4px; 
   opacity: 0;
   animation: img-bloom 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -88,7 +90,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .header-actions { display: flex; align-items: center; gap: 9px; }
 .icon-pill { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 15px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.78); cursor: pointer; font-size: .72rem; font-weight: 800; transition: transform .2s ease, background .2s ease, box-shadow .2s ease; }
 .icon-pill:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); background: #fff; }
-.icon-pill svg, .mobile-nav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icon-pill svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-pill .whatsapp-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+.mobile-nav svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .icon-pill--bag { position: relative; background: var(--charcoal); color: #fff; border-color: var(--charcoal); }
 .cart-badge { min-width: 21px; height: 21px; display: inline-grid; place-items: center; border-radius: 999px; background: var(--pink); color: #fff; font-size: .64rem; font-weight: 900; }
 .search-row { padding-bottom: 10px; }

@@ -72,8 +72,8 @@ serve(async (req) => {
       order_date: new Date(enquiry.created_at).toISOString().replace('T', ' ').substring(0, 16),
       pickup_location: "Home", 
       comment: enquiry.customer_note || "",
-      billing_customer_name: enquiry.customer_name || "Customer",
-      billing_last_name: "",
+      billing_customer_name: String(enquiry.customer_name || "Customer").split(' ')[0],
+      billing_last_name: String(enquiry.customer_name || "Customer").split(' ').slice(1).join(' ') || ".", // Shiprocket requires a fallback character if last name is empty
       billing_address: enquiry.address_line_1 || "Address not provided",
       billing_address_2: enquiry.address_line_2 || "",
       billing_city: enquiry.customer_city || "Nadiad",

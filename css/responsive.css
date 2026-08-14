@@ -16,7 +16,7 @@
   body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); font-size: 14px; }
   .site-shell { width: min(100% - 22px, 1180px); }
   .header-main { min-height: 64px; }
-  .brand-logo-wide { height: 44px; margin-top: 2px; }
+  .brand-logo-wide { height: 40px; width: 160px; margin-top: 2px; }
   .desktop-label { display: none; }
   .icon-pill { width: 40px; min-height: 40px; padding: 0; }
   .icon-pill--bag { width: auto; padding-inline: 10px; }

@@ -170,6 +170,8 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   padding: 6px;
+  min-width: 0;
+  flex-shrink: 0;
   transition: opacity 0.2s ease;
 }
 
@@ -178,9 +180,11 @@ textarea:focus-visible {
 }
 
 .admin-brand-logo-wide {
+  display: block;
   height: 48px;
-  width: auto;
+  width: 192px;
   object-fit: contain;
+  object-position: left center;
   opacity: 0;
   animation: img-bloom 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
@@ -1103,9 +1107,14 @@ textarea.admin-input {
   }
   .admin-mobile-head .admin-brand {
     padding: 0;
+    min-width: 0;
+    flex-shrink: 0;
   }
   .admin-mobile-head .admin-brand-logo-wide {
-    height: 34px;
+    height: 40px;
+    width: 160px;
+    object-fit: contain;
+    object-position: left center;
   }
   .admin-mobile-head button {
     width: 38px;

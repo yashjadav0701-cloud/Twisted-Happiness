@@ -73,7 +73,7 @@
     root.innerHTML = `
       <section class="admin-auth">
         <div class="admin-auth-card">
-          <img src="/assets/th_logo.svg" alt="Twisted Happiness" style="width: 76px; height: auto; margin: 0 auto 16px; border-radius: 50%; box-shadow: 0 10px 30px rgba(49,38,43,.08);">
+          <img src="/assets/th_logo.svg" alt="Twisted Happiness" style="width: 76px; height: 76px; object-fit: contain; margin: 0 auto 16px; border-radius: 50%; box-shadow: 0 10px 30px rgba(49,38,43,.08);">
           <p class="admin-eyebrow">Twisted Happiness</p>
           <h1>Studio access</h1>
           <p>The shortcut and private route are conveniences only. Supabase authentication, admin roles and RLS provide the real protection.</p>
@@ -1058,20 +1058,7 @@
     if (button.dataset.reviewAction === 'delete') deleteReview(review); 
   }
   
-  function editReview(review) { 
-    setValue('review-id', review.id); 
-    setValue('review-product', review.product_id || ''); 
-    setValue('review-name', review.customer_name || ''); 
-    setValue('review-rating', review.rating || 5); 
-    setValue('review-text', review.review_text || ''); 
-    document.getElementById('review-approved').checked = review.is_approved !== false; 
-    setText('save-review', 'Update review'); 
-  }
   
-  function resetReviewForm() { 
-    const form = document.getElementById('review-form'); form?.reset(); if (!form) return; 
-    setValue('review-id', ''); setValue('review-rating', 5); document.getElementById('review-approved').checked = true; setText('save-review', 'Save review'); 
-  }
   
   async function saveReview(event) { 
     event.preventDefault(); 
@@ -1156,11 +1143,19 @@
               <h2>${Utils.escapeHTML(enquiry.reference)}</h2>
               <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
             </div>
-            <div class="enquiry-meta">
-              <span>${Utils.escapeHTML(enquiry.customer_name)}</span>
-              <span>${Utils.escapeHTML(enquiry.customer_phone)}</span>
-              ${enquiry.customer_city ? `<span>${Utils.escapeHTML(enquiry.customer_city)}</span>` : ''}
-              <span>${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span>
+            <div class="enquiry-meta" style="display: grid; gap: 4px;">
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <span><strong>👤</strong> ${Utils.escapeHTML(enquiry.customer_name)}</span>
+                <span><strong>📱</strong> ${Utils.escapeHTML(enquiry.customer_phone)}</span>
+                ${enquiry.customer_email ? `<span><strong>✉️</strong> ${Utils.escapeHTML(enquiry.customer_email)}</span>` : ''}
+              </div>
+              <span style="display: block; color: var(--charcoal); font-weight: 600;">
+                <strong>📍</strong> ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
+                ${enquiry.address_line_2 ? ', ' + Utils.escapeHTML(enquiry.address_line_2) : ''}, 
+                ${Utils.escapeHTML(enquiry.customer_city || '')}, 
+                ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
+              </span>
+              <span><strong>🕒</strong> ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span>
             </div>
             <div class="enquiry-items">
               ${(enquiry.items || []).map((item) => `<span>${Utils.escapeHTML(item.title)} × ${item.quantity}${item.selected_size?.label ? ` · ${Utils.escapeHTML(item.selected_size.label)}` : ''}</span>`).join('')}

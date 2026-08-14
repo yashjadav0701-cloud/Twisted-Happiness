@@ -270,44 +270,624 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function renderSearchSuggestions() {
     const host = document.getElementById('search-suggestions');
     if (!host) return;
+
     const query = state.search.trim();
-    if (!query) return hideSearchSuggestions();
-    const results = state.products.filter((product) => productSearchText(product).includes(query)).slice(0, 6);
+
+    if (!query) {
+      hideSearchSuggestions();
+      return;
+    }
+
+    const results = getRankedSearchResults(query).slice(0, 6);
+
     if (!results.length) {
-      host.innerHTML = '<div class="search-suggestions__all">No matching products</div>';
+      host.innerHTML = '<div class="search-suggestions__all">No matching products. Try a product, subject, style or category.</div>';
       host.classList.remove('hidden');
       return;
     }
-    host.innerHTML = results.map((product, index) => `
-      <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" data-search-product="${Utils.escapeHTML(product.id)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt="">
-        <span><strong>${Utils.escapeHTML(product.title)}</strong><small>${Utils.escapeHTML(product.sub_category || product.main_category || 'Handcrafted')}</small></span>
-        <span>${Utils.formatCurrency(product.actual_price)}</span>
-      </button>`).join('') + '<button class="search-suggestions__all" type="button" data-search-all>View all matching creations</button>';
+
+    host.innerHTML = results.map((result, index) => `
+      <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg')}" alt="" loading="lazy" decoding="async">
+        <span>
+          <strong>${Utils.escapeHTML(result.product.title)}</strong>
+          <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
+        </span>
+        <span>${Utils.formatCurrency(result.product.actual_price)}</span>
+      </button>`).join('') + '<button class="search-suggestions__all" type="button" data-search-all>View all relevant creations</button>';
+
     host.classList.remove('hidden');
   }
 
   function handleSearchKeyboard(event) {
-    const results = state.products.filter((product) => productSearchText(product).includes(state.search)).slice(0, 6);
+    const results = getRankedSearchResults(state.search).slice(0, 6);
+
+    if (event.key === 'Escape') {
+      hideSearchSuggestions();
+      return;
+    }
+
     if (!results.length) return;
-    if (event.key === 'ArrowDown') { event.preventDefault(); state.searchSuggestionIndex = Math.min(results.length - 1, state.searchSuggestionIndex + 1); renderSearchSuggestions(); }
-    if (event.key === 'ArrowUp') { event.preventDefault(); state.searchSuggestionIndex = Math.max(0, state.searchSuggestionIndex - 1); renderSearchSuggestions(); }
-    if (event.key === 'Enter' && state.searchSuggestionIndex >= 0) { event.preventDefault(); window.location.href = productURL(results[state.searchSuggestionIndex]); }
-    if (event.key === 'Escape') hideSearchSuggestions();
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      state.searchSuggestionIndex = Math.min(results.length - 1, state.searchSuggestionIndex + 1);
+      renderSearchSuggestions();
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      state.searchSuggestionIndex = Math.max(0, state.searchSuggestionIndex - 1);
+      renderSearchSuggestions();
+      return;
+    }
+
+    if (event.key === 'Enter' && state.searchSuggestionIndex >= 0) {
+      event.preventDefault();
+      const result = results[state.searchSuggestionIndex];
+
+      if (result?.product) {
+        window.location.href = productURL(result.product);
+      }
+    }
   }
 
   function handleSearchSuggestionClick(event) {
     const productButton = event.target.closest('[data-search-product]');
+
     if (productButton) {
-      const product = state.products.find((item) => String(item.id) === productButton.dataset.searchProduct);
-      if (product) window.location.href = productURL(product);
+      const product = state.products.find(
+        (item) => String(item.id) === String(productButton.dataset.searchProduct)
+      );
+
+      if (product) {
+        window.location.href = productURL(product);
+      }
+
+      return;
     }
-    if (event.target.closest('[data-search-all]')) { hideSearchSuggestions(); document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' }); }
+
+    if (event.target.closest('[data-search-all]')) {
+      hideSearchSuggestions();
+      document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
-  function hideSearchSuggestions() { document.getElementById('search-suggestions')?.classList.add('hidden'); }
-  function productSearchText(product) { return `${product.title || ''} ${product.main_category || ''} ${product.sub_category || ''}`.toLowerCase(); }
+  function hideSearchSuggestions() {
+    document.getElementById('search-suggestions')?.classList.add('hidden');
+  }
 
+  function normaliseSearchText(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function singularSearchToken(value) {
+    const token = normaliseSearchText(value);
+
+    if (!token) return '';
+
+    if (token.endsWith('ies') && token.length > 4) {
+      return `${token.slice(0, -3)}y`;
+    }
+
+    if (token.endsWith('es') && token.length > 4) {
+      return token.slice(0, -2);
+    }
+
+    if (token.endsWith('s') && token.length > 3) {
+      return token.slice(0, -1);
+    }
+
+    return token;
+  }
+
+  const SEARCH_CONCEPT_GROUPS = [
+    {
+      id: 'flower',
+      terms: ['flower', 'flowers', 'floral', 'bloom', 'blossom', 'bouquet', 'petal', 'petals']
+    },
+    {
+      id: 'lily',
+      terms: ['lily', 'lilies']
+    },
+    {
+      id: 'rose',
+      terms: ['rose', 'roses']
+    },
+    {
+      id: 'plant',
+      terms: ['plant', 'plants', 'botanical', 'botanicals', 'garden']
+    },
+    {
+      id: 'animal',
+      terms: ['animal', 'animals', 'pet', 'pets', 'wildlife']
+    },
+    {
+      id: 'dog',
+      terms: ['dog', 'dogs', 'puppy', 'puppies', 'canine']
+    },
+    {
+      id: 'cat',
+      terms: ['cat', 'cats', 'kitten', 'kittens', 'feline']
+    },
+    {
+      id: 'rabbit',
+      terms: ['rabbit', 'rabbits', 'bunny', 'bunnies']
+    },
+    {
+      id: 'vehicle',
+      terms: ['vehicle', 'vehicles', 'automobile', 'automobiles', 'transport', 'transportation']
+    },
+    {
+      id: 'car',
+      terms: ['car', 'cars', 'automobile', 'automobiles', 'vehicle', 'vehicles', 'sports car', 'sports cars', 'supercar', 'supercars', 'luxury car', 'luxury cars', 'racing car', 'racing cars']
+    },
+    {
+      id: 'porsche',
+      terms: ['porsche', 'porsches', '911', 'porsche 911', 'carrera', 'taycan', 'macan', 'cayenne', 'panamera']
+    },
+    {
+      id: 'art',
+      terms: ['art', 'artwork', 'artworks', 'painting', 'paintings', 'illustration', 'illustrations', 'drawing', 'drawings']
+    },
+    {
+      id: 'canvas',
+      terms: ['canvas', 'canvases', 'canvas art', 'canvas painting', 'canvas paintings', 'wall art', 'wall decor', 'wall decoration']
+    },
+    {
+      id: 'decor',
+      terms: ['decor', 'decoration', 'decorative', 'home decor', 'room decor', 'office decor', 'wall decor', 'wall decoration']
+    },
+    {
+      id: 'gift',
+      terms: ['gift', 'gifts', 'present', 'presents', 'keepsake', 'keepsakes', 'souvenir', 'souvenirs']
+    },
+    {
+      id: 'handmade',
+      terms: ['handmade', 'handcrafted', 'craft', 'crafts', 'crafted', 'artisan', 'artisanal']
+    },
+    {
+      id: 'romantic',
+      terms: ['romantic', 'romance', 'love', 'loving', 'couple', 'couples', 'valentine', 'valentines']
+    },
+    {
+      id: 'custom',
+      terms: ['custom', 'customise', 'customised', 'customize', 'customized', 'personalise', 'personalised', 'personalize', 'personalized', 'bespoke']
+    },
+    {
+      id: 'red',
+      terms: ['red', 'crimson', 'scarlet', 'ruby', 'cherry', 'burgundy', 'maroon', 'wine']
+    },
+    {
+      id: 'pink',
+      terms: ['pink', 'blush', 'magenta', 'fuchsia']
+    },
+    {
+      id: 'blue',
+      terms: ['blue', 'navy', 'cobalt', 'azure', 'sapphire', 'royal blue']
+    },
+    {
+      id: 'green',
+      terms: ['green', 'emerald', 'olive', 'mint', 'sage', 'lime']
+    },
+    {
+      id: 'yellow',
+      terms: ['yellow', 'golden', 'gold', 'mustard', 'lemon']
+    },
+    {
+      id: 'cute',
+      terms: ['cute', 'adorable', 'sweet', 'lovely', 'kawaii']
+    }
+  ];
+
+  const SEARCH_RELATIONSHIPS = {
+    porsche: ['porsche', 'car', 'vehicle', 'automobile', 'sports car', 'supercar', 'luxury car', 'automotive'],
+    'porsche 911': ['porsche', 'car', 'vehicle', 'automobile', 'sports car', 'supercar', 'luxury car', 'automotive'],
+    lily: ['lily', 'flower', 'floral', 'plant', 'botanical'],
+    lilies: ['lily', 'flower', 'floral', 'plant', 'botanical'],
+    rose: ['rose', 'flower', 'floral', 'plant', 'botanical'],
+    roses: ['rose', 'flower', 'floral', 'plant', 'botanical'],
+    rabbit: ['rabbit', 'bunny', 'animal', 'pet'],
+    bunny: ['rabbit', 'bunny', 'animal', 'pet'],
+    dog: ['dog', 'puppy', 'animal', 'pet', 'canine'],
+    puppy: ['dog', 'puppy', 'animal', 'pet', 'canine'],
+    cat: ['cat', 'kitten', 'animal', 'pet', 'feline'],
+    kitten: ['cat', 'kitten', 'animal', 'pet', 'feline'],
+    canvas: ['canvas', 'art', 'painting', 'wall art', 'wall decor', 'decor'],
+    painting: ['painting', 'art', 'canvas', 'wall art', 'wall decor', 'decor'],
+    art: ['art', 'artwork', 'painting', 'canvas', 'wall art', 'decor'],
+    handmade: ['handmade', 'handcrafted', 'craft', 'artisan'],
+    handcrafted: ['handmade', 'handcrafted', 'craft', 'artisan']
+  };
+
+  function collectSearchableProductText(product) {
+    const values = [];
+
+    const addValue = (value) => {
+      if (value === null || value === undefined) return;
+
+      if (Array.isArray(value)) {
+        value.forEach(addValue);
+        return;
+      }
+
+      if (typeof value === 'object') {
+        Object.entries(value).forEach(([key, nestedValue]) => {
+          addValue(key);
+          addValue(nestedValue);
+        });
+        return;
+      }
+
+      const text = String(value).trim();
+
+      if (text) values.push(text);
+    };
+
+    addValue(product.title);
+    addValue(product.slug);
+    addValue(product.main_category);
+    addValue(product.sub_category);
+    addValue(product.description);
+    addValue(product.care_instructions);
+    addValue(product.preparation_days);
+    addValue(product.attributes);
+
+    return normaliseSearchText(values.join(' '));
+  }
+
+  function expandSearchConcepts(query) {
+    const normalizedQuery = normaliseSearchText(query);
+    const tokens = normalizedQuery.split(' ').filter(Boolean).map(singularSearchToken);
+    const expanded = new Set(tokens);
+
+    SEARCH_CONCEPT_GROUPS.forEach((group) => {
+      const matched = group.terms.some((term) => {
+        const normalizedTerm = normaliseSearchText(term);
+
+        return normalizedQuery.includes(normalizedTerm) ||
+          tokens.includes(singularSearchToken(normalizedTerm));
+      });
+
+      if (matched) {
+        expanded.add(group.id);
+
+        group.terms.forEach((term) => {
+          const normalizedTerm = normaliseSearchText(term);
+          if (normalizedTerm) expanded.add(normalizedTerm);
+        });
+      }
+    });
+
+    Object.entries(SEARCH_RELATIONSHIPS).forEach(([term, relatedTerms]) => {
+      const normalizedTerm = normaliseSearchText(term);
+
+      if (
+        normalizedQuery.includes(normalizedTerm) ||
+        tokens.includes(singularSearchToken(normalizedTerm))
+      ) {
+        relatedTerms.forEach((relatedTerm) => {
+          expanded.add(normaliseSearchText(relatedTerm));
+        });
+      }
+    });
+
+    return {
+      normalizedQuery,
+      tokens,
+      expanded: [...expanded].filter(Boolean)
+    };
+  }
+
+  function levenshteinDistance(first, second) {
+    if (first === second) return 0;
+    if (!first) return second.length;
+    if (!second) return first.length;
+
+    let previous = Array.from(
+      { length: second.length + 1 },
+      (_, index) => index
+    );
+
+    for (let row = 0; row < first.length; row += 1) {
+      const current = [row + 1];
+
+      for (let column = 0; column < second.length; column += 1) {
+        const insertion = current[column] + 1;
+        const deletion = previous[column + 1] + 1;
+        const substitution =
+          previous[column] +
+          (first[row] === second[column] ? 0 : 1);
+
+        current.push(Math.min(insertion, deletion, substitution));
+      }
+
+      previous = current;
+    }
+
+    return previous[previous.length - 1];
+  }
+
+  function fuzzyTokenSimilarity(first, second) {
+    const a = singularSearchToken(first);
+    const b = singularSearchToken(second);
+
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    if (a.length < 3 || b.length < 3) return 0;
+
+    if (a.includes(b) || b.includes(a)) return 0.88;
+
+    const maxLength = Math.max(a.length, b.length);
+    const distance = levenshteinDistance(a, b);
+
+    if (distance > 3) return 0;
+
+    return Math.max(0, 1 - distance / maxLength);
+  }
+
+  function calculateBestTokenMatch(queryToken, productText) {
+    const token = singularSearchToken(queryToken);
+    if (!token) return 0;
+
+    return productText
+      .split(' ')
+      .filter(Boolean)
+      .reduce(
+        (best, productToken) =>
+          Math.max(best, fuzzyTokenSimilarity(token, productToken)),
+        0
+      );
+  }
+
+  function calculateProductRelevance(product, searchQuery) {
+    const {
+      normalizedQuery,
+      tokens,
+      expanded
+    } = expandSearchConcepts(searchQuery);
+
+    if (!normalizedQuery) {
+      return {
+        score: 0,
+        reasons: []
+      };
+    }
+
+    const title = normaliseSearchText(product.title);
+    const mainCategory = normaliseSearchText(product.main_category);
+    const subCategory = normaliseSearchText(product.sub_category);
+    const description = normaliseSearchText(product.description);
+    const fullText = collectSearchableProductText(product);
+
+    let score = 0;
+    const reasons = [];
+
+    if (title === normalizedQuery) {
+      score += 180;
+      reasons.push('Exact product match');
+    } else if (title.includes(normalizedQuery)) {
+      score += 125;
+      reasons.push('Product title match');
+    }
+
+    if (
+      mainCategory === normalizedQuery ||
+      subCategory === normalizedQuery
+    ) {
+      score += 75;
+      reasons.push('Category match');
+    }
+
+    const queryTokenResults = tokens.map((token) => {
+      const singularToken = singularSearchToken(token);
+
+      if (!singularToken) {
+        return { score: 0, fuzzy: false };
+      }
+
+      if (title.includes(singularToken)) {
+        return { score: 38, fuzzy: false };
+      }
+
+      if (subCategory.includes(singularToken)) {
+        return { score: 27, fuzzy: false };
+      }
+
+      if (mainCategory.includes(singularToken)) {
+        return { score: 24, fuzzy: false };
+      }
+
+      if (description.includes(singularToken)) {
+        return { score: 11, fuzzy: false };
+      }
+
+      if (fullText.includes(singularToken)) {
+        return { score: 15, fuzzy: false };
+      }
+
+      const fuzzySimilarity = calculateBestTokenMatch(
+        singularToken,
+        fullText
+      );
+
+      if (fuzzySimilarity >= 0.84) {
+        return {
+          score: Math.round(18 * fuzzySimilarity),
+          fuzzy: true
+        };
+      }
+
+      return {
+        score: 0,
+        fuzzy: false
+      };
+    });
+
+    queryTokenResults.forEach((result) => {
+      score += result.score;
+
+      if (result.fuzzy) {
+        reasons.push('Spelling-tolerant match');
+      }
+    });
+
+    const relationshipMatches = new Set();
+
+    tokens.forEach((token) => {
+      const relationships =
+        SEARCH_RELATIONSHIPS[singularSearchToken(token)] || [];
+
+      relationships.forEach((relatedTerm) => {
+        const normalizedRelatedTerm = normaliseSearchText(relatedTerm);
+
+        if (
+          normalizedRelatedTerm &&
+          fullText.includes(normalizedRelatedTerm)
+        ) {
+          relationshipMatches.add(normalizedRelatedTerm);
+        }
+      });
+    });
+
+    if (relationshipMatches.size) {
+      score += relationshipMatches.size * 19;
+
+      if (
+        [...relationshipMatches].some((term) =>
+          ['car', 'vehicle', 'automobile', 'sports car', 'supercar'].includes(term)
+        )
+      ) {
+        reasons.push('Vehicle-related match');
+      }
+
+      if (
+        [...relationshipMatches].some((term) =>
+          ['flower', 'floral', 'lily', 'rose'].includes(term)
+        )
+      ) {
+        reasons.push('Floral match');
+      }
+
+      if (
+        [...relationshipMatches].some((term) =>
+          ['canvas', 'art', 'painting', 'wall art', 'decor'].includes(term)
+        )
+      ) {
+        reasons.push('Art & decor match');
+      }
+
+      if (
+        [...relationshipMatches].some((term) =>
+          ['animal', 'pet', 'dog', 'cat', 'rabbit', 'bunny'].includes(term)
+        )
+      ) {
+        reasons.push('Animal-related match');
+      }
+    }
+
+    if (tokens.length > 1) {
+      const matchedTokens = queryTokenResults.filter(
+        (result) => result.score > 0
+      ).length;
+
+      if (matchedTokens === tokens.length) {
+        score += 55;
+      } else if (matchedTokens >= Math.ceil(tokens.length / 2)) {
+        score += 20;
+      }
+    }
+
+    if (expanded.length > tokens.length) {
+      const matchedConcepts = expanded.filter((concept) =>
+        fullText.includes(normaliseSearchText(concept))
+      );
+
+      score += Math.min(60, matchedConcepts.length * 6);
+    }
+
+    if (fullText.includes(normalizedQuery)) {
+      score += 32;
+    }
+
+    if (tokens.length === 1) {
+      const fuzzySimilarity = calculateBestTokenMatch(tokens[0], title);
+
+      if (
+        fuzzySimilarity >= 0.78 &&
+        !title.includes(tokens[0])
+      ) {
+        score += Math.round(48 * fuzzySimilarity);
+        reasons.push('Fuzzy product-name match');
+      }
+    }
+
+    const hasStrongSignal =
+      title.includes(normalizedQuery) ||
+      queryTokenResults.some((result) => result.score >= 20) ||
+      relationshipMatches.size > 0 ||
+      fullText.includes(normalizedQuery);
+
+    if (!hasStrongSignal) {
+      score *= 0.35;
+    }
+
+    return {
+      score: Math.round(score * 100) / 100,
+      reasons: [...new Set(reasons)]
+    };
+  }
+
+  function getRankedSearchResults(query) {
+    const normalizedQuery = normaliseSearchText(query);
+
+    if (!normalizedQuery) return [];
+
+    return state.products
+      .map((product) => {
+        const relevance = calculateProductRelevance(
+          product,
+          normalizedQuery
+        );
+
+        return {
+          product,
+          score: relevance.score,
+          reasons: relevance.reasons
+        };
+      })
+      .filter((result) => result.score >= 10)
+      .sort((first, second) => {
+        if (second.score !== first.score) {
+          return second.score - first.score;
+        }
+
+        const firstTitle = normaliseSearchText(first.product.title);
+        const secondTitle = normaliseSearchText(second.product.title);
+
+        const firstExact = firstTitle.includes(normalizedQuery) ? 1 : 0;
+        const secondExact = secondTitle.includes(normalizedQuery) ? 1 : 0;
+
+        if (secondExact !== firstExact) {
+          return secondExact - firstExact;
+        }
+
+        return Number(first.product.sort_order || 0) -
+          Number(second.product.sort_order || 0);
+      });
+  }
+
+  function productSearchText(product) {
+    return collectSearchableProductText(product);
+  }
+  // ----------------------------------------------------------------
   function renderCategoryChips() {
     const host = document.getElementById('category-chips');
     if (!host) return;
@@ -331,14 +911,60 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function applyCatalogFilters() {
-    let products = state.products.filter((product) => {
-      const categoryMatch = state.category === 'All' || product.main_category === state.category;
-      return categoryMatch && (!state.search || productSearchText(product).includes(state.search));
+    let products = [...state.products];
+
+    // 1. Category filtering always applies first.
+    products = products.filter((product) => {
+      return state.category === 'All' || product.main_category === state.category;
     });
-    if (state.sort === 'price-low') products.sort((a, b) => a.actual_price - b.actual_price);
-    else if (state.sort === 'price-high') products.sort((a, b) => b.actual_price - a.actual_price);
-    else if (state.sort === 'newest') products.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    else products = seededMix(products);
+
+    // 2. Intelligent relevance search.
+    if (state.search && state.search.trim() !== '') {
+      const allowedProductIds = new Set(
+        products.map((product) => String(product.id))
+      );
+
+      products = getRankedSearchResults(state.search)
+        .filter((result) => allowedProductIds.has(String(result.product.id)))
+        .map((result) => result.product);
+    }
+
+    // 3. Explicit sorting.
+    //
+    // When searching, relevance is the default order.
+    // Price/newest ordering only overrides relevance when explicitly selected.
+    if (state.search && state.search.trim() !== '') {
+      if (state.sort === 'price-low') {
+        products.sort(
+          (a, b) => Number(a.actual_price || 0) - Number(b.actual_price || 0)
+        );
+      } else if (state.sort === 'price-high') {
+        products.sort(
+          (a, b) => Number(b.actual_price || 0) - Number(a.actual_price || 0)
+        );
+      } else if (state.sort === 'newest') {
+        products.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+      }
+    } else {
+      if (state.sort === 'price-low') {
+        products.sort(
+          (a, b) => Number(a.actual_price || 0) - Number(b.actual_price || 0)
+        );
+      } else if (state.sort === 'price-high') {
+        products.sort(
+          (a, b) => Number(b.actual_price || 0) - Number(a.actual_price || 0)
+        );
+      } else if (state.sort === 'newest') {
+        products.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+      } else {
+        products = seededMix(products);
+      }
+    }
+
     state.filteredProducts = products;
     renderCatalogProducts();
   }
