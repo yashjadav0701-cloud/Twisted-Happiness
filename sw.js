@@ -1,21 +1,22 @@
-// SELF-DESTRUCTING SERVICE WORKER
-// This forces the browser to delete all PWA caches and unregister itself.
+// CACHE KILL SWITCH
+// This forces all user browsers to delete old files and fetch the new updates immediately.
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          return caches.delete(cacheName);
-        })
+        cacheNames.map((cacheName) => caches.delete(cacheName))
       );
     }).then(() => {
       self.clients.claim();
-      self.registration.unregister();
     })
   );
+});
+
+self.addEventListener('fetch', (e) => {
+  // Pass through everything, do not intercept or cache
 });

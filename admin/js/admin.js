@@ -65,6 +65,15 @@
         sidebar.classList.remove('is-open');
       }
     });
+    
+    // Enable Ctrl + Shift + K to instantly focus search boxes globally
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'k' || event.key === 'K')) {
+        event.preventDefault();
+        const searchBox = document.getElementById('enquiry-search') || document.getElementById('product-search');
+        if (searchBox) searchBox.focus();
+      }
+    });
   }
 
   function showLogin(message = '') {
@@ -1226,21 +1235,27 @@
           </div>
 
           <!-- Column 3: Actions -->
-          <div style="flex: 0 0 140px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; height: 100%;">
-            <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; margin-bottom: auto; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em;">${Utils.escapeHTML(enquiry.status)}</span>
+          <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
+            <div style="display: flex; justify-content: flex-end;">
+              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em;">${Utils.escapeHTML(enquiry.status)}</span>
+            </div>
             
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
-              <label style="display:flex; flex-direction: column; gap: 2px; font-size: 0.58rem; font-weight: 900; color: var(--muted); text-transform: uppercase;">
-                Update Status
-                <select class="admin-input" data-enquiry-status style="font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 4px 8px; min-height: 28px;">
-                  ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
-                </select>
-              </label>
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
               
-              <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button" target="_blank" rel="noopener" style="justify-content: center; background: #178a59; color: #fff; border: none; width: 100%; min-height: 36px; font-size: 0.65rem;">
-                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
-                WhatsApp
-              </a>
+              <!-- Side-by-side Dropdown and WhatsApp -->
+              <div style="display: flex; gap: 8px; align-items: flex-end; width: 100%;">
+                <label style="flex: 1; display:flex; flex-direction: column; gap: 4px; font-size: 0.58rem; font-weight: 900; color: var(--muted); text-transform: uppercase;">
+                  Status
+                  <select class="admin-input" data-enquiry-status style="font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0 8px; height: 36px; width: 100%; max-width: 100%; box-sizing: border-box; margin: 0;">
+                    ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+                  </select>
+                </label>
+                
+                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button" target="_blank" rel="noopener" style="flex: 1; justify-content: center; background: #178a59; color: #fff; border: none; height: 36px; padding: 0; font-size: 0.65rem; margin: 0;">
+                  <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px; flex-shrink: 0;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
+                  WhatsApp
+                </a>
+              </div>
               
               ${shiprocketButton ? shiprocketButton.replace('class="admin-button admin-button--dark"', 'class="admin-button admin-button--dark" style="width: 100%; min-height: 36px; font-size: 0.65rem;"') : ''}
             </div>
