@@ -38,10 +38,29 @@
       state.session = session;
       showWorkspace();
       await initialisePage();
+      listenForNewOrders(); // Start listening for live orders
     } else {
       if (session) await supabaseClient.auth.signOut();
       showLogin();
     }
+  }
+
+  /* ---------------- Live Admin Alerts ---------------- */
+  function listenForNewOrders() {
+    supabaseClient
+      .channel('admin-order-alerts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'whatsapp_enquiries' }, payload => {
+        const order = payload.new;
+        
+        // Show a beautiful, native admin toast notification
+        const alertMsg = `🌸 New Order Alert! ${order.customer_name} from ${order.customer_city || 'your store'} just placed an order for ${Utils.formatCurrency(order.total_amount)}.`;
+        notify(alertMsg, 'success');
+
+        // Automatically refresh the dashboard or enquiries list so the new order appears instantly
+        if (state.page === 'enquiries') loadEnquiries();
+        if (state.page === 'dashboard') initialiseDashboard();
+      })
+      .subscribe();
   }
 
   async function hasAdminRole(userId) {
@@ -1252,7 +1271,7 @@
                 </label>
                 
                 <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button" target="_blank" rel="noopener" style="flex: 1; justify-content: center; background: #178a59; color: #fff; border: none; height: 36px; padding: 0; font-size: 0.65rem; margin: 0;">
-                  <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px; flex-shrink: 0;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px; flex-shrink: 0;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
                   WhatsApp
                 </a>
               </div>

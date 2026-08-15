@@ -1874,3 +1874,49 @@ textarea.admin-input {
 @keyframes loaderHalo { 0% { transform: scale(.82); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
 
 .app-loader__inner img { position: relative; z-index: 2; width: 120px; height: 120px; object-fit: contain; animation: loaderFloat 1.8s ease-in-out infinite; filter: drop-shadow(0 10px 30px rgba(49,38,43,.08)); }
+/* --------------------------------------------------------
+   Fix Exploding SVGs in Admin Navigation
+-------------------------------------------------------- */
+.admin-sidebar a svg,
+.admin-sidebar button svg,
+.admin-nav svg,
+.mobile-nav svg,
+[data-admin-menu] svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  display: block;
+}
+
+/* Ensure the links containing them align properly */
+.admin-sidebar a,
+.admin-sidebar button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* --------------------------------------------------------
+   Global Fix for Exploding SVGs in Admin
+-------------------------------------------------------- */
+.admin-sidebar svg,
+.mobile-nav svg,
+.admin-nav svg,
+[data-admin-menu] svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+}
+/* Force mobile navigation icons to stay small */
+.mobile-nav a svg {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}

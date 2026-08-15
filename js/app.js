@@ -1820,5 +1820,5 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     // Inject the new calculated numbers back into your original string format
     return defaultPrep.replace(match[0], match[2] ? `${min}-${max}` : `${min}`);
   }
-
+ 
 })();
