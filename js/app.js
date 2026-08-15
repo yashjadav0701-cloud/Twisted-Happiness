@@ -1297,14 +1297,29 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     root.innerHTML = `<div id="cart-overlay" class="cart-overlay" aria-hidden="true"></div>
       <aside id="cart-drawer" class="cart-drawer" aria-labelledby="cart-title" aria-hidden="true">
         <header class="cart-head"><h2 id="cart-title">Your Saving Bag</h2><button id="cart-close" class="round-button" type="button" aria-label="Close bag">×</button></header>
-        <div id="cart-items" class="cart-items"></div>
-        <footer class="cart-footer">
+        
+        <div class="cart-frozen-top" style="padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--cream);">
           <div class="savings-card"><div class="savings-card__icon">♕</div><div><strong id="cart-savings-title">Buy more, save more</strong><span id="cart-savings-message">Add products to unlock automatic savings.</span><div class="progress-track"><i id="cart-savings-progress" style="width:0%"></i></div></div></div>
           <div id="cart-shipping-progress" class="shipping-progress"></div>
-          <div class="coupon-control"><input id="cart-coupon" type="text" maxlength="40" placeholder="Coupon code"><button id="cart-apply-coupon" class="app-button app-button--dark app-button--small" type="button">Apply</button></div>
+        </div>
+
+        <div class="cart-items-scrollable" style="overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 16px;">
+          <div id="cart-items"></div>
+          <div id="cart-recommendations" class="recommendations hidden" style="margin-top: 0; padding-bottom: 12px;"><h3>Complete the gift</h3><div id="cart-recommendation-row" class="recommendation-row no-scrollbar"></div></div>
+        </div>
+
+        <footer class="cart-footer" style="max-height: none;">
+          <div class="coupon-control" style="margin-top: 0;"><input id="cart-coupon" type="text" maxlength="40" placeholder="Coupon code"><button id="cart-apply-coupon" class="app-button app-button--dark app-button--small" type="button">Apply</button></div>
           <p id="cart-coupon-status" class="coupon-status"></p>
-          <div id="cart-recommendations" class="recommendations hidden"><h3>Complete the gift</h3><div id="cart-recommendation-row" class="recommendation-row no-scrollbar"></div></div>
-          <div class="cart-totals"><div class="cart-total-row"><span>Products subtotal</span><strong id="cart-subtotal">₹0</strong></div><div id="cart-vip-row" class="cart-total-row is-saving hidden"><span id="cart-vip-label">VIP discount</span><strong id="cart-vip-discount">−₹0</strong></div><div id="cart-coupon-row" class="cart-total-row is-saving hidden"><span id="cart-coupon-label">Coupon</span><strong id="cart-coupon-discount">−₹0</strong></div><div class="cart-total-row"><span>Estimated delivery</span><strong id="cart-shipping">₹0</strong></div><div class="cart-total-row is-total"><span>Estimated total</span><strong id="cart-total">₹0</strong></div></div>
+          <div class="cart-totals">
+            <div class="cart-total-row"><span style="color: var(--muted);">Price (MRP)</span><strong id="cart-mrp">₹0</strong></div>
+            <div class="cart-total-row is-saving"><span id="cart-mrp-discount-label">Discount</span><strong id="cart-mrp-discount">−₹0</strong></div>
+            <div class="cart-total-row"><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div>
+            <div id="cart-vip-row" class="cart-total-row is-saving"><span id="cart-vip-label">VIP Savings</span><strong id="cart-vip-discount">−₹0</strong></div>
+            <div id="cart-coupon-row" class="cart-total-row is-saving"><span id="cart-coupon-label">Coupon Savings</span><strong id="cart-coupon-discount">−₹0</strong></div>
+            <div class="cart-total-row"><span style="color: var(--muted);">Shipping Fee</span><strong id="cart-shipping">₹0</strong></div>
+            <div class="cart-total-row is-total"><span>Order Total</span><strong id="cart-total">₹0</strong></div>
+          </div>
           <button id="cart-checkout" class="app-button app-button--dark app-button--full" type="button">Review bag & order on WhatsApp</button>
         </footer>
       </aside>`;
@@ -1440,6 +1455,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function calculateTotals(items = activeCheckoutItems()) {
     const subtotal = Utils.roundMoney(items.reduce((sum, item) => sum + Number(item.estimatedPrice) * Number(item.quantity), 0));
+    
+    // Dynamically calculate the exact original MRP based on the product's price ratio
+    const totalMrp = Utils.roundMoney(items.reduce((sum, item) => {
+      const product = state.products.find(p => String(p.id) === String(item.productId));
+      let itemMrp = item.estimatedPrice;
+      if (product && product.actual_price > 0 && product.fake_price > product.actual_price) {
+         const ratio = product.fake_price / product.actual_price;
+         itemMrp = item.estimatedPrice * ratio;
+      }
+      return sum + (itemMrp * item.quantity);
+    }, 0));
+    
+    const mrpDiscount = Utils.roundMoney(Math.max(0, totalMrp - subtotal));
     const quantity = totalQuantity(items);
     const tier = vipTier(quantity);
     const validCoupon = couponIsValid(state.coupon, subtotal);
@@ -1458,7 +1486,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const threshold = Number(state.store.free_shipping_threshold) || 0;
     const deliveryFee = Number(state.store.standard_delivery_fee) || 0;
     const shipping = !items.length || freeShippingCoupon || (threshold > 0 && merchandiseTotal >= threshold) ? 0 : deliveryFee;
-    return { subtotal, quantity, tier, vipDiscount, couponDiscount, merchandiseTotal, shipping, total: Utils.roundMoney(merchandiseTotal + shipping), threshold };
+    return { totalMrp, mrpDiscount, subtotal, quantity, tier, vipDiscount, couponDiscount, merchandiseTotal, shipping, total: Utils.roundMoney(merchandiseTotal + shipping), threshold };
   }
 
   function couponIsValid(coupon, subtotal) {
@@ -1475,14 +1503,18 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function renderFinancialSummary(prefix, items = activeCheckoutItems()) {
     const totals = calculateTotals(items);
+    setText(`${prefix}-mrp`, Utils.formatCurrency(totals.totalMrp));
+    setText(`${prefix}-mrp-discount`, `−${Utils.formatCurrency(totals.mrpDiscount)}`);
     setText(`${prefix}-subtotal`, Utils.formatCurrency(totals.subtotal));
     setText(`${prefix}-shipping`, totals.shipping ? Utils.formatCurrency(totals.shipping) : 'FREE');
     setText(`${prefix}-total`, Utils.formatCurrency(totals.total));
-    const vipRow = document.getElementById(`${prefix}-vip-row`); vipRow?.classList.toggle('hidden', totals.vipDiscount <= 0);
-    setText(`${prefix}-vip-label`, `VIP discount (${totals.tier.percent}%)`); setText(`${prefix}-vip-discount`, `−${Utils.formatCurrency(totals.vipDiscount)}`);
-    const couponRow = document.getElementById(`${prefix}-coupon-row`); couponRow?.classList.toggle('hidden', totals.couponDiscount <= 0 && state.coupon?.discountType !== 'shipping');
-    setText(`${prefix}-coupon-label`, state.coupon ? `Coupon (${state.coupon.code})` : 'Coupon');
+    
+    setText(`${prefix}-vip-label`, `VIP Savings (${totals.tier.percent}%)`); 
+    setText(`${prefix}-vip-discount`, `−${Utils.formatCurrency(totals.vipDiscount)}`);
+    
+    setText(`${prefix}-coupon-label`, state.coupon ? `Coupon (${state.coupon.code})` : 'Coupon Savings');
     setText(`${prefix}-coupon-discount`, state.coupon?.discountType === 'shipping' ? 'Free delivery' : `−${Utils.formatCurrency(totals.couponDiscount)}`);
+    
     renderSavingsProgress(prefix, totals);
   }
 
@@ -1686,12 +1718,49 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         ? `https://wa.me/${String(quote.whatsapp_number).replace(/\D/g, '')}?text=${encodeURIComponent(quote.whatsapp_message)}`
         : null);
       if (!secureWhatsAppURL) throw new Error('The secure quote did not return WhatsApp details.');
-      if (quote.reference) Utils.toast(`Enquiry ${quote.reference} created securely.`, 'success');
-      window.location.assign(secureWhatsAppURL);
+      
+      // 1. Show the beautiful success animation
+      showCheckoutSuccessAnimation();
+
+      // 2. Wait exactly 2 seconds, then redirect to WhatsApp
+      setTimeout(() => {
+        window.location.assign(secureWhatsAppURL);
+      }, 2000);
+
     } catch (error) {
       console.error('Secure checkout failed:', error);
       await Utils.alert({ title: 'We could not prepare the order', message: friendlyDatabaseError(error, 'Please try again. No payment has been taken and your bag is safe.'), icon: '🌷', button: 'Return to bag' });
-    } finally { button.disabled = false; button.textContent = 'Confirm & open WhatsApp'; }
+      button.disabled = false; 
+      button.textContent = 'Review bag & order on WhatsApp';
+    } 
+  }
+
+  function showCheckoutSuccessAnimation() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(252,247,248,0.95);backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.4s ease;';
+    
+    overlay.innerHTML = `
+      <div style="text-align:center; animation: popIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;">
+        <div style="font-size: 4.5rem; margin-bottom: 16px; animation: floatHeart 2.5s ease-in-out infinite;">🌸</div>
+        <h2 style="font-family:'Lora',serif; color:var(--pink-deep); font-size: 2.2rem; margin:0 0 10px; letter-spacing: -0.02em;">Order Placed!</h2>
+        <p style="color:var(--charcoal); font-weight: 600; font-size: 1rem; margin: 0; opacity: 0.8;">Taking you to WhatsApp to confirm...</p>
+        <div style="margin: 24px auto 0; display: block; width: 60px; height: 6px; background: rgba(244,143,177,0.3); border-radius: 99px; overflow: hidden;">
+           <div style="height: 100%; background: var(--pink-deep); animation: loadingBar 2s linear forwards;"></div>
+        </div>
+      </div>
+      <style>
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes floatHeart { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.05); } }
+        @keyframes loadingBar { 0% { width: 0%; } 100% { width: 100%; } }
+      </style>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    // Trigger fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    });
   }
 
   function focusError(id, message) { Utils.toast(message, 'error'); document.getElementById(id)?.focus(); }

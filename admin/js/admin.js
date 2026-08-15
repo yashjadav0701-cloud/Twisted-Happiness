@@ -1100,6 +1100,10 @@
     document.getElementById('enquiry-filter')?.addEventListener('change', renderEnquiries);
     document.getElementById('enquiry-list')?.addEventListener('change', handleEnquiryStatusChange);
     document.getElementById('enquiry-list')?.addEventListener('click', handleShiprocketPush); 
+    
+    // We must load the product catalog into memory first so we can match product images 
+    // and calculate the exact original MRP for the price distribution list.
+    await loadProducts();
     await loadEnquiries();
   }
   
@@ -1130,45 +1134,118 @@
       // Conditionally render the Shiprocket button
       let shiprocketButton = '';
       if (enquiry.shiprocket_order_id) {
-        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener">Track on Shiprocket</a>`;
+        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; min-height: 36px; font-size: 0.65rem;">Track on Shiprocket</a>`;
       } else if (enquiry.status === 'completed') {
-        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}">Push to Shiprocket</button>`;
+        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}" style="width: 100%; min-height: 36px; font-size: 0.65rem;">Push to Shiprocket</button>`;
       }
 
-      // Render the full row with the correct native WhatsApp link format
+      // Calculate the exact Total MRP dynamically for the admin view
+      let computedTotalMrp = 0;
+      (enquiry.items || []).forEach((item) => {
+          const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
+          let itemMrp = item.item_total;
+          if (product && product.actual_price > 0 && product.fake_price > product.actual_price) {
+              const ratio = product.fake_price / product.actual_price;
+              itemMrp = item.item_total * ratio;
+          }
+          computedTotalMrp += itemMrp;
+      });
+      const totalMrp = Utils.roundMoney(computedTotalMrp);
+      const mrpDiscount = Utils.roundMoney(Math.max(0, totalMrp - (enquiry.subtotal || 0)));
+
+      // Render the full row with the exact 3-column flex layout
       return `
-        <article class="enquiry-row" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}">
-          <div>
-            <div class="enquiry-row__top">
-              <h2>${Utils.escapeHTML(enquiry.reference)}</h2>
-              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
-            </div>
-            <div class="enquiry-meta" style="display: grid; gap: 4px;">
-              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <span><strong>👤</strong> ${Utils.escapeHTML(enquiry.customer_name)}</span>
-                <span><strong>📱</strong> ${Utils.escapeHTML(enquiry.customer_phone)}</span>
-                ${enquiry.customer_email ? `<span><strong>✉️</strong> ${Utils.escapeHTML(enquiry.customer_email)}</span>` : ''}
-              </div>
-              <span style="display: block; color: var(--charcoal); font-weight: 600;">
-                <strong>📍</strong> ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
-                ${enquiry.address_line_2 ? ', ' + Utils.escapeHTML(enquiry.address_line_2) : ''}, 
-                ${Utils.escapeHTML(enquiry.customer_city || '')}, 
-                ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
+        <article class="enquiry-row admin-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 18px; border-bottom: none; margin-bottom: 16px; background: rgba(255,255,255,0.7);">
+          
+          <!-- Column 1: Customer Details -->
+          <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 10px;">
+            <h2 style="margin:0; font-size:1.05rem; font-family: monospace;">${Utils.escapeHTML(enquiry.reference)}</h2>
+            <div style="font-size: 0.75rem; color: var(--charcoal); display: flex; flex-direction: column; gap: 6px;">
+              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>👤</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_name)}</span></span>
+              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>📱</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
+              ${enquiry.customer_email ? `<span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>✉️</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
+              <span style="display: flex; gap: 8px; align-items: start; line-height: 1.4; color: var(--muted);">
+                <strong>📍</strong> 
+                <span style="color: var(--charcoal);">
+                  ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
+                  ${enquiry.address_line_2 ? '<br>' + Utils.escapeHTML(enquiry.address_line_2) : ''}<br>
+                  ${Utils.escapeHTML(enquiry.customer_city || '')}, ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
+                </span>
               </span>
-              <span><strong>🕒</strong> ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span>
+              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted); margin-top: 4px;"><strong>🕒</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span></span>
             </div>
-            <div class="enquiry-items">
-              ${(enquiry.items || []).map((item) => `<span>${Utils.escapeHTML(item.title)} × ${item.quantity}${item.selected_size?.label ? ` · ${Utils.escapeHTML(item.selected_size.label)}` : ''}</span>`).join('')}
+          </div>
+
+          <!-- Column 2: Order Details & Price Distribution -->
+          <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: rgba(244,143,177,0.05); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+              ${(enquiry.items || []).map((item) => {
+                const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
+                const img = product?.images?.[0] || '/assets/th_logo.svg';
+                return `
+                  <div style="display: flex; gap: 10px; align-items: center;">
+                    <img src="${Utils.escapeHTML(img)}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line);">
+                    <div style="font-size: 0.72rem; line-height: 1.3;">
+                      <strong style="color: var(--charcoal);">${Utils.escapeHTML(item.title)}</strong> × ${item.quantity}<br>
+                      <span style="color: var(--muted);">${item.selected_size?.label ? `${Utils.escapeHTML(item.selected_size.label)}` : ''}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</span>
+                    </div>
+                  </div>`;
+              }).join('')}
             </div>
-            <strong class="enquiry-total">${Utils.formatCurrency(enquiry.total_amount)}${enquiry.coupon_code ? ` · ${Utils.escapeHTML(enquiry.coupon_code)}` : ''}</strong>
+            
+            <div style="font-size: 0.72rem; display: flex; flex-direction: column; gap: 4px; padding: 0 4px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--muted);">Price (MRP)</span>
+                <strong>${Utils.formatCurrency(totalMrp)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; color: var(--green);">
+                <span>Discount</span>
+                <strong>−${Utils.formatCurrency(mrpDiscount)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--charcoal);">Subtotal</span>
+                <strong>${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; color: var(--green);">
+                <span>VIP Savings</span>
+                <strong>−${Utils.formatCurrency(enquiry.vip_discount || 0)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; color: var(--green);">
+                <span>Coupon ${enquiry.coupon_code ? `(${Utils.escapeHTML(enquiry.coupon_code)})` : ''}</span>
+                <strong>−${Utils.formatCurrency(enquiry.coupon_discount || 0)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--muted);">Shipping Fee</span>
+                <strong>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'FREE'}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--charcoal);">
+                <span><strong>Order Total</strong></span>
+                <strong>${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+              </div>
+            </div>
           </div>
-          <div class="enquiry-row__actions">
-            <select class="enquiry-status" data-enquiry-status>
-              ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
-            </select>
-            <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button admin-button--soft" target="_blank" rel="noopener">Open WhatsApp</a>
-            ${shiprocketButton}
+
+          <!-- Column 3: Actions -->
+          <div style="flex: 0 0 140px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; height: 100%;">
+            <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; margin-bottom: auto; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em;">${Utils.escapeHTML(enquiry.status)}</span>
+            
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 6px;">
+              <label style="display:flex; flex-direction: column; gap: 2px; font-size: 0.58rem; font-weight: 900; color: var(--muted); text-transform: uppercase;">
+                Update Status
+                <select class="admin-input" data-enquiry-status style="font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 4px 8px; min-height: 28px;">
+                  ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+                </select>
+              </label>
+              
+              <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button" target="_blank" rel="noopener" style="justify-content: center; background: #178a59; color: #fff; border: none; width: 100%; min-height: 36px; font-size: 0.65rem;">
+                <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
+                WhatsApp
+              </a>
+              
+              ${shiprocketButton ? shiprocketButton.replace('class="admin-button admin-button--dark"', 'class="admin-button admin-button--dark" style="width: 100%; min-height: 36px; font-size: 0.65rem;"') : ''}
+            </div>
           </div>
+
         </article>`;
     }).join(''); 
   }
