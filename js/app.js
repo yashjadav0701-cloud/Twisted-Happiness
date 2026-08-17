@@ -1036,7 +1036,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function productShareURL(product) {
-    return `/api/product-share?pid=${encodeURIComponent(product.id)}&v=3`;
+    return `/api/product-share?pid=${encodeURIComponent(product.id)}`;
   }
 
   function showCatalogError(message) {
