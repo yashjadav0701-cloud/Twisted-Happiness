@@ -698,8 +698,7 @@ export default async function handler(req, res) {
       'Twisted Happiness Product';
 
     const description =
-      cleanText(product.description) ||
-      'A handcrafted creation by Twisted Happiness.';
+        'Thoughtfully handmade, beautifully crafted, and made with love. ✨';
 
     const contentType =
       imageResponse.headers.get(
