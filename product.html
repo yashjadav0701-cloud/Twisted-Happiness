@@ -6,27 +6,37 @@
   <meta name="description" content="View and customise a handcrafted Twisted Happiness creation, then order simply through WhatsApp.">
   <meta name="theme-color" content="#fcf7f8">
 
+  <!-- Static fallback metadata.
+       The real product metadata is generated server-side
+       when /share/product?pid=... is shared. -->
+
   <!-- Open Graph / WhatsApp / Facebook -->
   <meta property="og:type" content="product">
-  <meta property="og:url" content="https://twistedhappiness.vercel.app/">
+  <meta property="og:url" content="https://twistedhappiness.vercel.app/product.html">
   <meta id="og-title" property="og:title" content="Twisted Happiness Product">
   <meta id="og-description" property="og:description" content="A handcrafted creation by Twisted Happiness.">
-  <meta id="og-image" property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.2">
+  <meta id="og-image" property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2">
+  <meta property="og:image:secure_url" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2">
   <meta property="og:image:type" content="image/png">
+  <meta property="og:image:alt" content="Twisted Happiness">
+  <meta property="og:site_name" content="Twisted Happiness">
 
-  <!-- Twitter / Telegram / Discord (This forces the LARGE image layout) -->
+  <!-- Twitter / Telegram / Discord -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://twistedhappiness.vercel.app/">
+  <meta name="twitter:url" content="https://twistedhappiness.vercel.app/product.html">
   <meta id="twitter-title" name="twitter:title" content="Twisted Happiness Product">
   <meta id="twitter-description" name="twitter:description" content="A handcrafted creation by Twisted Happiness.">
-  <meta id="twitter-image" name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.2">
+  <meta id="twitter-image" name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2">
+  <meta name="twitter:image:alt" content="Twisted Happiness">
+
+  <link rel="canonical" href="https://twistedhappiness.vercel.app/product.html">
 
   <link rel="icon" href="/assets/th_logo.svg" type="image/svg+xml">
   <title>Product | Twisted Happiness</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@700&family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=1.2"><link rel="stylesheet" href="/css/responsive.css?v=1.2">
+  <link rel="stylesheet" href="/css/app.css?v=1.5"><link rel="stylesheet" href="/css/responsive.css?v=1.5">
 </head>
 <body data-page="product">
   <div id="announcement-bar" class="announcement-bar hidden" role="status"><span id="announcement-text"></span><button id="announcement-close" type="button" aria-label="Dismiss announcement">×</button></div>
@@ -113,6 +123,6 @@
     </button>
 </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.2"></script><script src="/js/common.js?v=1.2"></script><script src="/js/app.js?v=1.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.5"></script><script src="/js/common.js?v=1.5"></script><script src="/js/app.js?v=1.5"></script>
 </body>
 </html>

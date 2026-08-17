@@ -1031,11 +1031,22 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     else addProductToCart(product, { quantity: 1 });
   }
 
-  function productURL(product) { return `/product.html?pid=${encodeURIComponent(product.id)}`; }
+  function productURL(product) {
+  return `/product.html?pid=${encodeURIComponent(product.id)}`;
+  }
+
+  function productShareURL(product) {
+    return `/share/product?pid=${encodeURIComponent(product.id)}&v=2`;
+  }
+
   function showCatalogError(message) {
     document.getElementById('catalog-loading')?.classList.add('hidden');
     const empty = document.getElementById('catalog-empty');
-    if (empty) { empty.classList.remove('hidden'); empty.querySelector('h3').textContent = 'Unable to load the collection'; empty.querySelector('p').textContent = message; }
+    if (empty) {
+      empty.classList.remove('hidden');
+      empty.querySelector('h3').textContent = 'Unable to load the collection';
+      empty.querySelector('p').textContent = message;
+    }
   }
 
   /* ---------------- Product page ---------------- */
@@ -1052,11 +1063,96 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function renderProduct(product) {
     state.activePrice = product.actual_price;
     state.activeMRP = product.fake_price || 0;
+
+    const productPageURL = window.location.href;
+
+    const primaryImage =
+      product.images?.[0] ||
+      `${window.location.origin}/assets/share-icon.png?v=2`;
+
+    const shareDescription =
+      String(
+        product.description ||
+        'A handcrafted creation by Twisted Happiness.'
+      )
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 180);
+
     document.title = `${product.title} | Twisted Happiness`;
-    document.getElementById('og-title')?.setAttribute('content', product.title);
-    document.getElementById('og-description')?.setAttribute('content', String(product.description || '').slice(0, 180));
-    document.getElementById('og-image')?.setAttribute('content', product.images[0] || `${APP_CONFIG.SITE_URL}/assets/logo.png`);
-    setText('breadcrumb-product', product.title); setText('product-category', product.sub_category || product.main_category || 'Collection'); setText('product-prep', `Prep: ${product.preparation_days || 'Made to order'}`); setText('product-title', product.title);
+
+    document.getElementById('og-title')?.setAttribute(
+      'content',
+      product.title
+    );
+
+    document.getElementById('og-description')?.setAttribute(
+      'content',
+      shareDescription
+    );
+
+    document.getElementById('og-image')?.setAttribute(
+      'content',
+      primaryImage
+    );
+
+    document.querySelector(
+      'meta[property="og:url"]'
+    )?.setAttribute(
+      'content',
+      productPageURL
+    );
+
+    document.getElementById('twitter-title')?.setAttribute(
+      'content',
+      product.title
+    );
+
+    document.getElementById('twitter-description')?.setAttribute(
+      'content',
+      shareDescription
+    );
+
+    document.getElementById('twitter-image')?.setAttribute(
+      'content',
+      primaryImage
+    );
+
+    document.querySelector(
+      'meta[name="twitter:url"]'
+    )?.setAttribute(
+      'content',
+      productPageURL
+    );
+
+    document.querySelector(
+      'link[rel="canonical"]'
+    )?.setAttribute(
+      'href',
+      productPageURL
+    );
+
+    setText(
+      'breadcrumb-product',
+      product.title
+    );
+
+    setText(
+      'product-category',
+      product.sub_category ||
+      product.main_category ||
+      'Collection'
+    );
+
+    setText(
+      'product-prep',
+      `Prep: ${product.preparation_days || 'Made to order'}`
+    );
+
+    setText(
+      'product-title',
+      product.title
+    );
     updateProductPrice();
     renderGallery(product);
     renderCanvasControls(product);
@@ -1217,24 +1313,101 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function bindProductEvents() {
     const quantity = document.getElementById('product-qty');
+
     document.getElementById('gallery-prev')?.addEventListener('click', () => moveGallery(-1));
     document.getElementById('gallery-next')?.addEventListener('click', () => moveGallery(1));
     document.getElementById('gallery-track')?.addEventListener('transitionend', settleGalleryLoop);
+
     bindGallerySwipe();
+
     document.getElementById('canvas-size-options')?.addEventListener('click', (event) => {
       const option = event.target.closest('[data-canvas-size]');
       if (!option) return;
-      state.activeCanvasSize = Utils.normaliseCanvasSize(Utils.parseJSON(option.dataset.canvasSize));
-      option.parentElement.querySelectorAll('.size-option').forEach((button) => button.classList.toggle('is-active', button === option));
-      updateOrientationVisibility(); updateCanvasPrice();
+
+      state.activeCanvasSize = Utils.normaliseCanvasSize(
+        Utils.parseJSON(option.dataset.canvasSize)
+      );
+
+      option.parentElement
+        .querySelectorAll('.size-option')
+        .forEach((button) =>
+          button.classList.toggle('is-active', button === option)
+        );
+
+      updateOrientationVisibility();
+      updateCanvasPrice();
     });
-    document.getElementById('product-qty-minus')?.addEventListener('click', () => { quantity.value = String(Math.floor(Utils.clamp(Number(quantity.value) - 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY))); });
-    document.getElementById('product-qty-plus')?.addEventListener('click', () => { quantity.value = String(Math.floor(Utils.clamp(Number(quantity.value) + 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY))); });
-    quantity?.addEventListener('change', () => { quantity.value = String(Math.floor(Utils.clamp(quantity.value, 1, APP_CONFIG.MAX_ITEM_QUANTITY))); });
-    document.getElementById('add-to-cart')?.addEventListener('click', () => { addProductToCart(state.activeProduct, productSelections()); openCart(); });
-    document.getElementById('single-whatsapp')?.addEventListener('click', orderSingleProduct);
-    document.getElementById('share-product')?.addEventListener('click', () => Utils.share({ title: state.activeProduct.title, text: `See this handcrafted creation from Twisted Happiness: ${state.activeProduct.title}`, url: window.location.href }));
-    document.getElementById('related-grid')?.addEventListener('click', handleProductGridClick);
+
+    document.getElementById('product-qty-minus')?.addEventListener('click', () => {
+      quantity.value = String(
+        Math.floor(
+          Utils.clamp(
+            Number(quantity.value) - 1,
+            1,
+            APP_CONFIG.MAX_ITEM_QUANTITY
+          )
+        )
+      );
+    });
+
+    document.getElementById('product-qty-plus')?.addEventListener('click', () => {
+      quantity.value = String(
+        Math.floor(
+          Utils.clamp(
+            Number(quantity.value) + 1,
+            1,
+            APP_CONFIG.MAX_ITEM_QUANTITY
+          )
+        )
+      );
+    });
+
+    quantity?.addEventListener('change', () => {
+      quantity.value = String(
+        Math.floor(
+          Utils.clamp(
+            quantity.value,
+            1,
+            APP_CONFIG.MAX_ITEM_QUANTITY
+          )
+        )
+      );
+    });
+
+    document.getElementById('add-to-cart')?.addEventListener('click', () => {
+      addProductToCart(
+        state.activeProduct,
+        productSelections()
+      );
+
+      openCart();
+    });
+
+    document.getElementById('single-whatsapp')?.addEventListener(
+      'click',
+      orderSingleProduct
+    );
+
+    document.getElementById('share-product')?.addEventListener(
+      'click',
+      () => {
+        const product = state.activeProduct;
+
+        if (!product) return;
+
+        Utils.share({
+          title: product.title,
+          text:
+            `See this handcrafted creation from Twisted Happiness: ${product.title}`,
+          url: productShareURL(product)
+        });
+      }
+    );
+
+    document.getElementById('related-grid')?.addEventListener(
+      'click',
+      handleProductGridClick
+    );
   }
 
   function bindGallerySwipe() {
