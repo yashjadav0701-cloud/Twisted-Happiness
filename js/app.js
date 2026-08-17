@@ -1032,20 +1032,23 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function productURL(product) {
-  return `/product.html?pid=${encodeURIComponent(product.id)}`;
+    return `/product.html?pid=${encodeURIComponent(product.id)}`;
   }
 
   function productShareURL(product) {
-    return `/share/product?pid=${encodeURIComponent(product.id)}&v=2`;
+    return `/api/product-share?pid=${encodeURIComponent(product.id)}&v=3`;
   }
 
   function showCatalogError(message) {
     document.getElementById('catalog-loading')?.classList.add('hidden');
     const empty = document.getElementById('catalog-empty');
+
     if (empty) {
       empty.classList.remove('hidden');
-      empty.querySelector('h3').textContent = 'Unable to load the collection';
-      empty.querySelector('p').textContent = message;
+      empty.querySelector('h3').textContent =
+        'Unable to load the collection';
+      empty.querySelector('p').textContent =
+        message;
     }
   }
 
@@ -1393,12 +1396,20 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       () => {
         const product = state.activeProduct;
 
-        if (!product) return;
+        if (!product) {
+          Utils.toast(
+            'This product is still loading.',
+            'error'
+          );
+          return;
+        }
 
         Utils.share({
           title: product.title,
+
           text:
             `See this handcrafted creation from Twisted Happiness: ${product.title}`,
+
           url: productShareURL(product)
         });
       }
