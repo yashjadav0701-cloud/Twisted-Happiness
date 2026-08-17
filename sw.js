@@ -1,44 +1,194 @@
-// 🌸 Twisted Happiness Native Web Push Worker 🌸
+// 🌸 Twisted Happiness Native Web Push + PWA Launch Worker 🌸
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-});
+const TH_PWA_CACHE = 'twisted-happiness-pwa-assets';
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
-});
+const TH_PWA_ASSETS = [
+  '/assets/logo-vid.mp4',
+  '/assets/th_logo.svg'
+];
 
-// Listen for push signals sent from the server/database when you are offline
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || '🌸 New Order Received!';
-  const options = {
-    body: data.body || 'A new customer just placed an order on your store.',
-    icon: '/assets/th_logo.svg',
-    badge: '/assets/th_logo.svg',
-    vibrate: [200, 100, 200],
-    data: { url: '/admin/admin-enquiries.html' }
-  };
 
+/*
+ * Install
+ *
+ * Cache the animated logo and logo fallback so the PWA launch
+ * animation can work even when the app is opened with poor
+ * or temporarily unavailable network connectivity.
+ */
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    caches.open(TH_PWA_CACHE)
+      .then((cache) => {
+        return cache.addAll(TH_PWA_ASSETS);
+      })
+      .catch(() => {
+        /*
+         * Do not prevent the service worker from installing if
+         * the video cannot be cached for some reason.
+         *
+         * The browser can still request the video normally.
+         */
+      })
+      .then(() => {
+        return self.skipWaiting();
+      })
   );
 });
 
-// When you tap the notification on your phone/PC lock screen, open the admin panel
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+
+/*
+ * Activate immediately and take control of open pages.
+ */
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
-        if (client.url.includes('/admin/') && 'focus' in client) {
+    self.clients.claim()
+  );
+});
+
+
+/*
+ * Serve the PWA launch assets from cache when available.
+ *
+ * Everything else continues to behave normally.
+ */
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  const url = new URL(
+    request.url
+  );
+
+  const isLaunchAsset =
+    url.origin === self.location.origin &&
+    TH_PWA_ASSETS.includes(url.pathname);
+
+  if (!isLaunchAsset) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request)
+      .then((cachedResponse) => {
+
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(request)
+          .then((networkResponse) => {
+
+            if (
+              networkResponse &&
+              networkResponse.ok
+            ) {
+              const responseClone =
+                networkResponse.clone();
+
+              caches.open(TH_PWA_CACHE)
+                .then((cache) => {
+                  cache.put(
+                    request,
+                    responseClone
+                  );
+                });
+            }
+
+            return networkResponse;
+          });
+      })
+  );
+});
+
+
+/*
+ * Listen for push signals sent from the server/database
+ * when you are offline.
+ */
+self.addEventListener('push', (event) => {
+
+  const data =
+    event.data
+      ? event.data.json()
+      : {};
+
+  const title =
+    data.title ||
+    '🌸 New Order Received!';
+
+  const options = {
+    body:
+      data.body ||
+      'A new customer just placed an order on your store.',
+
+    icon:
+      '/assets/th_logo.svg',
+
+    badge:
+      '/assets/th_logo.svg',
+
+    vibrate:
+      [200, 100, 200],
+
+    data: {
+      url:
+        '/admin/admin-enquiries.html'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(
+      title,
+      options
+    )
+  );
+});
+
+
+/*
+ * When you tap the notification on your phone/PC lock screen,
+ * open the admin panel.
+ */
+self.addEventListener('notificationclick', (event) => {
+
+  event.notification.close();
+
+  event.waitUntil(
+
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    })
+
+    .then((clientList) => {
+
+      for (
+        let i = 0;
+        i < clientList.length;
+        i++
+      ) {
+
+        const client =
+          clientList[i];
+
+        if (
+          client.url.includes('/admin/') &&
+          'focus' in client
+        ) {
           return client.focus();
         }
       }
+
       if (clients.openWindow) {
-        return clients.openWindow('/admin/admin-enquiries.html');
+        return clients.openWindow(
+          '/admin/admin-enquiries.html'
+        );
       }
+
     })
+
   );
 });

@@ -13,7 +13,7 @@
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.7">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.8">
   <meta property="og:image:type" content="image/png">
 
   <!-- Twitter / Telegram / Discord -->
@@ -23,7 +23,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.7">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.8">
 
   <link rel="canonical" href="https://twistedhappiness.vercel.app/">
   <link rel="icon" href="/assets/th_logo.svg" type="image/svg+xml">
@@ -31,9 +31,133 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@700&family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=1.7"><link rel="stylesheet" href="/css/responsive.css?v=1.7">
+  <link rel="stylesheet" href="/css/app.css?v=1.8"><link rel="stylesheet" href="/css/responsive.css?v=1.8">
+
+  <!-- Twisted Happiness PWA animated launch screen -->
+  <style id="th-pwa-splash-styles">
+    #th-pwa-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #fcf7f8;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition:
+        opacity 420ms ease,
+        visibility 420ms ease;
+    }
+
+    #th-pwa-splash.th-pwa-splash--visible {
+      display: flex;
+    }
+
+    #th-pwa-splash.th-pwa-splash--hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #th-pwa-splash-video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      background: #fcf7f8;
+    }
+
+    #th-pwa-splash-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fcf7f8;
+      z-index: -1;
+    }
+
+    #th-pwa-splash-fallback img {
+      width: min(55vw, 240px);
+      max-width: 240px;
+      height: auto;
+      display: block;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #th-pwa-splash {
+        transition: opacity 250ms ease, visibility 250ms ease;
+      }
+    }
+        .install-app-button {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .install-app-button::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      background: rgba(255, 255, 255, 0.16);
+      transition: opacity 180ms ease;
+    }
+
+    .install-app-button:hover::after,
+    .install-app-button:focus-visible::after {
+      opacity: 1;
+    }
+
+    .install-app-button svg {
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 640px) {
+      .install-app-button .desktop-label {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body data-page="catalog">
+
+  <!--
+    Twisted Happiness PWA launch animation.
+    This is displayed only when the website is running
+    as an installed PWA / standalone mobile app.
+  -->
+  <div
+    id="th-pwa-splash"
+    aria-hidden="true"
+  >
+    <div id="th-pwa-splash-fallback">
+      <img
+        src="/assets/th_logo.svg"
+        alt=""
+      >
+    </div>
+
+    <video
+      id="th-pwa-splash-video"
+      src="/assets/logo-vid.mp4"
+      muted
+      autoplay
+      playsinline
+      preload="auto"
+      disablepictureinpicture
+      controlslist="nodownload nofullscreen noremoteplayback"
+      aria-hidden="true"
+    ></video>
+  </div>
+
   <div id="announcement-bar" class="announcement-bar hidden" role="status">
     <span id="announcement-text"></span>
     <button id="announcement-close" type="button" aria-label="Dismiss announcement">×</button>
@@ -45,18 +169,74 @@ Made with imagination. Created with love. Made to make you smile. 💜">
         <img src="/assets/th_logo_with_heading.svg" alt="Twisted Happiness" class="brand-logo-wide">
       </a>
       <div class="header-actions">
-        <a id="header-whatsapp" class="icon-pill" href="#" aria-label="Chat with Twisted Happiness on WhatsApp" title="Chat on WhatsApp">
-          <svg class="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M12.01 2.5a9.48 9.48 0 0 0-8.2 14.24L2.5 21.5l4.92-1.29A9.48 9.48 0 1 0 12.01 2.5Z"></path>
-            <path d="M8.02 7.3c.2-.37.42-.38.76-.39h.63c.2 0 .43.07.54.33l.77 1.84c.1.23.08.41-.05.61l-.58.8c-.14.19-.17.33-.05.55.43.78 1.06 1.43 1.8 1.92.54.36 1.16.64 1.79.82.27.08.43.04.58-.14l.78-.94c.16-.2.34-.22.57-.13l1.9.89c.22.1.36.17.42.3.06.14.06.73-.15 1.27-.21.54-1.04 1.01-1.44 1.08-.37.06-.85.09-1.38-.08a12.77 12.77 0 0 1-2.3-.99 13.31 13.31 0 0 1-3.67-2.84 10.49 10.49 0 0 1-2.12-3.17c-.36-.81-.38-1.46-.22-2 .15-.51.7-1.2 1.05-1.42Z"></path>
+        <button
+          id="install-app-button"
+          class="icon-pill install-app-button hidden"
+          type="button"
+          aria-label="Install Twisted Happiness app"
+          title="Install Twisted Happiness app"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M12 3v11m0 0 4-4m-4 4-4-4M5 18v2h14v-2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ></path>
           </svg>
+          <span class="desktop-label">Install App</span>
+        </button>
+
+        <a
+          id="header-whatsapp"
+          class="icon-pill"
+          href="#"
+          aria-label="Chat with Twisted Happiness on WhatsApp"
+          title="Chat on WhatsApp"
+        >
+          <svg
+            class="whatsapp-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12.01 2.5a9.48 9.48 0 0 0-8.2 14.24L2.5 21.5l4.92-1.29A9.48 9.48 0 1 0 12.01 2.5Z"></path>
+            <path d="M8.02 7.3c.2-.37.42-.38.76-.39h.63c.2 0 .43.07.54.33l.77 1.84c.1.23.08.41-.05.61l-.58.8c-.14.19-.17.33-.05.55.43.78 1.06 1.43 1.8 1.92.54.36 1.16.64 1.79.82.27.08.43.04.58-.14l.78-.94c.16-.2.34-.22.57-.13l1.9.89c.22.1.36.17.42.3.06.54-1.04 1.01-1.44 1.08-.37.06-.85.09-1.38-.08a12.77 12.77 0 0 1-2.3-.99 13.31 13.31 0 0 1-3.67-2.84 10.49 10.49 0 0 1-2.12-3.17c-.36-.81-.38-1.46-.22-2 .15-.51.7-1.2 1.05-1.42Z"></path>
+          </svg>
+
           <span class="desktop-label">Need help?</span>
         </a>
-        <button class="icon-pill icon-pill--bag" type="button" data-open-cart>
+
+        <button
+          class="icon-pill icon-pill--bag"
+          type="button"
+          data-open-cart
+        >
           <span class="desktop-label">Saving Bag</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V6a5 5 0 0 1 10 0v2M4 8h16l-1 13H5L4 8Z"></path></svg>
-          <span class="cart-badge" data-cart-count>0</span>
+
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M7 8V6a5 5 0 0 1 10 0v2M4 8h16l-1 13H5L4 8Z"></path>
+          </svg>
+
+          <span
+            class="cart-badge"
+            data-cart-count
+          >0</span>
         </button>
+
       </div>
     </div>
 
@@ -175,6 +355,332 @@ Made with imagination. Created with love. Made to make you smile. 💜">
     </button>
 </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.7"></script><script src="/js/common.js?v=1.7"></script><script src="/js/app.js?v=1.7"></script>
+  <script>
+  /*
+   * Twisted Happiness PWA launch + installation manager.
+   *
+   * Installation behavior:
+   * - Android/Chrome/Edge: native beforeinstallprompt.
+   * - iPhone/iPad Safari: Add-to-Home-Screen instructions.
+   * - Installed PWA: install button remains hidden.
+   *
+   * Launch animation:
+   * - Installed PWA only.
+   * - Exactly 3 seconds.
+   */
+
+  (() => {
+    const splash =
+      document.getElementById('th-pwa-splash');
+
+    const video =
+      document.getElementById('th-pwa-splash-video');
+
+    const installButton =
+      document.getElementById('install-app-button');
+
+    /*
+     * ---------------------------------------------------------
+     * PWA DISPLAY MODE
+     * ---------------------------------------------------------
+     */
+
+    const isStandalone =
+      window.matchMedia &&
+      window.matchMedia(
+        '(display-mode: standalone)'
+      ).matches;
+
+    const isIOSStandalone =
+      window.navigator.standalone === true;
+
+    const isInstalledPWA =
+      isStandalone ||
+      isIOSStandalone;
+
+
+    /*
+     * ---------------------------------------------------------
+     * PWA LAUNCH ANIMATION
+     * ---------------------------------------------------------
+     */
+
+    if (splash && video) {
+
+      if (!isInstalledPWA) {
+
+        splash.remove();
+
+      } else {
+
+        splash.classList.add(
+          'th-pwa-splash--visible'
+        );
+
+        try {
+          video.currentTime = 0;
+        } catch (error) {
+          // Ignore browsers that don't allow this yet.
+        }
+
+        const playVideo = () => {
+
+          try {
+
+            const promise =
+              video.play();
+
+            if (
+              promise &&
+              typeof promise.catch === 'function'
+            ) {
+              promise.catch(() => {
+                // Fallback logo remains visible.
+              });
+            }
+
+          } catch (error) {
+            // Fallback logo remains visible.
+          }
+        };
+
+        if (video.readyState >= 2) {
+          playVideo();
+        } else {
+
+          video.addEventListener(
+            'loadeddata',
+            playVideo,
+            { once: true }
+          );
+
+          video.addEventListener(
+            'canplay',
+            playVideo,
+            { once: true }
+          );
+        }
+
+        window.setTimeout(() => {
+
+          splash.classList.add(
+            'th-pwa-splash--hide'
+          );
+
+          window.setTimeout(() => {
+
+            try {
+              video.pause();
+            } catch (error) {
+              // Ignore cleanup errors.
+            }
+
+            splash.remove();
+
+          }, 450);
+
+        }, 3000);
+      }
+    }
+
+
+    /*
+     * ---------------------------------------------------------
+     * INSTALL BUTTON
+     * ---------------------------------------------------------
+     */
+
+    let deferredInstallPrompt = null;
+
+    const isIOS =
+      /iphone|ipad|ipod/i.test(
+        window.navigator.userAgent
+      );
+
+    const isSafari =
+      /safari/i.test(
+        window.navigator.userAgent
+      ) &&
+      !/chrome|android|crios|fxios|edgios/i.test(
+        window.navigator.userAgent
+      );
+
+
+    function showInstallButton() {
+
+      if (!installButton) {
+        return;
+      }
+
+      if (isInstalledPWA) {
+        installButton.classList.add('hidden');
+        return;
+      }
+
+      installButton.classList.remove('hidden');
+    }
+
+
+    function hideInstallButton() {
+
+      if (!installButton) {
+        return;
+      }
+
+      installButton.classList.add('hidden');
+    }
+
+
+    /*
+     * Chrome / Edge / Android native PWA installation.
+     */
+
+    window.addEventListener(
+      'beforeinstallprompt',
+      (event) => {
+
+        event.preventDefault();
+
+        deferredInstallPrompt =
+          event;
+
+        showInstallButton();
+      }
+    );
+
+
+    /*
+     * The browser tells us the PWA has actually
+     * been installed.
+     */
+
+    window.addEventListener(
+      'appinstalled',
+      () => {
+
+        deferredInstallPrompt =
+          null;
+
+        hideInstallButton();
+      }
+    );
+
+
+    /*
+     * iOS does not expose beforeinstallprompt.
+     * So we show the button manually on Safari.
+     */
+
+    if (
+      !isInstalledPWA &&
+      isIOS &&
+      isSafari
+    ) {
+
+      showInstallButton();
+    }
+
+
+    /*
+     * Button click.
+     */
+
+    installButton?.addEventListener(
+      'click',
+      async () => {
+
+        /*
+         * Android / Chrome / Edge.
+         */
+
+        if (deferredInstallPrompt) {
+
+          const promptEvent =
+            deferredInstallPrompt;
+
+          deferredInstallPrompt =
+            null;
+
+          try {
+
+            await promptEvent.prompt();
+
+            const result =
+              await promptEvent.userChoice;
+
+            if (
+              result?.outcome === 'accepted'
+            ) {
+              hideInstallButton();
+            } else {
+              /*
+               * User cancelled.
+               *
+               * Don't permanently hide it.
+               * They can try again later.
+               */
+              showInstallButton();
+            }
+
+          } catch (error) {
+
+            showInstallButton();
+
+          }
+
+          return;
+        }
+
+
+        /*
+         * iPhone / iPad Safari.
+         */
+
+        if (
+          isIOS &&
+          isSafari
+        ) {
+
+          alert(
+            'Install Twisted Happiness on your iPhone/iPad:\\n\\n' +
+            '1. Tap the Share button in Safari.\\n' +
+            '2. Choose “Add to Home Screen”.\\n' +
+            '3. Tap “Add”.\\n\\n' +
+            'Twisted Happiness will then appear as an app on your Home Screen.'
+          );
+
+          return;
+        }
+
+
+        /*
+         * If the button somehow becomes available without
+         * a native install prompt, provide a useful message.
+         */
+
+        alert(
+          'Your browser does not currently provide the install option. ' +
+          'Please use your browser menu and choose “Install app” or “Add to Home screen”.'
+        );
+      }
+    );
+
+
+    /*
+     * On normal pages where the browser has not yet fired
+     * beforeinstallprompt, we keep the button hidden.
+     *
+     * It becomes visible automatically when the browser
+     * declares the PWA installable.
+     */
+
+  })();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
 </body>
 </html>
