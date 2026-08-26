@@ -5,7 +5,7 @@
 - [ ] Download a Supabase database backup.
 - [ ] Run `supabase/migrations/20260803_final_whatsapp_catalog.sql` once.
 - [ ] Add the correct Auth user UUID to `public.user_roles` as `admin`.
-- [ ] Confirm `js/config.js` contains the live site URL, Supabase URL and anon key.
+- [ ] Confirm `config.js` contains the live site URL, Supabase URL and anon key.
 - [ ] Confirm the WhatsApp number includes the country code without `+`.
 
 ## After Netlify deployment

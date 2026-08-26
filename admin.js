@@ -2,8 +2,104 @@
 (() => {
   'use strict';
 
-  const { APP_CONFIG, supabaseClient, Utils } = window;
-  if (!APP_CONFIG || !supabaseClient || !Utils) return;
+  const APP_CONFIG = Object.freeze({
+    APP_NAME: 'Twisted Happiness',
+    APP_VERSION: '2026.08.03-spa',
+    SITE_URL: 'https://twistedhappiness.in',
+    SUPABASE_URL: 'https://jlszvfevobpqqrmmjzpp.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc3p2ZmV2b2JwcXFybW1qenBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MzMwMTYsImV4cCI6MjEwMDMwOTAxNn0.WsaLFBk365cSO-nj2tezcLEtbxwKGm3YwZK1_eWoBmE',
+    STORAGE_BUCKET: 'art-images',
+    RPC: Object.freeze({
+      storefrontSettings: 'get_storefront_settings',
+      validateCoupon: 'validate_coupon_for_cart',
+      createEnquiry: 'create_whatsapp_enquiry'
+    }),
+    DEFAULTS: Object.freeze({
+      storeName: 'Twisted Happiness',
+      whatsapp: '917383333494',
+      deliveryFee: 80,
+      freeShippingThreshold: 1499,
+      announcement: 'Every creation is handcrafted to order with love and patience.',
+      vipTiers: Object.freeze([
+        Object.freeze({ minimumQuantity: 1, percent: 0 }),
+        Object.freeze({ minimumQuantity: 2, percent: 5 }),
+        Object.freeze({ minimumQuantity: 3, percent: 10 }),
+        Object.freeze({ minimumQuantity: 5, percent: 15 })
+      ]),
+      canvasSizes: Object.freeze([
+        Object.freeze({ id: 'square-5', shape: 'square', width: 5, height: 5, label: '5 × 5 in' }),
+        Object.freeze({ id: 'square-8', shape: 'square', width: 8, height: 8, label: '8 × 8 in' }),
+        Object.freeze({ id: 'square-10', shape: 'square', width: 10, height: 10, label: '10 × 10 in' }),
+        Object.freeze({ id: 'rectangle-8-10', shape: 'rectangle', width: 8, height: 10, label: '8 × 10 in' }),
+        Object.freeze({ id: 'rectangle-12-16', shape: 'rectangle', width: 12, height: 16, label: '12 × 16 in' }),
+        Object.freeze({ id: 'circle-8', shape: 'circle', diameter: 8, label: '8 in diameter' })
+      ])
+    }),
+    STORAGE_KEYS: Object.freeze({ customer: 'twisted_happiness_customer_v2' }),
+    MAX_PRODUCT_IMAGES: 8,
+    DEFAULT_CARE_GUIDE: 'Keep away from water and direct heat.\nDust gently with a soft, dry brush.\nHandle delicate handmade details with care.'
+  });
+
+  const supabaseClient = window.supabase ? window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: 'twisted-happiness-auth' }
+  }) : null;
+
+  const Utils = {
+    parseJSON(value, fallback = null) { try { return typeof value === 'string' ? JSON.parse(value) : (value ?? fallback); } catch { return fallback; } },
+    escapeHTML(value = '') { return String(value).replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]); },
+    safeImageURL(value, fallback = '') { if (!value) return fallback; try { const url = new URL(String(value), window.location.origin); if (['http:', 'https:', 'data:', 'blob:'].includes(url.protocol)) return url.href; } catch {} return fallback; },
+    normaliseImages(value) { let imgs = value; if (typeof imgs === 'string') { const p = Utils.parseJSON(imgs, null); imgs = Array.isArray(p) ? p : imgs.split(','); } return Array.isArray(imgs) ? [...new Set(imgs.map((i) => Utils.safeImageURL(String(i).trim())).filter(Boolean))] : []; },
+    normaliseAttributes(value) { const p = Utils.parseJSON(value, value); return p && typeof p === 'object' && !Array.isArray(p) ? p : {}; },
+    normaliseVipTiers(value, fallback = []) { const p = Utils.parseJSON(value, value); if (!Array.isArray(p)) return [...fallback]; const tiers = p.map((t) => ({ minimumQuantity: Math.max(1, Math.floor(Number(t.minimumQuantity ?? t.minimum_quantity ?? 1))), percent: Math.min(80, Math.max(0, Number(t.percent ?? t.discount_percent ?? 0))) })).filter((t) => Number.isFinite(t.minimumQuantity) && Number.isFinite(t.percent)).sort((a, b) => a.minimumQuantity - b.minimumQuantity); if (!tiers.length || tiers[0].minimumQuantity !== 1) tiers.unshift({ minimumQuantity: 1, percent: 0 }); return tiers; },
+    normaliseCanvasSizes(value, fallback = []) { const p = Utils.parseJSON(value, value); if (Array.isArray(p)) return p.map((e, i) => Utils.normaliseCanvasSize(e, i)).filter(Boolean); if (typeof p === 'string') return p.split(',').map((l, i) => Utils.normaliseCanvasSize(l.trim(), i)).filter(Boolean); return [...fallback]; },
+    normaliseCanvasSize(entry, index = 0) {
+      if (!entry) return null;
+      if (typeof entry === 'string') {
+        const text = entry.replace(/×/g, 'x').trim();
+        const rectangle = text.match(/(\d+(?:\.\d+)?)\s*["']?\s*x\s*(\d+(?:\.\d+)?)/i);
+        if (rectangle) return { id: `size-${index}-${Number(rectangle[1])}-${Number(rectangle[2])}`, shape: Number(rectangle[1]) === Number(rectangle[2]) ? 'square' : 'rectangle', width: Number(rectangle[1]), height: Number(rectangle[2]), label: `${Utils.cleanNumber(rectangle[1])} × ${Utils.cleanNumber(rectangle[2])} in` };
+        const circle = text.match(/(\d+(?:\.\d+)?)\s*(?:in|inch|inches|["'])?/i);
+        if (circle && /circle|diameter/i.test(text)) return { id: `circle-${index}-${Number(circle[1])}`, shape: 'circle', diameter: Number(circle[1]), label: `${Utils.cleanNumber(circle[1])} in diameter` };
+        return null;
+      }
+      const shape = String(entry.shape || 'square').toLowerCase(); const w = Number(entry.width || 0); const h = Number(entry.height || (shape === 'square' ? w : 0)); const d = Number(entry.diameter || 0);
+      if (shape === 'circle' && d > 0) return { id: String(entry.id || `circle-${index}-${d}`), shape, diameter: d, label: String(entry.label || `${Utils.cleanNumber(d)} in diameter`) };
+      if (w > 0 && h > 0) return { id: String(entry.id || `${shape}-${index}-${w}-${h}`), shape: w === h ? 'square' : 'rectangle', width: w, height: h, label: String(entry.label || `${Utils.cleanNumber(w)} × ${Utils.cleanNumber(h)} in`) };
+      return null;
+    },
+    cleanNumber(value) { const num = Number(value); return Number.isInteger(num) ? String(num) : String(Number(num.toFixed(2))); },
+    roundMoney(value) { return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100; },
+    formatCurrency(value) { const n = Utils.roundMoney(value); return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 }).format(n); },
+    slugify(value) { return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90); },
+    choice({ title = 'Please choose', message = '', icon = '✨', primaryLabel = 'Continue', secondaryLabel = 'Cancel', hideSecondary = false } = {}) {
+      return new Promise((resolve) => {
+        document.getElementById('app-modal-overlay')?.remove();
+        const overlay = document.createElement('div'); overlay.id = 'app-modal-overlay'; overlay.className = 'app-modal-overlay';
+        overlay.innerHTML = `<section class="app-modal" role="dialog" aria-modal="true"><div class="app-modal__icon" aria-hidden="true">${Utils.escapeHTML(icon)}</div><h2>${Utils.escapeHTML(title)}</h2><p>${Utils.escapeHTML(message)}</p><div class="app-modal__actions">${hideSecondary ? '' : `<button type="button" class="admin-button admin-button--soft" data-modal-secondary>${Utils.escapeHTML(secondaryLabel)}</button>`}<button type="button" class="admin-button admin-button--dark" data-modal-primary>${Utils.escapeHTML(primaryLabel)}</button></div></section>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('[data-modal-primary]')?.addEventListener('click', () => { overlay.remove(); resolve('primary'); });
+        overlay.querySelector('[data-modal-secondary]')?.addEventListener('click', () => { overlay.remove(); resolve('secondary'); });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay && !hideSecondary) { overlay.remove(); resolve('dismiss'); } });
+      });
+    },
+    async compressImage(file, options = {}) {
+      const maxDimension = 1920; const maxBytes = 500000;
+      let source; let objectURL = null;
+      if ('createImageBitmap' in window) { source = await createImageBitmap(file, { imageOrientation: 'from-image' }); } else { objectURL = URL.createObjectURL(file); source = await new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = () => reject(new Error('Invalid image.')); image.src = objectURL; }); }
+      try {
+        let scale = Math.min(1, maxDimension / Math.max(source.width, source.height)); let blob = null; let quality = 0.9;
+        for (let i = 0; i < 5; i++) {
+          const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(source.width * scale)); canvas.height = Math.max(1, Math.round(source.height * scale));
+          const context = canvas.getContext('2d', { alpha: true }); context.imageSmoothingEnabled = true; context.imageSmoothingQuality = 'high'; context.drawImage(source, 0, 0, canvas.width, canvas.height);
+          quality = 0.9;
+          for (let j = 0; j < 8; j++) { blob = await new Promise((r) => canvas.toBlob(r, 'image/webp', quality)); if (blob.size <= maxBytes) break; quality -= 0.08; }
+          if (blob?.size <= maxBytes) break; scale *= 0.82;
+        }
+        if (!blob || blob.size > maxBytes) throw new Error('Could not compress image.');
+        return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.webp`, { type: 'image/webp', lastModified: Date.now() });
+      } finally { source?.close?.(); if (objectURL) URL.revokeObjectURL(objectURL); }
+    }
+  };
 
   const state = {
     page: document.body.dataset.adminPage,
@@ -29,16 +125,76 @@
     'Standard': `Keep away from direct water contact and heat sources.\nDust gently with a clean, dry brush or soft cloth.\nHandle any delicate handmade elements with care.\nAvoid direct sunlight to maintain the original finish.\nProtect from heavy objects resting on or crushing the piece.`
   };
 
-  document.addEventListener('DOMContentLoaded', initialise);
+  document.addEventListener('DOMContentLoaded', initialiseApp);
 
-  async function initialise() {
+  function bindAdminRouter() {
+    window.addEventListener('popstate', () => {
+      executeRouteTransition(window.location.hash || '#dashboard');
+    });
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-admin-nav-link], a[href^="#"]');
+      if (!link) return;
+      e.preventDefault();
+      executeRouteTransition(new URL(link.href, window.location.origin).hash || '#dashboard');
+    });
+  }
+
+  async function executeRouteTransition(hash) {
+    const root = document.querySelector('.admin-main');
+    if (root) {
+      root.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+      root.style.opacity = '0';
+      root.style.transform = 'translateY(5px)';
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    handleRoute(hash);
+
+    if (root) {
+      window.scrollTo(0, 0);
+      requestAnimationFrame(() => {
+        root.style.opacity = '1';
+        root.style.transform = 'translateY(0)';
+      });
+    }
+  }
+
+  function handleRoute(hash) {
+    const page = hash.replace('#', '') || 'dashboard';
+    state.page = page;
+    
+    // Hide all views
+    document.querySelectorAll('.spa-view').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
+    
+    // Show active view
+    const activeView = document.getElementById(`view-${page}`);
+    if (activeView) {
+      activeView.style.display = 'block';
+      requestAnimationFrame(() => activeView.classList.add('active'));
+    }
+
+    // Update navigation active states
+    document.querySelectorAll('[data-admin-nav-link]').forEach(nav => {
+      nav.classList.toggle('is-active', nav.dataset.adminNavLink === page);
+    });
+
+    // Close mobile sidebar if open
+    document.querySelector('.admin-sidebar')?.classList.remove('is-open');
+
+    initialisePage();
+  }
+
+  async function initialiseApp() {
     bindGlobalAdminEvents();
+    bindAdminRouter();
+    
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && await hasAdminRole(session.user.id)) {
       state.session = session;
       showWorkspace();
-      await initialisePage();
-      listenForNewOrders(); // Start listening for live orders
+      handleRoute(window.location.hash || '#dashboard');
+      listenForNewOrders();
     } else {
       if (session) await supabaseClient.auth.signOut();
       showLogin();
@@ -185,7 +341,7 @@
     if (!host) return;
     const recent = recentResult.data || [];
     host.innerHTML = recent.length ? recent.map((enquiry) => `
-      <a class="dashboard-enquiry" href="/admin/admin-enquiries.html">
+      <a class="dashboard-enquiry" href="#enquiries">
         <div>
           <h3>${Utils.escapeHTML(enquiry.reference)}</h3>
           <p>${Utils.escapeHTML(enquiry.customer_name)} · ${Utils.escapeHTML(enquiry.status)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</p>
@@ -195,8 +351,9 @@
   }
 
   /* ---------------- Products ---------------- */
+  let productsBound = false;
   async function initialiseProducts() {
-    bindProductEvents(); 
+    if (!productsBound) { bindProductEvents(); productsBound = true; }
     resetProductForm(); 
     await loadCanvasSizesForDropdown();
     await loadProducts();
@@ -210,17 +367,143 @@
     updateCanvasFields();
   }
 
+  function renderCategoryDropdown() {
+    const menu = document.getElementById('category-dropdown-menu');
+    if (!menu) return;
+    
+    // Extract unique categories currently used in the DB
+    const categories = [...new Set(state.products.map(p => p.main_category).filter(Boolean))];
+    if (!categories.includes('Whimsical Art')) categories.unshift('Whimsical Art');
+    if (!categories.includes('Painted Whispers')) categories.push('Painted Whispers');
+    const uniqueCategories = [...new Set(categories)];
+    
+    menu.innerHTML = uniqueCategories.map(cat => `
+      <div class="custom-select-option" data-value="${Utils.escapeHTML(cat)}">${Utils.escapeHTML(cat)}</div>
+    `).join('') + `
+      <div class="custom-select-input-wrapper">
+        <input type="text" id="category-dropdown-new" placeholder="Type a new category & press Enter..." autocomplete="off">
+      </div>
+    `;
+  }
+
+  function bindCustomDropdown() {
+    const wrapper = document.getElementById('category-dropdown-wrapper');
+    const btn = document.getElementById('category-dropdown-btn');
+    const menu = document.getElementById('category-dropdown-menu');
+    const hiddenInput = document.getElementById('product-category');
+    const label = document.getElementById('category-dropdown-label');
+    
+    if(!wrapper) return;
+
+    btn.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      if (!isExpanded) renderCategoryDropdown();
+      
+      btn.setAttribute('aria-expanded', !isExpanded);
+      if (!isExpanded) {
+         menu.classList.add('is-open');
+         setTimeout(() => document.getElementById('category-dropdown-new')?.focus(), 50);
+      } else {
+         menu.classList.remove('is-open');
+      }
+    });
+
+    menu.addEventListener('click', (e) => {
+      const option = e.target.closest('.custom-select-option');
+      if (option) {
+        hiddenInput.value = option.dataset.value;
+        label.textContent = option.dataset.value;
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+        updateProductCategoryUI();
+        if (CARE_GUIDES[option.dataset.value]) setValue('product-care', CARE_GUIDES[option.dataset.value]);
+      }
+    });
+
+    menu.addEventListener('keydown', (e) => {
+      if (e.target.id === 'category-dropdown-new' && e.key === 'Enter') {
+        e.preventDefault();
+        const val = e.target.value.trim();
+        if (val) {
+          hiddenInput.value = val;
+          label.textContent = val;
+          btn.setAttribute('aria-expanded', 'false');
+          menu.classList.remove('is-open');
+          updateProductCategoryUI();
+        }
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+      }
+    });
+  }
+
+  function renderFilterDropdown() {
+    const menu = document.getElementById('filter-dropdown-menu');
+    if (!menu) return;
+    
+    // Dynamically extract only active, existing main categories from the database
+    const categories = [...new Set(state.products.filter(p => p.is_active).map(p => p.main_category).filter(Boolean))];
+    
+    menu.innerHTML = `
+      <div class="custom-select-option" data-value="all">All products</div>
+      <div class="custom-select-option" data-value="active">Visible only</div>
+      <div class="custom-select-option" data-value="hidden">Hidden only</div>
+      ${categories.length ? '<div style="height:1px; background:var(--line); margin:4px 0;"></div>' : ''}
+      ${categories.map(cat => `<div class="custom-select-option" data-value="${Utils.escapeHTML(cat)}">${Utils.escapeHTML(cat)}</div>`).join('')}
+    `;
+  }
+
+  function bindFilterDropdown() {
+    const wrapper = document.getElementById('filter-dropdown-wrapper');
+    const btn = document.getElementById('filter-dropdown-btn');
+    const menu = document.getElementById('filter-dropdown-menu');
+    const hiddenInput = document.getElementById('product-filter');
+    const label = document.getElementById('filter-dropdown-label');
+    
+    if(!wrapper) return;
+
+    btn.addEventListener('click', () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      if (!isExpanded) renderFilterDropdown();
+      
+      btn.setAttribute('aria-expanded', !isExpanded);
+      if (!isExpanded) {
+         menu.classList.add('is-open');
+      } else {
+         menu.classList.remove('is-open');
+      }
+    });
+
+    menu.addEventListener('click', (e) => {
+      const option = e.target.closest('.custom-select-option');
+      if (option) {
+        hiddenInput.value = option.dataset.value;
+        label.textContent = option.textContent;
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+        renderProductList(); // Trigger the actual filter update
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrapper.contains(e.target)) {
+        btn.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('is-open');
+      }
+    });
+  }
+
   function bindProductEvents() {
+    bindCustomDropdown();
+    bindFilterDropdown();
     document.getElementById('product-form')?.addEventListener('submit', saveProduct);
     document.getElementById('new-product')?.addEventListener('click', () => { resetProductForm(); document.getElementById('product-title')?.focus(); });
     document.getElementById('reset-product-form')?.addEventListener('click', resetProductForm);
-    document.getElementById('product-category')?.addEventListener('change', (event) => {
-      updateProductCategoryUI();
-      const category = event.target.value || 'Standard';
-      if (CARE_GUIDES[category]) {
-        setValue('product-care', CARE_GUIDES[category]);
-      }
-    });
     document.getElementById('canvas-shape')?.addEventListener('change', updateCanvasFields);
     document.getElementById('product-price')?.addEventListener('change', handleSellingPriceChange);
     document.getElementById('product-mrp')?.addEventListener('input', () => { if (!state.suppressMRPTracking) state.mrpManuallyEdited = true; });
@@ -229,7 +512,6 @@
     document.getElementById('product-images')?.addEventListener('change', handleImageSelection);
     document.getElementById('image-preview-list')?.addEventListener('click', handleImagePreviewAction);
     document.getElementById('product-search')?.addEventListener('input', renderProductList);
-    document.getElementById('product-filter')?.addEventListener('change', renderProductList);
     document.getElementById('product-list')?.addEventListener('click', handleProductAction);
   }
 
@@ -255,25 +537,39 @@
     
     const filtered = state.products.filter((product) => {
       const text = `${product.title || ''} ${product.main_category || ''} ${product.sub_category || ''}`.toLowerCase();
-      return (!search || text.includes(search)) && (filter === 'all' || (filter === 'active' && product.is_active) || (filter === 'hidden' && !product.is_active));
+      const matchesSearch = !search || text.includes(search);
+      const matchesFilter = filter === 'all' || 
+                            (filter === 'active' && product.is_active) || 
+                            (filter === 'hidden' && !product.is_active) || 
+                            (product.main_category === filter);
+      return matchesSearch && matchesFilter;
     });
     
     document.getElementById('product-count').textContent = String(filtered.length);
     if (!filtered.length) { host.innerHTML = '<div class="admin-empty">No products match this view.</div>'; return; }
     
     host.innerHTML = filtered.map((product) => `
-      <article class="product-row" data-product-id="${Utils.escapeHTML(product.id)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt="">
-        <div>
-          <h3>${Utils.escapeHTML(product.title)}</h3>
-          <p>${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep time')}</p>
-          <span class="status-pill ${product.is_active ? 'is-active' : ''}">${product.is_active ? 'Visible' : 'Hidden'}</span>
+      <article data-product-id="${Utils.escapeHTML(product.id)}" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt="" style="width: 76px; height: 76px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; border: 1px solid var(--line);">
+        
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px;">
+          <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Utils.escapeHTML(product.title)}</h3>
+          <p style="margin: 0; font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep')}</p>
+          <span class="status-pill ${product.is_active ? 'is-active' : ''}" style="margin: 2px 0 0; align-self: flex-start;">${product.is_active ? 'Visible' : 'Hidden'}</span>
         </div>
-        <div class="product-row__actions">
-          <button type="button" data-product-action="edit">Edit</button>
-          <button type="button" data-product-action="duplicate">Duplicate</button>
-          <button type="button" data-product-action="toggle">${product.is_active ? 'Hide' : 'Show'}</button>
-          <button type="button" class="is-danger" data-product-action="delete">Delete</button>
+        
+        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; border-left: 1px solid var(--line-strong); padding-left: 16px;">
+          <button type="button" class="admin-button admin-button--soft" data-product-action="edit" title="Edit" style="width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button type="button" class="admin-button admin-button--soft" data-product-action="toggle" title="${product.is_active ? 'Hide' : 'Show'}" style="width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 8px;">
+            ${product.is_active 
+              ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>' 
+              : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'}
+          </button>
+          <button type="button" class="admin-button admin-button--soft is-danger" data-product-action="delete" title="Delete" style="width: 32px; height: 32px; min-height: 32px; padding: 0; color: var(--red); border-color: rgba(186,102,119,0.3); border-radius: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
         </div>
       </article>`).join('');
   }
@@ -296,7 +592,10 @@
     setValue('product-title', product.title || ''); 
     setValue('product-price', product.actual_price ?? ''); 
     setValue('product-mrp', product.fake_price ?? '');
-    setValue('product-category', product.main_category || 'Standard'); 
+    setValue('product-category', product.main_category || 'Whimsical Art'); 
+    
+    const label = document.getElementById('category-dropdown-label');
+    if (label) label.textContent = product.main_category || 'Whimsical Art'; 
     setValue('product-subcategory', product.sub_category || ''); 
     setValue('product-preparation', product.preparation_days || '2-3 Days'); 
     setValue('product-sort-order', product.sort_order ?? 100); 
@@ -346,7 +645,11 @@
     const form = document.getElementById('product-form'); 
     if (form) form.reset(); 
     
-    const defaultCategory = document.getElementById('product-category')?.value || 'Whimsical Art';
+    const defaultCategory = 'Whimsical Art';
+    setValue('product-category', defaultCategory);
+    const label = document.getElementById('category-dropdown-label');
+    if (label) label.textContent = defaultCategory;
+    
     setValue('product-id', ''); 
     setValue('product-care', CARE_GUIDES[defaultCategory] || APP_CONFIG.DEFAULT_CARE_GUIDE); 
     setValue('product-preparation', '2-3 Days'); 
@@ -599,8 +902,9 @@
   }
 
   /* ---------------- Settings ---------------- */
+  let settingsBound = false;
   async function initialiseSettings() {
-    bindSettingsEvents(); 
+    if (!settingsBound) { bindSettingsEvents(); settingsBound = true; }
     await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews()]); 
     resetCouponForm(); 
     resetReviewForm();
@@ -684,8 +988,8 @@
     state.canvasSizes.forEach((size, index) => {
       const shape = size.shape || 'square';
       const itemHTML = `
-        <div class="structured-row" data-canvas-index="${index}" style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff;">
-          <div style="display:grid;gap:4px;">
+        <div class="structured-row" data-canvas-index="${index}" style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px;">
+          <div style="display:grid;gap:8px;flex:1;">
             ${shape === 'circle' 
               ? `<label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Diameter (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.diameter || 8}"></label>`
               : shape === 'rectangle'
@@ -797,19 +1101,21 @@
     if (!host) return;
     
     const cards = state.vipTiers.map((tier, index) => `
-      <div class="structured-row is-vip" data-vip-index="${index}" style="display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;position:relative;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <strong style="font-size:0.65rem;color:var(--muted);">Tier ${index + 1}</strong>
-          <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''} style="width:24px;height:24px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:12px;${index === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}">×</button>
+      <div class="structured-row is-vip" data-vip-index="${index}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <strong style="font-size:0.75rem;color:var(--charcoal);">Tier ${index + 1}</strong>
+          <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''} style="width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:0.2s ease;${index === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}">×</button>
         </div>
-        <label style="display:grid;gap:2px;">
-          <span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Min quantity</span>
-          <input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}>
-        </label>
-        <label style="display:grid;gap:2px;">
-          <span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Discount %</span>
-          <input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}">
-        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <label style="display:grid;gap:4px;">
+            <span style="font-size:0.65rem;font-weight:600;color:var(--muted);">Min quantity</span>
+            <input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''} style="min-height:36px;padding:6px 10px;">
+          </label>
+          <label style="display:grid;gap:4px;">
+            <span style="font-size:0.65rem;font-weight:600;color:var(--muted);">Discount %</span>
+            <input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}" style="min-height:36px;padding:6px 10px;">
+          </label>
+        </div>
       </div>`).join('');
 
     host.innerHTML = `<div class="vip-columns-grid">${cards}</div>`;
@@ -1122,16 +1428,18 @@
   }
 
   /* ---------------- Enquiries & Shiprocket ---------------- */
+  let enquiriesBound = false;
   async function initialiseEnquiries() {
-    document.getElementById('refresh-enquiries')?.addEventListener('click', loadEnquiries);
-    document.getElementById('enquiry-search')?.addEventListener('input', renderEnquiries);
-    document.getElementById('enquiry-filter')?.addEventListener('change', renderEnquiries);
-    document.getElementById('enquiry-list')?.addEventListener('change', handleEnquiryStatusChange);
-    document.getElementById('enquiry-list')?.addEventListener('click', handleShiprocketPush); 
-    
+    if (!enquiriesBound) {
+      document.getElementById('refresh-enquiries')?.addEventListener('click', loadEnquiries);
+      document.getElementById('enquiry-search')?.addEventListener('input', renderEnquiries);
+      document.getElementById('enquiry-filter')?.addEventListener('change', renderEnquiries);
+      document.getElementById('enquiry-list')?.addEventListener('change', handleEnquiryStatusChange);
+      document.getElementById('enquiry-list')?.addEventListener('click', handleShiprocketPush); 
+      enquiriesBound = true;
+    }
     // We must load the product catalog into memory first so we can match product images 
-    // and calculate the exact original MRP for the price distribution list.
-    await loadProducts();
+    if (!state.products.length) await loadProducts();
     await loadEnquiries();
   }
   
@@ -1162,9 +1470,9 @@
       // Conditionally render the Shiprocket button
       let shiprocketButton = '';
       if (enquiry.shiprocket_order_id) {
-        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; min-height: 36px; font-size: 0.65rem;">Track on Shiprocket</a>`;
+        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; height: 38px;">Track on Shiprocket</a>`;
       } else if (enquiry.status === 'completed') {
-        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}" style="width: 100%; min-height: 36px; font-size: 0.65rem;">Push to Shiprocket</button>`;
+        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}" style="width: 100%; height: 38px;">Push to Shiprocket</button>`;
       }
 
       // Calculate the exact Total MRP dynamically for the admin view
@@ -1181,106 +1489,126 @@
       const totalMrp = Utils.roundMoney(computedTotalMrp);
       const mrpDiscount = Utils.roundMoney(Math.max(0, totalMrp - (enquiry.subtotal || 0)));
 
-      // Render the full row with the exact 3-column flex layout
+      // Render the collapsible row
       return `
-        <article class="enquiry-row admin-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" style="display: flex; flex-wrap: wrap; gap: 20px; padding: 18px; border-bottom: none; margin-bottom: 16px; background: rgba(255,255,255,0.7);">
-          
-          <!-- Column 1: Customer Details -->
-          <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 10px;">
-            <h2 style="margin:0; font-size:1.05rem; font-family: monospace;">${Utils.escapeHTML(enquiry.reference)}</h2>
-            <div style="font-size: 0.75rem; color: var(--charcoal); display: flex; flex-direction: column; gap: 6px;">
-              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>👤</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_name)}</span></span>
-              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>📱</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
-              ${enquiry.customer_email ? `<span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>✉️</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
-              <span style="display: flex; gap: 8px; align-items: start; line-height: 1.4; color: var(--muted);">
-                <strong>📍</strong> 
-                <span style="color: var(--charcoal);">
-                  ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
-                  ${enquiry.address_line_2 ? '<br>' + Utils.escapeHTML(enquiry.address_line_2) : ''}<br>
-                  ${Utils.escapeHTML(enquiry.customer_city || '')}, ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
+        <details class="admin-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" style="margin-bottom: 16px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <summary class="enquiry-summary" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; cursor: pointer; list-style: none; user-select: none;">
+            <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 200px;">
+              <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(197, 139, 158, 0.12); color: var(--pink-deep); border-radius: 50%; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+              <div>
+                <strong style="font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); display: block;">${Utils.escapeHTML(enquiry.customer_name)}</strong>
+                <span style="font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(enquiry.reference)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px; justify-content: flex-end;">
+              <div style="text-align: right;">
+                <strong style="font-size: 0.9rem; color: var(--charcoal); display: block;">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+              </div>
+              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em; min-width: 76px; text-align: center;">${Utils.escapeHTML(enquiry.status)}</span>
+              <div class="enquiry-chevron" style="color: var(--muted); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: grid; place-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            </div>
+          </summary>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 0 20px 20px; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 20px;">
+            <!-- Column 1: Customer Details -->
+            <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 10px;">
+              <p class="admin-eyebrow">Customer & Delivery</p>
+              <div style="font-size: 0.8rem; color: var(--charcoal); display: flex; flex-direction: column; gap: 6px;">
+                <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>👤</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_name)}</span></span>
+                <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>📱</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
+                ${enquiry.customer_email ? `<span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>✉️</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
+                <span style="display: flex; gap: 8px; align-items: start; line-height: 1.4; color: var(--muted);">
+                  <strong>📍</strong> 
+                  <span style="color: var(--charcoal);">
+                    ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
+                    ${enquiry.address_line_2 ? '<br>' + Utils.escapeHTML(enquiry.address_line_2) : ''}<br>
+                    ${Utils.escapeHTML(enquiry.customer_city || '')}, ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
+                  </span>
                 </span>
-              </span>
-              <span style="display: flex; gap: 8px; align-items: center; color: var(--muted); margin-top: 4px;"><strong>🕒</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN'))}</span></span>
+                ${enquiry.note ? `<div style="margin-top:6px; padding: 10px; background: var(--beige); border-radius: var(--radius-sm); border: 1px solid var(--line-strong); color: var(--charcoal); line-height: 1.4;"><strong style="color: var(--pink-deep); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Order Note:</strong>${Utils.escapeHTML(enquiry.note)}</div>` : ''}
+              </div>
             </div>
-          </div>
 
-          <!-- Column 2: Order Details & Price Distribution -->
-          <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 12px;">
-            <div style="background: rgba(244,143,177,0.05); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
-              ${(enquiry.items || []).map((item) => {
-                const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
-                const img = product?.images?.[0] || '/assets/th_logo.svg';
-                return `
-                  <div style="display: flex; gap: 10px; align-items: center;">
-                    <img src="${Utils.escapeHTML(img)}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line);">
-                    <div style="font-size: 0.72rem; line-height: 1.3;">
-                      <strong style="color: var(--charcoal);">${Utils.escapeHTML(item.title)}</strong> × ${item.quantity}<br>
-                      <span style="color: var(--muted);">${item.selected_size?.label ? `${Utils.escapeHTML(item.selected_size.label)}` : ''}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</span>
-                    </div>
-                  </div>`;
-              }).join('')}
-            </div>
-            
-            <div style="font-size: 0.72rem; display: flex; flex-direction: column; gap: 4px; padding: 0 4px;">
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--muted);">Price (MRP)</span>
-                <strong>${Utils.formatCurrency(totalMrp)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; color: var(--green);">
-                <span>Discount</span>
-                <strong>−${Utils.formatCurrency(mrpDiscount)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--charcoal);">Subtotal</span>
-                <strong>${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; color: var(--green);">
-                <span>VIP Savings</span>
-                <strong>−${Utils.formatCurrency(enquiry.vip_discount || 0)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; color: var(--green);">
-                <span>Coupon ${enquiry.coupon_code ? `(${Utils.escapeHTML(enquiry.coupon_code)})` : ''}</span>
-                <strong>−${Utils.formatCurrency(enquiry.coupon_discount || 0)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span style="color: var(--muted);">Shipping Fee</span>
-                <strong>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'FREE'}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.82rem; color: var(--charcoal);">
-                <span><strong>Order Total</strong></span>
-                <strong>${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Column 3: Actions -->
-          <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
-            <div style="display: flex; justify-content: flex-end;">
-              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em;">${Utils.escapeHTML(enquiry.status)}</span>
-            </div>
-            
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+            <!-- Column 2: Order Details & Price Distribution -->
+            <div style="flex: 1 1 0%; min-width: 240px; display: flex; flex-direction: column; gap: 14px;">
+              <p class="admin-eyebrow">Order Summary</p>
+              <details class="admin-products-dropdown" style="background: var(--beige); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden;">
+                <summary style="padding: 10px 14px; font-size: 0.75rem; font-weight: 600; color: var(--charcoal); cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; user-select: none; outline: none; transition: background-color 0.2s ease, box-shadow 0.2s ease;">
+                  <span>${enquiry.items?.length || 0} item${enquiry.items?.length === 1 ? '' : 's'} in bag</span>
+                  <span class="dropdown-chevron" style="transition: transform 0.25s ease; display: grid; place-items: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                  </span>
+                </summary>
+                <div style="padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto;">
+                  ${(enquiry.items || []).map((item) => {
+                    const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
+                    const img = product?.images?.[0] || '/assets/th_logo.svg';
+                    return `
+                      <div style="display: flex; gap: 12px; align-items: center; padding-top: 10px; border-top: 1px solid var(--line);">
+                        <img src="${Utils.escapeHTML(img)}" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line);">
+                        <div style="font-size: 0.75rem; line-height: 1.3;">
+                          <strong style="color: var(--charcoal);">${Utils.escapeHTML(item.title)}</strong> × ${item.quantity}<br>
+                          <span style="color: var(--muted); font-size: 0.65rem;">${item.selected_size?.label ? `${Utils.escapeHTML(item.selected_size.label)}` : ''}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</span>
+                        </div>
+                      </div>`;
+                  }).join('')}
+                </div>
+              </details>
               
-              <!-- Side-by-side Dropdown and WhatsApp -->
-              <div style="display: flex; gap: 8px; align-items: flex-end; width: 100%;">
-                <label style="flex: 1; display:flex; flex-direction: column; gap: 4px; font-size: 0.58rem; font-weight: 900; color: var(--muted); text-transform: uppercase;">
-                  Status
-                  <select class="admin-input" data-enquiry-status style="font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0 8px; height: 36px; width: 100%; max-width: 100%; box-sizing: border-box; margin: 0;">
-                    ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+              <div style="font-size: 0.75rem; display: flex; flex-direction: column; gap: 6px; padding: 0 4px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Price (MRP)</span>
+                  <strong>${Utils.formatCurrency(totalMrp)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
+                  <span>Discount</span>
+                  <strong>−${Utils.formatCurrency(mrpDiscount)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--charcoal);">Subtotal</span>
+                  <strong>${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
+                  <span>VIP Savings</span>
+                  <strong>−${Utils.formatCurrency(enquiry.vip_discount || 0)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
+                  <span>Coupon ${enquiry.coupon_code ? `(${Utils.escapeHTML(enquiry.coupon_code)})` : ''}</span>
+                  <strong>−${Utils.formatCurrency(enquiry.coupon_discount || 0)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: var(--muted);">Shipping Fee</span>
+                  <strong>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'FREE'}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--charcoal);">
+                  <span><strong>Order Total</strong></span>
+                  <strong>${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Column 3: Actions -->
+            <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
+              <p class="admin-eyebrow">Actions</p>
+              <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                <label style="display:flex; flex-direction: column; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--charcoal);">
+                  Update Status
+                  <select class="admin-input" data-enquiry-status style="cursor: pointer; padding: 0 12px; height: 40px;">
+                    ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status.charAt(0).toUpperCase() + status.slice(1)}</option>`).join('')}
                   </select>
                 </label>
                 
-                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button" target="_blank" rel="noopener" style="flex: 1; justify-content: center; background: #178a59; color: #fff; border: none; height: 36px; padding: 0; font-size: 0.65rem; margin: 0;">
-                  <svg width="24" height="24" viewBox="0 0 24 24" style="width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; margin-right: 4px; flex-shrink: 0;"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.6Z"></path><path d="M9 8.5c.4 2 2 3.7 4.2 4.6l1.1-1.1 2 .9c.2.1.3.3.2.5-.2 1.1-1.2 1.8-2.3 1.7-4.5-.5-7.8-4-8.2-8.3-.1-1.1.7-2.1 1.8-2.2.2 0 .4.1.5.3l.8 2-1 1.1"></path></svg>
-                  WhatsApp
+                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; justify-content: center; height: 40px; color: #178a59; border-color: #178a59; background: #f0fdf4;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="margin-right: 8px; flex-shrink: 0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                  Message Customer
                 </a>
+                
+                ${shiprocketButton}
               </div>
-              
-              ${shiprocketButton ? shiprocketButton.replace('class="admin-button admin-button--dark"', 'class="admin-button admin-button--dark" style="width: 100%; min-height: 36px; font-size: 0.65rem;"') : ''}
             </div>
-          </div>
 
-        </article>`;
+          </div>
+        </details>`;
     }).join(''); 
   }
   
@@ -1303,10 +1631,10 @@
       const overlay = document.createElement('div');
       // Using inline layout styles to ensure it floats perfectly in the center of the screen
       // while recycling your existing admin CSS classes for the inputs and buttons!
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(74,59,66,0.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;';
       
       overlay.innerHTML = `
-        <div style="background:#fff;padding:24px;border-radius:16px;width:90%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,0.15);transform:translateY(10px);transition:transform 0.2s ease;">
+        <div style="background:var(--paper);padding:24px;border-radius:var(--radius-lg);width:90%;max-width:380px;box-shadow:var(--shadow-md);transform:translateY(10px);transition:transform 0.2s ease;">
           <div style="text-align:center;margin-bottom:20px;">
              <span style="font-size:24px;display:block;margin-bottom:8px;">📦</span>
              <h2 style="margin:0;font-family:'Lora',serif;font-size:1.4rem;color:var(--charcoal);">Package Details</h2>

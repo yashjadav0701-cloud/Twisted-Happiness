@@ -37,7 +37,7 @@ There is no customer login, website payment, COD automation or Shiprocket flow.
 
 ## Required public configuration
 
-Edit `js/config.js` only when your Supabase project or domain changes:
+Edit `config.js` only when your Supabase project or domain changes:
 
 - `SITE_URL`
 - `SUPABASE_URL`

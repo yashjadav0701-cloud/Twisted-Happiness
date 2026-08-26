@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#fcf7f8">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtah96hf" type="image/svg+xml">
+  <title>Admin Command Center | Twisted Happiness</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/admin.css?v=mtah96hf">
+</head>
+
+<body data-admin-page="dashboard">
+  <!-- Authentication Gate -->
+  <div id="admin-auth-root"></div>
+
+  <!-- Unified Workspace Shell -->
+  <div id="admin-workspace" class="admin-shell hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <div>
+        <a class="admin-brand" href="#dashboard" aria-label="Admin Home">
+          <img src="/assets/th_logo_with_heading.svg?v=mtah96hf" alt="Twisted Happiness" class="admin-brand-logo-wide">
+        </a>
+        <nav class="admin-nav">
+          <a data-admin-nav-link="dashboard" class="is-active" href="#dashboard">Overview</a>
+          <a data-admin-nav-link="products" href="#products">Products</a>
+          <a data-admin-nav-link="enquiries" href="#enquiries">Enquiries</a>
+          <a data-admin-nav-link="settings" href="#settings">Settings</a>
+        </nav>
+      </div>
+      <button id="admin-logout" class="admin-logout" type="button">Secure logout</button>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-mobile-head">
+        <a class="admin-brand" href="#dashboard" aria-label="Admin Home">
+          <img src="/assets/th_logo_with_heading.svg?v=mtah96hf" alt="Twisted Happiness" class="admin-brand-logo-wide">
+        </a>
+        <button type="button" data-admin-menu aria-label="Open navigation">☰</button>
+      </header>
+
+      <!-- ============================================== -->
+      <!-- VIEW: DASHBOARD                                -->
+      <!-- ============================================== -->
+      <div id="view-dashboard" class="spa-view active">
+        <header class="admin-page-head">
+          <div>
+            <p class="admin-eyebrow">Studio at a glance</p>
+            <h1>Overview</h1>
+            <p>Only the numbers that help you manage the catalog and WhatsApp enquiries.</p>
+          </div>
+          <a class="admin-button admin-button--dark" href="#products">Add product</a>
+        </header>
+
+        <section id="dashboard-metrics" class="dashboard-metrics" aria-live="polite">
+          <article class="metric-card"><span>Visible products</span><strong id="metric-products-active">—</strong><small id="metric-products-total">Loading catalog…</small></article>
+          <article class="metric-card"><span>New enquiries</span><strong id="metric-enquiries-new">—</strong><small id="metric-enquiries-total">Loading enquiries…</small></article>
+          <article class="metric-card"><span>Active coupons</span><strong id="metric-coupons-active">—</strong><small id="metric-coupons-total">Loading offers…</small></article>
+          <article class="metric-card"><span>Public reviews</span><strong id="metric-reviews-approved">—</strong><small id="metric-reviews-total">Loading reviews…</small></article>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="admin-card">
+            <header class="admin-card__head"><div><p class="admin-eyebrow">Needs attention</p><h2>Recent enquiries</h2></div><a href="#enquiries">View all</a></header>
+            <div id="dashboard-enquiries" class="dashboard-list"><div class="admin-empty">Loading recent enquiries…</div></div>
+          </section>
+          <section class="admin-card">
+            <header class="admin-card__head"><div><p class="admin-eyebrow">Fast actions</p><h2>Manage your studio</h2></div></header>
+            <div class="quick-actions">
+              <a href="#products"><span>🌷</span><strong>Products</strong><small>Add, edit, arrange or hide creations.</small></a>
+              <a href="#settings"><span>🎁</span><strong>Offers</strong><small>Control VIP tiers, coupons and delivery.</small></a>
+              <a href="#settings"><span>⭐</span><strong>Reviews</strong><small>Approve and maintain social proof.</small></a>
+              <a href="/" target="_blank" rel="noopener"><span>↗</span><strong>Open storefront</strong><small>See the live customer experience.</small></a>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW: PRODUCTS                                 -->
+      <!-- ============================================== -->
+      <div id="view-products" class="spa-view" style="display: none;">
+        <header class="admin-page-head">
+          <div><p class="admin-eyebrow">Handmade catalog</p><h1>Products</h1><p>Create, update, arrange and hide products from one compact screen.</p></div>
+          <button id="new-product" class="admin-button admin-button--dark" type="button">New product</button>
+        </header>
+
+        <div class="admin-grid">
+          <section class="admin-card is-editor">
+            <header class="admin-card__head"><div><p class="admin-eyebrow" id="product-edit-indicator">New creation</p><h2 id="product-form-title">Add product</h2></div></header>
+            <div class="admin-card__body">
+              <form id="product-form" class="product-editor-form">
+                <input id="product-id" type="hidden">
+                
+                <div class="form-section">
+                  <h3 class="form-section-title">Essentials</h3>
+                  <div class="form-section-grid">
+                    <label class="admin-field is-wide"><span>Product title *</span><input id="product-title" class="admin-input" type="text" maxlength="150" required placeholder="Pastel Peony Bouquet"></label>
+                    
+                    <div class="admin-field">
+                      <span>Category *</span>
+                      <div class="admin-custom-select" id="category-dropdown-wrapper">
+                        <input type="hidden" id="product-category" value="Whimsical Art" required>
+                        <button type="button" class="admin-input custom-select-button" id="category-dropdown-btn" aria-expanded="false">
+                          <span id="category-dropdown-label" style="pointer-events:none;">Whimsical Art</span>
+                          <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none; transition: transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div class="custom-select-menu" id="category-dropdown-menu"></div>
+                      </div>
+                    </div>
+                    
+                    <label class="admin-field"><span>Subcategory *</span><input id="product-subcategory" class="admin-input" type="text" maxlength="80" list="subcategory-list" required placeholder="e.g. Florals"><datalist id="subcategory-list"></datalist></label>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3 class="form-section-title">Pricing & Display</h3>
+                  <div class="form-section-grid">
+                    <label class="admin-field"><span>Selling price (₹) *</span><input id="product-price" class="admin-input" type="number" min="1" step="0.01" required></label>
+                    <label class="admin-field"><span>MRP / strike price *</span><div class="input-action"><input id="product-mrp" class="admin-input" type="number" min="1" step="0.01" required><button id="generate-mrp" type="button">Auto</button></div><small id="mrp-hint">Generated once and stored.</small></label>
+                    <label class="admin-field"><span>Preparation time *</span><select id="product-preparation" class="admin-input" required><option>1-2 Days</option><option selected>2-3 Days</option><option>3-4 Days</option><option>5-6 Days</option><option>7-10 Days</option><option>10-14 Days</option></select></label>
+                    <label class="admin-field"><span>Display order</span><input id="product-sort-order" class="admin-input" type="number" min="0" step="1" value="100"></label>
+                  </div>
+                </div>
+
+                <fieldset id="canvas-fields" class="form-section canvas-fields hidden" style="margin: 0 0 16px;">
+                  <legend style="padding:0; margin-bottom:12px; font-family:'Lora',serif; font-size:1.1rem; color:var(--pink-deep); border-bottom:1px solid var(--line); width:100%;">Canvas Configuration</legend>
+                  <div class="form-section-grid">
+                    <label class="admin-field"><span>Shape</span><select id="canvas-shape" class="admin-input"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle</option></select></label>
+                    <label class="admin-field"><span>Select size *</span><select id="canvas-size-select" class="admin-input" required><option value="">Loading sizes...</option></select></label>
+                    <label id="canvas-orientation-field" class="admin-field hidden"><span>Default orientation</span><select id="canvas-orientation" class="admin-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
+                  </div>
+                </fieldset>
+
+                <div class="form-section">
+                  <h3 class="form-section-title">Media & Content</h3>
+                  <label class="admin-field is-wide" style="margin-bottom:16px;"><span>Description *</span><textarea id="product-description" class="admin-input" required maxlength="3000" rows="4" placeholder="Tell the story of this creation…"></textarea></label>
+                  
+                  <label id="upload-zone" class="upload-zone" style="margin-bottom:16px;"><input id="product-images" class="hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple><span><strong>Add product images</strong><small>Up to 8 images. Automatically optimized to WebP.</small></span></label>
+                  <div id="image-preview-list" class="image-preview-list" style="margin-bottom:16px;"></div>
+
+                  <label class="admin-field is-wide" style="margin-bottom:20px;"><span>Care guide</span><textarea id="product-care" class="admin-input" maxlength="3000" rows="3"></textarea><small>One instruction per line.</small></label>
+                  
+                  <label class="switch-field is-wide"><input id="product-active" type="checkbox" checked><span><strong>Visible in customer catalog</strong><small>Turn this off to hide the product without deleting it.</small></span></label>
+                </div>
+
+                <div class="admin-form-actions" style="margin-top: 4px;">
+                  <button id="reset-product-form" class="admin-button admin-button--soft" type="button">Reset</button>
+                  <button id="save-product" class="admin-button admin-button--dark" type="submit">Save product</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="admin-card catalog-card">
+            <header class="admin-card__head"><div><p class="admin-eyebrow">Current catalog</p><h2>Your products</h2></div><span id="product-count" class="admin-count">0</span></header>
+            <div class="admin-toolbar">
+              <input id="product-search" class="admin-input" type="search" placeholder="Search products…">
+              <div class="admin-custom-select" id="filter-dropdown-wrapper">
+                <input type="hidden" id="product-filter" value="all">
+                <button type="button" class="admin-input custom-select-button" id="filter-dropdown-btn" aria-expanded="false" style="min-height: 40px;">
+                  <span id="filter-dropdown-label" style="pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">All products</span>
+                  <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none; transition: transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div class="custom-select-menu" id="filter-dropdown-menu"></div>
+              </div>
+            </div>
+            <div id="product-list" class="product-list"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW: ENQUIRIES                                -->
+      <!-- ============================================== -->
+      <div id="view-enquiries" class="spa-view" style="display: none;">
+        <header class="admin-page-head">
+          <div><p class="admin-eyebrow">Secure WhatsApp requests</p><h1>Enquiries</h1><p>Lightweight website enquiries only. Payment and final order confirmation still happen on WhatsApp.</p></div>
+          <button id="refresh-enquiries" class="admin-button admin-button--soft" type="button">Refresh</button>
+        </header>
+        <section class="admin-card">
+          <div class="admin-toolbar enquiry-toolbar">
+            <input id="enquiry-search" class="admin-input" type="search" placeholder="Search reference, name or phone…">
+            <select id="enquiry-filter" class="admin-input"><option value="all">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+          </div>
+          <div id="enquiry-list" class="enquiry-list"></div>
+        </section>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW: SETTINGS                                 -->
+      <!-- ============================================== -->
+      <div id="view-settings" class="spa-view" style="display: none;">
+        <header class="admin-page-head">
+          <div><p class="admin-eyebrow">Business controls</p><h1>Settings</h1><p>Manage the rules customers see and the rules the secure checkout enforces.</p></div>
+        </header>
+
+        <div class="settings-stack">
+          <section class="admin-card">
+            <header class="admin-card__head"><div><p class="admin-eyebrow">Store essentials</p><h2>Customer-facing settings</h2></div></header>
+            <div class="admin-card__body">
+              <form id="settings-form" class="admin-form">
+                <label class="admin-field"><span>Store name *</span><input id="setting-store-name" class="admin-input" type="text" required></label>
+                <label class="admin-field"><span>WhatsApp number *</span><input id="setting-whatsapp" class="admin-input" type="tel" inputmode="numeric" required><small>Include country code: 917383333494</small></label>
+                <label class="admin-field"><span>Delivery estimate (₹)</span><input id="setting-delivery-fee" class="admin-input" type="number" min="0" step="0.01" required></label>
+                <label class="admin-field"><span>Free delivery from (₹)</span><input id="setting-free-delivery" class="admin-input" type="number" min="0" step="0.01" required></label>
+                <label class="admin-field is-wide"><span>Announcement text</span><input id="setting-announcement" class="admin-input" type="text" maxlength="220"></label>
+                <label class="switch-field"><input id="setting-announcement-active" type="checkbox"><span><strong>Show announcement</strong><small>Displays above the header.</small></span></label>
+                <label class="switch-field"><input id="setting-vacation" type="checkbox"><span><strong>Vacation / waitlist mode</strong><small>Checkout becomes a waitlist enquiry.</small></span></label>
+                <div class="admin-form-actions"><button id="save-settings" class="admin-button admin-button--dark" type="submit">Save essentials</button></div>
+              </form>
+            </div>
+          </section>
+
+          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Structured sizes</p><h2>Canvas options</h2></div><button id="add-canvas-size" class="admin-button admin-button--soft admin-button--small" type="button">Add size</button></header><div class="admin-card__body"><p class="admin-help">No comma-separated text. Each shape and dimension is stored as structured JSON and validated by the database.</p><div id="canvas-size-list" class="structured-list"></div><div class="admin-form-actions"><button id="save-canvas-sizes" class="admin-button admin-button--dark" type="button">Save canvas sizes</button></div></div></section>
+
+          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Buy more, save more</p><h2>VIP tiers</h2></div><button id="add-vip-tier" class="admin-button admin-button--soft admin-button--small" type="button">Add tier</button></header><div class="admin-card__body"><p class="admin-help">Tiers are applied by quantity. The secure checkout always chooses the highest eligible tier.</p><div id="vip-tier-list" class="structured-list"></div><div class="admin-form-actions"><button id="save-vip-tiers" class="admin-button admin-button--dark" type="button">Save VIP tiers</button></div></div></section>
+
+          <section id="coupons-section" class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Controlled offers</p><h2>Coupons</h2></div><button id="reset-coupon" class="admin-button admin-button--soft admin-button--small" type="button">New coupon</button></header><div class="admin-card__body two-column-body">
+            <form id="coupon-form" class="admin-form compact-form">
+              <input id="coupon-id" type="hidden">
+              <label class="admin-field is-wide"><span>Code *</span><input id="coupon-code" class="admin-input" type="text" maxlength="40" required placeholder="MAGIC10"></label>
+              <label class="admin-field"><span>Discount type *</span><select id="coupon-type" class="admin-input"><option value="percent">Percentage</option><option value="flat">Flat amount</option><option value="shipping">Free delivery</option></select></label>
+              <label class="admin-field"><span>Value *</span><input id="coupon-value" class="admin-input" type="number" min="0" step="0.01" required></label>
+              <label class="admin-field"><span>Minimum spend</span><input id="coupon-minimum" class="admin-input" type="number" min="0" step="0.01" value="0"></label>
+              <label class="admin-field"><span>Maximum discount</span><input id="coupon-maximum" class="admin-input" type="number" min="0" step="0.01" placeholder="Optional"></label>
+              <label class="admin-field"><span>Total usage limit</span><input id="coupon-usage-limit" class="admin-input" type="number" min="0" step="1" placeholder="Unlimited"></label>
+              <label class="admin-field"><span>Per phone limit</span><input id="coupon-customer-limit" class="admin-input" type="number" min="0" step="1" value="1"></label>
+              <label class="admin-field"><span>Starts at</span><input id="coupon-starts" class="admin-input" type="datetime-local"></label>
+              <label class="admin-field"><span>Expires at</span><input id="coupon-expires" class="admin-input" type="datetime-local"></label>
+              <label class="admin-field is-wide"><span>Customer label</span><input id="coupon-label" class="admin-input" type="text" maxlength="120" placeholder="Welcome 10% off"></label>
+              <label class="switch-field is-wide"><input id="coupon-stack-vip" type="checkbox" checked><span><strong>Stack with VIP</strong><small>Allow both savings.</small></span></label>
+              <label class="switch-field is-wide"><input id="coupon-active" type="checkbox" checked><span><strong>Coupon active</strong><small>Available for validation.</small></span></label>
+              <div class="admin-form-actions"><button id="save-coupon" class="admin-button admin-button--dark" type="submit">Save coupon</button></div>
+            </form>
+            <div id="coupon-list" class="coupon-list"></div>
+          </div></section>
+
+          <section id="reviews-section" class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Approved customer love</p><h2>Reviews</h2></div><button id="reset-review" class="admin-button admin-button--soft admin-button--small" type="button">New review</button></header><div class="admin-card__body two-column-body">
+            <form id="review-form" class="admin-form compact-form">
+              <input id="review-id" type="hidden">
+              <label class="admin-field is-wide"><span>Product *</span><select id="review-product" class="admin-input" required></select></label>
+              <label class="admin-field"><span>Customer name *</span><input id="review-name" class="admin-input" type="text" maxlength="80" required></label>
+              <label class="admin-field"><span>Rating *</span><select id="review-rating" class="admin-input"><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></label>
+              <label class="admin-field is-wide"><span>Review *</span><textarea id="review-text" class="admin-input" rows="4" maxlength="800" required></textarea></label>
+              <label class="switch-field is-wide"><input id="review-approved" type="checkbox" checked><span><strong>Show publicly</strong><small>Only approved reviews appear.</small></span></label>
+              <div class="admin-form-actions"><button id="save-review" class="admin-button admin-button--dark" type="submit">Save review</button></div>
+            </form>
+            <div id="review-list" class="coupon-list"></div>
+          </div></section>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <nav class="admin-bottom-nav" aria-label="Studio navigation">
+    <a data-admin-nav-link="dashboard" href="#dashboard" class="admin-bottom-nav__item">
+      <span class="admin-bottom-nav__icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span class="admin-bottom-nav__label">Overview</span>
+    </a>
+    <a data-admin-nav-link="products" href="#products" class="admin-bottom-nav__item">
+      <span class="admin-bottom-nav__icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+      <span class="admin-bottom-nav__label">Products</span>
+    </a>
+    <a data-admin-nav-link="enquiries" href="#enquiries" class="admin-bottom-nav__item">
+      <span class="admin-bottom-nav__icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+      <span class="admin-bottom-nav__label">Enquiries</span>
+    </a>
+    <a data-admin-nav-link="settings" href="#settings" class="admin-bottom-nav__item">
+      <span class="admin-bottom-nav__icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="admin-bottom-nav__label">Settings</span>
+    </a>
+  </nav>
+
+  <div id="admin-toast-region" class="admin-toast-region" aria-live="polite"></div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/admin.js?v=mtah96hf" type="module"></script>
+</body>
+</html>

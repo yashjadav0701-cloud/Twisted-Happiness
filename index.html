@@ -13,7 +13,7 @@
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.8">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtah96hf">
   <meta property="og:image:type" content="image/png">
 
   <!-- Twitter / Telegram / Discord -->
@@ -23,140 +23,17 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=1.8">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtah96hf">
 
   <link rel="canonical" href="https://twistedhappiness.vercel.app/">
-  <link rel="icon" href="/assets/th_logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtah96hf" type="image/svg+xml">
   <title>Twisted Happiness | Handcrafted Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:wght@700&family=Lora:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=1.8"><link rel="stylesheet" href="/css/responsive.css?v=1.8">
-
-  <!-- Twisted Happiness PWA animated launch screen -->
-  <style id="th-pwa-splash-styles">
-    #th-pwa-splash {
-      position: fixed;
-      inset: 0;
-      z-index: 2147483647;
-      width: 100%;
-      height: 100%;
-      min-height: 100dvh;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #fcf7f8;
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition:
-        opacity 420ms ease,
-        visibility 420ms ease;
-    }
-
-    #th-pwa-splash.th-pwa-splash--visible {
-      display: flex;
-    }
-
-    #th-pwa-splash.th-pwa-splash--hide {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    #th-pwa-splash-video {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      object-position: center;
-      background: #fcf7f8;
-    }
-
-    #th-pwa-splash-fallback {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fcf7f8;
-      z-index: -1;
-    }
-
-    #th-pwa-splash-fallback img {
-      width: min(55vw, 240px);
-      max-width: 240px;
-      height: auto;
-      display: block;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #th-pwa-splash {
-        transition: opacity 250ms ease, visibility 250ms ease;
-      }
-    }
-        .install-app-button {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .install-app-button::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0;
-      background: rgba(255, 255, 255, 0.16);
-      transition: opacity 180ms ease;
-    }
-
-    .install-app-button:hover::after,
-    .install-app-button:focus-visible::after {
-      opacity: 1;
-    }
-
-    .install-app-button svg {
-      flex: 0 0 auto;
-    }
-
-    @media (max-width: 640px) {
-      .install-app-button .desktop-label {
-        display: none;
-      }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=mtah96hf">
 </head>
 <body data-page="catalog">
-
-  <!--
-    Twisted Happiness PWA launch animation.
-    This is displayed only when the website is running
-    as an installed PWA / standalone mobile app.
-  -->
-  <div
-    id="th-pwa-splash"
-    aria-hidden="true"
-  >
-    <div id="th-pwa-splash-fallback">
-      <img
-        src="/assets/th_logo.svg"
-        alt=""
-      >
-    </div>
-
-    <video
-      id="th-pwa-splash-video"
-      src="/assets/logo-vid.mp4"
-      muted
-      autoplay
-      playsinline
-      preload="auto"
-      disablepictureinpicture
-      controlslist="nodownload nofullscreen noremoteplayback"
-      aria-hidden="true"
-    ></video>
-  </div>
 
   <div id="announcement-bar" class="announcement-bar hidden" role="status">
     <span id="announcement-text"></span>
@@ -165,161 +42,282 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 
   <header class="site-header">
     <div class="site-shell header-main">
-      <a class="brand" href="/" aria-label="Twisted Happiness home">
-        <img src="/assets/th_logo_with_heading.svg" alt="Twisted Happiness" class="brand-logo-wide">
+      <a class="brand" href="/" aria-label="Twisted Happiness home" style="display: flex; align-items: center;">
+        <img src="/assets/th_logo_with_heading.svg?v=mtah96hf" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
       </a>
+      
       <div class="header-actions">
-        <button
-          id="install-app-button"
-          class="icon-pill install-app-button hidden"
-          type="button"
-          aria-label="Install Twisted Happiness app"
-          title="Install Twisted Happiness app"
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path
-              d="M12 3v11m0 0 4-4m-4 4-4-4M5 18v2h14v-2"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></path>
-          </svg>
-          <span class="desktop-label">Install App</span>
+        <button id="header-search-toggle" class="icon-pill" type="button" aria-label="Toggle search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
         </button>
-
-        <a
-          id="header-whatsapp"
-          class="icon-pill"
-          href="#"
-          aria-label="Chat with Twisted Happiness on WhatsApp"
-          title="Chat on WhatsApp"
-        >
-          <svg
-            class="whatsapp-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-          >
-            <path d="M12.01 2.5a9.48 9.48 0 0 0-8.2 14.24L2.5 21.5l4.92-1.29A9.48 9.48 0 1 0 12.01 2.5Z"></path>
-            <path d="M8.02 7.3c.2-.37.42-.38.76-.39h.63c.2 0 .43.07.54.33l.77 1.84c.1.23.08.41-.05.61l-.58.8c-.14.19-.17.33-.05.55.43.78 1.06 1.43 1.8 1.92.54.36 1.16.64 1.79.82.27.08.43.04.58-.14l.78-.94c.16-.2.34-.22.57-.13l1.9.89c.22.1.36.17.42.3.06.54-1.04 1.01-1.44 1.08-.37.06-.85.09-1.38-.08a12.77 12.77 0 0 1-2.3-.99 13.31 13.31 0 0 1-3.67-2.84 10.49 10.49 0 0 1-2.12-3.17c-.36-.81-.38-1.46-.22-2 .15-.51.7-1.2 1.05-1.42Z"></path>
-          </svg>
-
-          <span class="desktop-label">Need help?</span>
+        <a id="header-whatsapp" class="icon-pill" href="#" aria-label="WhatsApp studio" title="WhatsApp studio">
+          <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
         </a>
-
-        <button
-          class="icon-pill icon-pill--bag"
-          type="button"
-          data-open-cart
-        >
-          <span class="desktop-label">Saving Bag</span>
-
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path d="M7 8V6a5 5 0 0 1 10 0v2M4 8h16l-1 13H5L4 8Z"></path>
-          </svg>
-
-          <span
-            class="cart-badge"
-            data-cart-count
-          >0</span>
+        <button class="icon-pill icon-pill--bag" type="button" data-open-cart aria-label="View saving bag">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="cart-badge" data-cart-count>0</span>
         </button>
-
       </div>
     </div>
-
-    <div class="site-shell search-row">
-      <div class="search-shell">
-        <label class="search-wrap">
-          <span class="sr-only">Search products</span>
-          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.4-4.4m2.4-5.6a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"></path></svg>
-          <input id="catalog-search" type="search" autocomplete="off" aria-autocomplete="list" aria-controls="search-suggestions" placeholder="Search bouquets, canvas art and keepsakes…">
-          <button id="catalog-search-clear" class="search-clear hidden" type="button" aria-label="Clear search">×</button>
-        </label>
+    
+    <!-- Premium Search Overlay -->
+    <div id="search-overlay" class="search-overlay" aria-hidden="true">
+      <div class="search-overlay__backdrop" data-close-search></div>
+      <div class="search-overlay__panel">
+        <div class="search-overlay__header">
+          <label class="search-wrap">
+            <span class="sr-only">Search creations</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <input id="catalog-search" type="search" autocomplete="off" aria-autocomplete="list" aria-controls="search-suggestions" placeholder="What are you looking for?">
+            <button id="catalog-search-clear" class="search-clear hidden" type="button" aria-label="Clear search">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </label>
+          <button id="search-close" class="search-close-btn" type="button" aria-label="Close search" data-close-search>Cancel</button>
+        </div>
         <div id="search-suggestions" class="search-suggestions hidden" role="listbox" aria-label="Product suggestions"></div>
       </div>
     </div>
   </header>
 
-  <main>
-    <section class="hero site-shell" aria-labelledby="hero-title">
-      <div class="hero-card">
-        <div class="hero-copy">
-          <p class="eyebrow">Made slowly · Gifted forever</p>
-          <h1 id="hero-title">Handcrafted happiness for people you love.</h1>
-          <p>Choose a creation, personalise it, build a saving bag and confirm everything directly with our studio on WhatsApp.</p>
-          <div class="hero-actions">
-            <a class="app-button app-button--dark" href="#collection">Shop creations</a>
-            <button class="app-button app-button--soft" type="button" data-open-cart>See my bag</button>
+  <main id="spa-root">
+    <!-- ============================================== -->
+    <!-- VIEW: HOME / CATALOG                           -->
+    <!-- ============================================== -->
+    <div id="view-home" class="spa-view active">
+      
+      <!-- Ultra-Compact Hero & VIP Combined -->
+      <section class="hero site-shell" aria-labelledby="hero-title" style="padding-top: 8px; padding-bottom: 12px;">
+        <div class="hero-card" style="padding: 16px; background: linear-gradient(to bottom, var(--paper), var(--beige)); border: 1px solid var(--line); border-radius: 12px; text-align: center; box-shadow: var(--shadow-sm);">
+          <div class="hero-copy" style="width: 100%; max-width: 800px; margin: 0 auto;">
+            <p class="eyebrow" style="margin-bottom: 6px; color: var(--pink-deep); font-weight: 700; letter-spacing: 0.1em;">✨ Handcrafted with love</p>
+            <h1 id="hero-title" class="hero-title-main">Beautiful art & keepsakes for people you cherish.</h1>
+            
+            <!-- Refined VIP Tiers (Single Row) -->
+            <div class="vip-hero-integration" style="margin: 12px auto 0; width: 100%;">
+                <p style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px; font-weight: 600;">Automatic VIP Savings</p>
+                <div id="home-vip-tiers" class="vip-tiers no-scrollbar" aria-label="VIP discount tiers"></div>
+            </div>
+
+            <div class="hero-actions" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;">
+              <a class="app-button app-button--dark" href="#collection" style="flex: 1; min-width: 0;">Shop the collection</a>
+              <button class="app-button app-button--soft" type="button" data-open-cart style="flex: 1; min-width: 0;">See my bag</button>
+            </div>
+            <div class="hero-proof" style="display: flex; justify-content: center; gap: 12px; margin-top: 12px; font-size: 0.65rem; color: var(--muted); font-weight: 500;">
+              <span>♡ Handmade in Gujarat</span>
+              <span>♕ Buy more, save more</span>
+            </div>
           </div>
-          <div class="hero-proof"><span>♡ Handmade in Gujarat</span><span>✦ Personal confirmation</span><span>♕ Buy more, save more</span></div>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <span class="hero-orb hero-orb--one"></span>
-          <span class="hero-orb hero-orb--two"></span>
-          <img src="/assets/th_logo.svg" alt="Twisted Happiness" style="position: relative; z-index: 3; width: 180px; height: auto; animation: gentleFloat 5s ease-in-out infinite; filter: drop-shadow(0 10px 30px rgba(49,38,43,.08));">
+      </section>
+
+      <!-- Products Directly Below Hero -->
+      <section id="collection" class="catalog site-shell" aria-labelledby="collection-title">
+        <div class="section-head">
+          <div>
+            <h2 id="collection-title" class="section-title">Shop the collection</h2>
+            <p id="search-results-label" class="search-results-label hidden"></p>
+          </div>
+          <div class="custom-sort-dropdown" id="custom-sort-wrapper">
+            <button type="button" class="sort-toggle pop-click" id="sort-toggle" aria-haspopup="listbox" aria-expanded="false">
+              <span id="sort-current-label">Featured mix</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul class="sort-menu" id="sort-menu" role="listbox">
+              <li role="option" aria-selected="true" data-sort-val="featured">Featured mix</li>
+              <li role="option" aria-selected="false" data-sort-val="newest">Newest first</li>
+              <li role="option" aria-selected="false" data-sort-val="price-low">Price: low to high</li>
+              <li role="option" aria-selected="false" data-sort-val="price-high">Price: high to low</li>
+            </ul>
+            <select id="catalog-sort" class="hidden" aria-label="Sort products">
+              <option value="featured">Featured mix</option>
+              <option value="newest">Newest first</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <section class="site-shell benefit-strip" aria-label="Shopping benefits">
-      <article><span>01</span><div><strong>Choose & customise</strong><small>Select sizes and add personal notes.</small></div></article>
-      <article><span>02</span><div><strong>Build your saving bag</strong><small>VIP discounts apply automatically.</small></div></article>
-      <article><span>03</span><div><strong>Confirm on WhatsApp</strong><small>Payment and delivery stay personal.</small></div></article>
-    </section>
+        <div class="catalog-tools" style="display: flex; flex-direction: column; align-items: stretch; gap: 24px; margin-bottom: 24px;">
+          <div id="category-chips" class="category-visual-grid no-scrollbar" aria-label="Product categories"></div>
+        </div>
 
-    <section class="site-shell vip-strip" aria-labelledby="vip-title">
-      <div class="vip-strip__copy">
-        <p class="eyebrow">Automatic VIP savings</p>
-        <h2 id="vip-title">More happiness in your bag. Better value automatically.</h2>
-        <p>No complicated membership and no extra code. Your best eligible tier is calculated for you.</p>
-      </div>
-      <div id="home-vip-tiers" class="vip-tiers" aria-label="VIP discount tiers"></div>
-    </section>
+        <div id="catalog-loading" class="skeleton-grid" aria-label="Loading products">
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+        </div>
+        <div id="product-grid" class="product-grid hidden" aria-live="polite"></div>
+        <div id="catalog-empty" class="empty-state hidden">
+          <span aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--pink-deep)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7l-2-2"/><path d="M12 15l2-2"/><path d="M12 15a4 4 0 0 0-4-4h0a4 4 0 0 1-4-4V5s2-1 4 0c2.2 1.1 4 3.5 4 6"/><path d="M12 15a4 4 0 0 1 4-4h0a4 4 0 0 0 4-4V5s-2-1-4 0c-2.2 1.1-4 3.5-4 6"/></svg>
+          </span>
+          <h3>No creations found</h3><p>Try another search or category.</p><button id="reset-catalog" class="app-button app-button--soft" type="button">Reset filters</button>
+        </div>
+        <div id="load-more-wrap" class="load-more-wrap hidden"><button id="load-more" class="app-button app-button--soft" type="button">Show more creations</button></div>
+      </section>
 
-    <section id="collection" class="catalog site-shell" aria-labelledby="collection-title">
-      <div class="section-head">
-        <div><p class="eyebrow">Curated for joyful gifting</p><h2 id="collection-title" class="section-title">Shop the collection</h2></div>
-        <span id="catalog-count" class="result-count">Loading creations…</span>
-      </div>
+      <section class="site-shell reassurance-card">
+        <div><p class="eyebrow">Handmade means personal</p><h2>Questions are welcome.</h2></div>
+        <p>We personally confirm availability, final customisation, delivery timing and payment securely on WhatsApp.</p>
+        <a id="reassurance-whatsapp" class="app-button app-button--whatsapp" href="#">Ask the studio</a>
+      </section>
+    </div>
 
-      <div class="catalog-tools">
-        <div id="category-chips" class="category-chips no-scrollbar" aria-label="Product categories"></div>
-        <select id="catalog-sort" class="compact-select" aria-label="Sort products">
-          <option value="featured">Featured mix</option>
-          <option value="newest">Newest first</option>
-          <option value="price-low">Price: low to high</option>
-          <option value="price-high">Price: high to low</option>
-        </select>
-      </div>
+    <!-- ============================================== -->
+    <!-- VIEW: PRODUCT                                  -->
+    <!-- ============================================== -->
+    <div id="view-product" class="spa-view product-page site-shell" style="display: none;">
+      <div id="product-loading" class="product-skeleton"><div class="skeleton"></div><div class="skeleton"></div></div>
+      <section id="product-error" class="empty-state hidden">
+        <span aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--pink-deep)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7l-2-2"/><path d="M12 15l2-2"/><path d="M12 15a4 4 0 0 0-4-4h0a4 4 0 0 1-4-4V5s2-1 4 0c2.2 1.1 4 3.5 4 6"/><path d="M12 15a4 4 0 0 1 4-4h0a4 4 0 0 0 4-4V5s-2-1-4 0c-2.2 1.1-4 3.5-4 6"/></svg>
+        </span>
+        <h2>This creation is unavailable</h2><p>It may be hidden or no longer available.</p><a class="app-button app-button--dark" href="/#collection">Browse collection</a>
+      </section>
 
-      <div id="catalog-loading" class="skeleton-grid" aria-label="Loading products">
-        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-      </div>
-      <div id="product-grid" class="product-grid hidden" aria-live="polite"></div>
-      <div id="catalog-empty" class="empty-state hidden">
-        <span aria-hidden="true">🌷</span><h3>No creations found</h3><p>Try another search or category.</p><button id="reset-catalog" class="app-button app-button--soft" type="button">Reset filters</button>
-      </div>
-      <div id="load-more-wrap" class="load-more-wrap hidden"><button id="load-more" class="app-button app-button--soft" type="button">Show more creations</button></div>
-    </section>
+      <section id="product-detail" class="product-layout hidden" aria-live="polite">
+        <div class="product-gallery">
+          <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><a href="/#collection">Collection</a><span>›</span><span id="breadcrumb-product">Product</span></nav>
+          <div class="gallery-main-layout">
+            <div id="gallery-thumbnails" class="thumbnail-row no-scrollbar"></div>
+            <div id="main-gallery" class="main-gallery">
+              <button id="gallery-prev" class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Previous image">‹</button>
+              <div id="gallery-viewport" class="gallery-viewport"><div id="gallery-track" class="gallery-track"></div></div>
+              <button id="gallery-next" class="gallery-arrow gallery-arrow--next" type="button" aria-label="Next image">›</button>
+              <div id="gallery-dots" class="gallery-dots"></div>
+            </div>
+          </div>
+        </div>
 
-    <section class="site-shell reassurance-card">
-      <div><p class="eyebrow">Handmade means personal</p><h2>Questions are welcome before you confirm.</h2></div>
-      <p>Every piece requires real time, care and materials. We personally confirm availability, final customisation, delivery timing and payment on WhatsApp.</p>
-      <a id="reassurance-whatsapp" class="app-button app-button--whatsapp" href="#">Ask the studio</a>
-    </section>
+        <article class="product-panel">
+          <div class="product-meta-row">
+            <div class="product-badges">
+              <span id="product-category" class="soft-badge">Collection</span>
+              <span id="product-prep" class="soft-badge">Made to order</span>
+            </div>
+            <button id="btn-fwd-item" class="fwd-action-pill" type="button" aria-label="Share product" title="Share this creation">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            </button>
+          </div>
+          <h1 id="product-title" class="product-title">Product</h1>
+          
+          <div class="price-line">
+            <strong id="product-price" class="product-price">₹0</strong>
+            <del id="product-mrp" class="product-mrp hidden">₹0</del>
+            <span id="product-discount" class="discount-pill hidden">0% off</span>
+          </div>
+          
+          <p class="product-tax-note hidden">Price updates for the selected canvas size. Final availability and delivery are confirmed on WhatsApp.</p>
+          
+          <div class="product-divider"></div>
+
+          <section id="canvas-section" class="field-block hidden">
+            <span class="field-label">Canvas size</span>
+            <div id="canvas-size-options" class="size-option-grid" role="radiogroup" aria-label="Canvas size"></div>
+            <label id="orientation-wrap" class="orientation-field hidden"><span>Orientation</span><select id="canvas-orientation" class="simple-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
+            <small id="canvas-price-note">Pricing is calculated from the stored base size and exact area.</small>
+          </section>
+
+          <div class="product-quantity-row"><span class="field-label">Quantity</span><div class="quantity-control"><button id="product-qty-minus" class="pop-click" type="button" aria-label="Decrease quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><input id="product-qty" type="number" min="1" max="20" value="1" inputmode="numeric" aria-label="Quantity"><button id="product-qty-plus" class="pop-click" type="button" aria-label="Increase quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></div></div>
+          <label class="field-block"><span>Custom note <small>(optional)</small></span><textarea id="product-note" maxlength="180" rows="3" placeholder="Colour preference, name, gift message or another detail…"></textarea></label>
+
+          <div id="product-vip-nudge" class="product-vip-nudge"><span>♕</span><div><strong>Build a bag to unlock automatic savings</strong><small id="product-vip-text">Add 2 items for your first VIP discount.</small></div></div>
+          <div class="product-actions"><button id="add-to-cart" class="app-button app-button--dark app-button--full" type="button">Add to saving bag</button><button id="single-whatsapp" class="single-order-link" type="button">Order only this item on WhatsApp</button></div>
+
+          <section class="content-section"><h2>Story & inspiration</h2><div id="product-description"></div></section>
+          <section id="care-section" class="content-section hidden"><h2>Care guide</h2><ul id="product-care" class="care-list"></ul></section>
+          <section id="reviews-section" class="content-section hidden"><div class="content-section__head"><h2>Customer love</h2><span id="reviews-summary"></span></div><div id="reviews-list" class="reviews-list"></div></section>
+          <p class="policy-note">Handmade products are generally non-returnable. <a href="/return-policy">Read the no-return policy</a>.</p>
+        </article>
+      </section>
+
+      <section id="related-section" class="related-section hidden"><p class="eyebrow">Complete the gift</p><h2>More from this collection</h2><div id="related-grid" class="related-grid"></div></section>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW: CHECKOUT                                 -->
+    <!-- ============================================== -->
+    <div id="view-checkout" class="spa-view checkout-page site-shell" style="display: none;">
+      <header class="checkout-head"><h1 class="checkout-title">Secure Checkout</h1></header>
+
+      <section id="checkout-empty" class="empty-state hidden">
+        <span aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--pink-deep)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </span>
+        <h2>Your checkout is empty</h2><p>Add a few handcrafted creations to proceed.</p><a class="app-button app-button--dark" href="/">Browse collection</a>
+      </section>
+
+      <div id="checkout-content" class="checkout-layout hidden">
+        <div class="checkout-stack">
+          <section class="checkout-card"><div class="checkout-card__head"><div><p class="eyebrow">For a clean WhatsApp message</p><h2>Delivery details</h2></div></div>
+            <form id="checkout-form" class="simple-form">
+              <label><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Full name"></label>
+              <label><span>WhatsApp number *</span><input id="customer-phone" class="simple-input" type="tel" maxlength="16" required inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number"></label>
+              
+              <label class="is-wide"><span>Email address *</span><input id="customer-email" class="simple-input" type="email" maxlength="120" required autocomplete="email" placeholder="Required for delivery tracking updates"></label>
+              
+              <label class="is-wide"><span>Address line 1 *</span><input id="customer-address-1" class="simple-input" type="text" maxlength="150" required autocomplete="address-line1" placeholder="House/Flat No., Building name, Street"></label>
+              <label class="is-wide"><span>Address line 2 *</span><input id="customer-address-2" class="simple-input" type="text" maxlength="150" required autocomplete="address-line2" placeholder="Locality, Area, Landmark"></label>
+              
+              <label><span>City *</span><input id="customer-city" class="simple-input" type="text" maxlength="80" required autocomplete="address-level2" placeholder="Delivery city"></label>
+              <label><span>State *</span><input id="customer-state" class="simple-input" type="text" maxlength="80" required autocomplete="address-level1" placeholder="e.g. Gujarat"></label>
+              <label><span>Pincode *</span><input id="customer-pincode" class="simple-input" type="text" maxlength="6" required inputmode="numeric" autocomplete="postal-code" placeholder="6-digit pincode"></label>
+              
+              <label class="is-wide"><span>Order note <small>(optional)</small></span><textarea id="customer-note" class="simple-input" rows="3" maxlength="260" placeholder="Gifting date, colour preference or another request…"></textarea></label>
+            </form>
+          </section>
+        </div>
+
+        <aside class="checkout-summary checkout-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+            <div><p class="eyebrow">Order summary</p><h2 style="margin:0;">Your estimate</h2></div>
+            <button id="edit-bag-btn" class="single-order-link" type="button" style="margin:0 0 4px 0; font-size: 0.8rem; font-weight: 600;">Edit bag</button>
+          </div>
+          
+          <div id="checkout-items" style="margin-bottom: 24px; padding-bottom: 8px; border-bottom: 1px solid var(--line);"></div>
+
+          <div class="coupon-control"><input id="checkout-coupon" type="text" maxlength="40" placeholder="Coupon code"><button id="checkout-apply-coupon" class="app-button app-button--dark app-button--small" type="button">Apply</button></div>
+          <p id="checkout-coupon-status" class="coupon-status" aria-live="polite"></p>
+          <div class="cart-totals">
+            <div class="cart-total-row"><span style="color: var(--muted);">Total Prep Time</span><strong id="checkout-prep-time">0 days</strong></div>
+            <div class="cart-total-row"><span style="color: var(--muted);">Price (MRP)</span><strong id="checkout-mrp">₹0</strong></div>
+            <div class="cart-total-row is-saving"><span id="checkout-mrp-discount-label">Discount</span><strong id="checkout-mrp-discount">−₹0</strong></div>
+            <div class="cart-total-row"><span>Subtotal</span><strong id="checkout-subtotal">₹0</strong></div>
+            <div id="checkout-vip-row" class="cart-total-row is-saving"><span id="checkout-vip-label">VIP Savings</span><strong id="checkout-vip-discount">−₹0</strong></div>
+            <div id="checkout-coupon-row" class="cart-total-row is-saving"><span id="checkout-coupon-label">Coupon Savings</span><strong id="checkout-coupon-discount">−₹0</strong></div>
+            <div class="cart-total-row"><span style="color: var(--muted);">Shipping Fee</span><strong id="checkout-shipping">₹0</strong></div>
+            <div class="cart-total-row is-total"><span>Order Total</span><strong id="checkout-total">₹0</strong></div>
+          </div>
+          <div class="secure-quote-note"><span>✓</span><p><strong>Secure final calculation</strong><small>The database recalculates the final order before WhatsApp opens.</small></p></div>
+          <button id="checkout-whatsapp" class="app-button app-button--whatsapp app-button--full" type="submit" form="checkout-form">Confirm & open WhatsApp</button>
+          <p class="summary-disclaimer">Submitting creates a lightweight enquiry reference. It does not take payment or confirm an order automatically.</p>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW: POLICY                                   -->
+    <!-- ============================================== -->
+    <div id="view-policy" class="spa-view policy-page site-shell" style="display: none;">
+      <header class="policy-hero"><p class="eyebrow">Clear, fair and handmade-aware</p><h1>No-Return Policy</h1><p>Last updated: August 3, 2026</p></header>
+      <article class="policy-card">
+        <section><h2>Why handmade products are generally non-returnable</h2><p>Every Twisted Happiness creation is handmade or prepared specifically for your confirmed request. Significant time, skill, materials and studio capacity are committed before your product is ready. Small variations in colour, texture, shape or placement are natural characteristics of handmade work and are not defects.</p><p>For these reasons, products are generally <strong>non-returnable and non-exchangeable</strong> after the order details have been confirmed and work has begun.</p></section>
+        <section><h2>Issues we will review</h2><p>We will fairly review a request when you receive:</p><ul><li>a product damaged during delivery;</li><li>a product different from the item confirmed on WhatsApp; or</li><li>a product with a material difference from the final customisation details that the studio explicitly confirmed.</li></ul></section>
+        <section><h2>How to report a genuine issue</h2><p>Contact us on WhatsApp within <strong>24 hours of delivery</strong>. Please keep the original packaging and send:</p><ul><li>your enquiry or order reference;</li><li>clear photos of the product and packaging;</li><li>a short unedited opening video, where available; and</li><li>a clear explanation of the issue.</li></ul><p>Do not dispose of the product or packaging until the studio has reviewed the evidence.</p></section>
+        <section><h2>Resolution</h2><p>After verification, Twisted Happiness may offer the most appropriate solution: repair guidance, replacement of the affected item, correction of the confirmed customisation, store credit, or a refund for the affected product. The solution depends on the nature of the issue and the availability of materials.</p></section>
+        <section><h2>What is not covered</h2><ul><li>change of mind, personal preference or gifting-plan changes;</li><li>minor handmade variations or slight colour differences caused by screen settings and lighting;</li><li>damage caused after delivery through water, heat, pressure, rough handling, incorrect storage or normal wear;</li><li>incorrect details supplied or approved by the customer; or</li><li>delivery delays caused by incomplete address information, unavailable recipients, courier disruptions or events outside the studio’s reasonable control.</li></ul></section>
+        <section><h2>Cancellation</h2><p>A cancellation request may be considered only before materials have been allocated or crafting has started. Once work begins, cancellation may not be possible. Any approved cancellation and refund method will be confirmed through WhatsApp.</p></section>
+        <section><h2>Need help?</h2><p>Our goal is to resolve legitimate issues thoughtfully and fairly. Contact the studio through the WhatsApp link on the website and include your reference.</p></section>
+      </article>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- VIEW: 404                                      -->
+    <!-- ============================================== -->
+    <div id="view-404" class="spa-view standalone-state" style="display: none;">
+      <div class="th-icon-box"><svg class="th-svg-clean th-anim-fade-in" viewBox="0 0 1500 1500" xmlns="http://www.w3.org/2000/svg"><g class="th-anim-slide-up"><path d="M778.7 399.9c0 0-11.1-129.1 55.4-219.7c66.5-90.6 139.4-136.4 194-92c51.6 41.9 53.2 275.2-214 366.6c46.8 11.4 95.6 16.9 143.3 15.4c21.4-.6 42.8-3.8 63.6-10.3c20.9-6.5 40-17.7 60.2-26.5c75.5-32.8 161.3-30.5 238.2-6c35.5 11.3 69.9 28.6 100.5 53.5c0 0-73.9-18.3-65.8 79.6c-56.8-45-109.4-90.2-197.4-80.8c-46 4.9-91.4 16.3-137.1 24.4c-75.2 13.3-153.1 3.4-224.3-30.3c-10.8-5.1-21.5-10.8-32-16.8c0 0 130.5-61.1 187-130.1c72.5-88.4 68.8-254.7-17.7-188.8c-86.5 65.9-139.7 149.7-154.2 261.6z" fill="#d53695"/><path d="M721.3 399.9c0 0 11.1-129.1-55.5-219.7c-66.5-90.6-139.4-136.4-194-92c-51.6 41.9-53.2 275.2 214 366.6c-46.8 11.4-95.6 16.9-143.3 15.4c-21.4-.6-42.8-3.8-63.6-10.3c-20.9-6.5-40-17.7-60.2-26.5c-75.5-32.8-161.3-30.5-238.2-6c-35.5 11.3-69.9 28.6-100.5 53.5c0 0 73.9-18.3 65.8 79.6c56.8-45 109.4-90.2 197.4-80.8c46 4.9 91.4 16.3 137.1 24.4c75.2 13.3 153.1 3.4 224.3-30.3c10.8-5.1 21.5-10.8 32-16.8c0 0-130.5-61.1-187-130.1c-72.5-88.4-68.8-254.7 17.7-188.8c86.5 65.9 139.7 149.7 154.2 261.6z" fill="#d53695"/></g><path d="M922.3 884c-34.6-22.3-53.4-63.5-57.5-116.1c-4.1-57.9 1.6-108.8 17.9-145c14.7-36.2 39.7-61.3 71.9-70.3c21-6.1 44.5-8.2 65.3-6.4c5.1 30.5 4.3 62-2.3 93.3c-10.6 42.6-30.6 63-53.1 63c-4.1 0-15.3-8.2-24.5-21.7l-21.6 23.1c26 29.8 46.5 81.3 54.3 147.9c6.1 50.8-1.5 100.7-19.1 138.3c-17.9 36.7-46 56.8-80.8 56.8c-1.1 0-1.8 0-1.8-1.5l1.6-19.9h36l1.6-16.8h-36v-85.5h41.4l-9.8 41.9c8.2-20.5 24.5-51 48-84.5c18.3-24.9 33.7-55.4 44.3-89.4c10.6-32.6 15.6-64.6 15.6-95.2c9.5-32 12.1-61 8.2-87.3c-5.3-52.3-28.1-79.1-68-79.1c-20.5 0-38 9.2-53.6 27.6c-16.4 18.7-25.5 44.3-27.5 77.8l-33.8-4C803.9 663.9 815.7 632.3 835.6 608.3C856.5 584.4 879 572 1017 572c20.5 0 35.8 4.2 46.5 13.8c10.2 8.7 14.8 21.4 14.8 36.7l-39.4-40.4v21c14.2-14.7 30-22.1 52.7-22.1c15.2 0 28.5 7.1 38.9 21c10.1 14.2 16.4 34.2 18.8 61l-42.3 3.8v8.4l1.6 42.5c0 17.5-16.6 26.2-43.9 26.2c-25.6 0-47.5-7.6-62.1-20.9l-18.4 24.5c9.2 10.3 21.4 16.8 35.7 18.9c0 0-41.4 46-52.6 71c-11.2 25-18.9 50.5-22.5 75.6l-52.6 4.1c11.8-39.9 25.6-76.1 46-114.9v21l-34.2-43.9v-1.1c11.7 54.7-18.8 80.8-60.8 80.8c-23.5 0-41.9-10.7-52.6-32.6c-10.2-20.9-14.3-46.5-12.8-74.6m147.2 42.9l46.5-135h-45.5v103.7h-36v-103.7h-27.6l23.5-103.6h36.3l-6.8-30.2c-3.1-13-8.2-18.9-13.8-18.9c-8.7 0-14.8 4.1-25.6 20.4l1.6 44h-16.9v30.2h16.9v21.5c0 31.6 18.4 44.5 44 44.5c11.2 0 22.5-2.6 30.2-6.6l-6.7-29.7c-3.1 2.1-8.2 3.6-13.8 3.6c-8.7 0-14.8-4.2-14.8-15.3v-18l43.4 3.7c15.8-44.5 28.1-98.1 35.8-158.4l-58.2 8.7c-27.1 41.9-46.5 86.8-57.7 131.7l16.9 103.7h36v-16.9c9.7 15.8 23.5 24 43.4 24c19.4 0 45-15.3 45-54.1v-1.1c0-34.2-21-56.2-52.6-56.2h-17.9l-16.4 135h40.4v27.6h40.4v-27.6h40.4v103.7h17.3l-17.3-103.7h-174l17.4-103.7h45.5c-24-34.2-40.4-56.7-70.5-56.7c-15.3 0-29.1 7.2-38.8 21.5l10.2-41.9v-1.1c0-40.4-36.2-82.2-85.7-82.2c-53.7 0-90.4 46.5-90.4 99.1v1c0 51.1 34.2 99.1 96.6 99.1c32.1 0 59.2-12.8 74.1-35.8c-1.1-23.5 4.6-47.5 13.3-71M687.2 929v1.1c0 51.1-39.9 100.1-101.2 100.1c-32.1 0-59.2-22-74.6-44.4l-28 21.4c18.4 25.1 48 37.8 84.8 37.8c66.4 0 119.5-55.7 119.5-126.2v-1.1c0-51.1 39.9-100.1 101.2-100.1c32.1 0 59.2 22 74.6 44.4l28-21.4c-18.4-25.1-48-37.8-84.8-37.8c-66.4 0-119.5 55.7-119.5 126.2m26.1-50l1.6 8.2c8.2 46.5 28.1 108.3 55.7 156.9c19 32.7 50.1 5.3 53.6-56.2c0-50.6 36.3-95 86.8-95v-1c0-50.6-36.3-95-86.8-95c21.5 4.7 39.8 19.4 51.5 42.4c17.9 44.4 20 104.7 2.6 172.6c-6.1 24.5-14.8 49-25.6 67.4c-11.8 19-27.1 32.2-43.4 32.2c-14.8 0-22.5-8.7-22.5-22.5c0 0-48.4-106.7-65.4-159.9c25.6-34.2 56.2-82.7 61.8-132.8l20.5 20.5c-42.9 56.7-72 100.6-88.4 126.7v1.1c-13.8 29.6-37.3 52.1-70 52.1c-25 0-46.5-15.8-63.3-43.4c-20.5-34.2-32.7-77.1-35.3-120.6c2.6-43.4 14.8-86.3 35.3-120.6c16.9-27.6 38.3-43.4 63.3-43.4c36.8 0 65.4 24 80.7 69.5l-12.8 12.3c-9.2-34.2-29.6-54.1-56.2-54.1c-17.9 0-33.7 7.7-45.5 23.5c-16.9 23-28.1 58.7-32.1 106.3c17.9-106.2 65.4-192.6 150.7-258.5h5.3v5.2m56.2-119.5v5.1c0 38.8 21.9 68.4 58.2 68.4c19.4 0 34.2-9.2 42.9-24l27.6 21c-14.8 22.5-41.4 35.2-73 35.2c-60.8 0-94.5-47.5-94.5-97.6v-1c0-52.6 36.3-98.6 89.4-98.6c49 0 84.8 40.8 84.8 89.4v1c0 19.9-8.2 54.7-23.5 88.4h-38.8c9.2-23.5 11.7-41.4 11.7-51.6v-1c0-25.6-15.3-57.2-44.4-57.2c-22 0-39.4 20.4-39.4 51.6v49m-144.5 14h-17.4l17.4-102.1h39.9v102.1h-39.9m37.3-117.5c0-10.7 7.7-19.4 19.4-19.4c11.2 0 19.4 8.7 19.4 19.4c0 11.2-8.2 19.4-19.4 19.4c-11.7 0-19.4-8.2-19.4-19.4m-416.7 117.5h-17.4l17.4-102.1h39.9v102.1h-39.9m37.3-117.5c0-10.7 7.7-19.4 19.4-19.4c11.2 0 19.4 8.7 19.4 19.4c0 11.2-8.2 19.4-19.4 19.4c-11.7 0-19.4-8.2-19.4-19.4m101.1 117.5h39.9v42.4h27.6v29.6h-27.6v17.9c0 11.2 6.1 15.3 14.8 15.3c5.6 0 10.7-1.5 13.8-3.6l6.6 29.1c-7.6 4.1-18.9 6.6-29.6 6.6c-25.6 0-43.4-12.8-43.4-43.9v-21.5h-16.9v-29.6h16.9l-1.5-42.4m207.9 103.2c0-20.4 15.8-34.2 42.4-36.3l51.6-4.1v-8.2c0-17.4-9.2-26-26-26c-14.3 0-26 5.1-35.3 13.8l-18.4-24c14.8-13.3 36.3-20.9 61.8-20.9c37.8 0 57.7 20.9 57.7 57.2v84.8h-35.8l-1.5-19.9h-1c-13.3 15.8-29.1 24-48 24c-26.6 0-46.5-15.3-46.5-40.4m51.1-20.9c15.8 0 31.2-7.7 42.4-21.5v-20.4l-41.4 3.6c-16.4 1.5-22.5 11.2-22.5 21.5c0 10.2 7.6 17.3 21.5 17.3M589 832c-34.2 0-61.8-20.4-78.7-56.7c-17.4-37.3-24-86.8-17.9-136.9c7.7-65.9 28.1-116.9 53.6-146.6l-21-22.5c-9.2 0-20.4-8.2-24-21c24.5-27.6 54.7-41.9 88.4-41.9c27.6 0 51.6 15.3 71 41.9l17.4-108.8h26.6l-36.3 228.3c-7.6 49.5-21 90.9-41.9 118.5c-11.2 14.8-24.5 21.5-39.4 21.5m-23.5-29.1c22.5 0 45-24 55.7-63.3c6.1-20.4 10.7-45.5 14.8-73.6c4.6-31.7 3.6-63.4-3.6-91.4c-11.2-33.7-30.1-53.6-52.6-53.6c-15.3 0-30.6 10.7-41.9 30.6c-10.7 19.4-18.9 45.5-23 75.1c-8.7 63.3-3.6 118.5 15.8 147.1c9.7 13.3 20.9 20.4 34.2 20.4m-129.8 29.1c-34.2 0-61.8-20.4-78.7-56.7c-17.4-37.3-24-86.8-17.9-136.9c7.7-65.9 28.1-116.9 53.6-146.6l-21-22.5c-9.2 0-20.4-8.2-24-21c24.5-27.6 54.7-41.9 88.4-41.9c27.6 0 51.6 15.3 71 41.9l17.4-108.8h26.6l-36.3 228.3c-7.6 49.5-21 90.9-41.9 118.5c-11.2 14.8-24.5 21.5-39.4 21.5m-23.5-29.1c22.5 0 45-24 55.7-63.3c6.1-20.4 10.7-45.5 14.8-73.6c4.6-31.7 3.6-63.4-3.6-91.4c-11.2-33.7-30.1-53.6-52.6-53.6c-15.3 0-30.6 10.7-41.9 30.6c-10.7 19.4-18.9 45.5-23 75.1c-8.7 63.3-3.6 118.5 15.8 147.1c9.7 13.3 20.9 20.4 34.2 20.4m-37.3-39.4h-39.9v-102.1h38.3v16.9h1.1c11.2-13.8 26.6-20.4 42.9-20.4c31.2 0 51.6 21.5 51.6 55.7v1.1c0 38.3-26 53.6-45.5 53.6c-20.4 0-33.7-8.2-42.9-24h-1l-5.1 19.4m4.6-63.3v1c0 23.5 14.8 37.3 32.2 37.3c18.4 0 33.2-17.9 33.2-43.4v-1c0-19.9-10.7-35.8-28.1-35.8c-17.9 0-37.3 15.8-37.3 41.9m-110.3 64.3c-34.2 0-62.8-22-80.2-58.2c-16.4-33.2-23-77.1-20.4-126.2c3.1-54.7 14.8-102.1 32.2-133.8c18.4-33.2 42.9-56.7 73-65.4c23-7.1 48.5-9.2 79.2-6.1l-2.6 29.1c-39.4-4.6-69.5 12.3-87.9 45.5c-24 42.9-31.2 107.8-18.4 175.2c9.7 56.7 33.2 92.4 64.9 96.5l2-41.4h27.1l-7.1 134.3c-14.8 6.6-36.3 10.2-59.3 10.2M233.1 773.3h39.9v42.4h27.6v29.6h-27.6v17.9c0 11.2 6.1 15.3 14.8 15.3c5.6 0 10.7-1.5 13.8-3.6l6.6 29.1c-7.6 4.1-18.9 6.6-29.6 6.6c-25.6 0-43.4-12.8-43.4-43.9v-21.5h-16.9v-29.6h16.9l-1.5-42.4" fill="#fbd1ba"/></svg></div>
+      <p class="eyebrow">A little detour</p><h1>This page is not available.</h1><p>The creation or link may have moved.</p>
+      <a class="app-button app-button--dark" href="/">Return to the collection</a>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -334,9 +332,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <div id="shared-cart-root"></div>
 <nav class="mobile-nav" aria-label="Mobile navigation">
     <a href="/index.html" class="mobile-nav__item">
-        <svg width="24" height="24" viewBox="0 0 24 24">
-            <path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3v-9.5Z"></path>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Home</span>
     </a>
 
@@ -347,9 +343,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
     >
         <span class="cart-badge" data-cart-count>0</span>
 
-        <svg width="24" height="24" viewBox="0 0 24 24">
-            <path d="M7 8V6a5 5 0 0 1 10 0v2M4 8h16l-1 13H5L4 8Z"></path>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
 
         <span>Save More</span>
     </button>
@@ -357,33 +351,12 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 
   <script>
   /*
-   * Twisted Happiness PWA launch + installation manager.
-   *
-   * Installation behavior:
-   * - Android/Chrome/Edge: native beforeinstallprompt.
-   * - iPhone/iPad Safari: Add-to-Home-Screen instructions.
-   * - Installed PWA: install button remains hidden.
-   *
-   * Launch animation:
-   * - Installed PWA only.
-   * - Exactly 3 seconds.
+   * Twisted Happiness PWA installation manager.
    */
 
   (() => {
-    const splash =
-      document.getElementById('th-pwa-splash');
-
-    const video =
-      document.getElementById('th-pwa-splash-video');
-
     const installButton =
       document.getElementById('install-app-button');
-
-    /*
-     * ---------------------------------------------------------
-     * PWA DISPLAY MODE
-     * ---------------------------------------------------------
-     */
 
     const isStandalone =
       window.matchMedia &&
@@ -397,92 +370,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
     const isInstalledPWA =
       isStandalone ||
       isIOSStandalone;
-
-
-    /*
-     * ---------------------------------------------------------
-     * PWA LAUNCH ANIMATION
-     * ---------------------------------------------------------
-     */
-
-    if (splash && video) {
-
-      if (!isInstalledPWA) {
-
-        splash.remove();
-
-      } else {
-
-        splash.classList.add(
-          'th-pwa-splash--visible'
-        );
-
-        try {
-          video.currentTime = 0;
-        } catch (error) {
-          // Ignore browsers that don't allow this yet.
-        }
-
-        const playVideo = () => {
-
-          try {
-
-            const promise =
-              video.play();
-
-            if (
-              promise &&
-              typeof promise.catch === 'function'
-            ) {
-              promise.catch(() => {
-                // Fallback logo remains visible.
-              });
-            }
-
-          } catch (error) {
-            // Fallback logo remains visible.
-          }
-        };
-
-        if (video.readyState >= 2) {
-          playVideo();
-        } else {
-
-          video.addEventListener(
-            'loadeddata',
-            playVideo,
-            { once: true }
-          );
-
-          video.addEventListener(
-            'canplay',
-            playVideo,
-            { once: true }
-          );
-        }
-
-        window.setTimeout(() => {
-
-          splash.classList.add(
-            'th-pwa-splash--hide'
-          );
-
-          window.setTimeout(() => {
-
-            try {
-              video.pause();
-            } catch (error) {
-              // Ignore cleanup errors.
-            }
-
-            splash.remove();
-
-          }, 450);
-
-        }, 3000);
-      }
-    }
-
 
     /*
      * ---------------------------------------------------------
@@ -677,10 +564,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   })();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/config.js?v=1.8"></script><script src="/js/common.js?v=1.8"></script><script src="/js/app.js?v=1.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/app.js?v=mtah96hf" type="module"></script>
 </body>
 </html>

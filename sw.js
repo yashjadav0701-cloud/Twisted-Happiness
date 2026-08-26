@@ -3,8 +3,7 @@
 const TH_PWA_CACHE = 'twisted-happiness-pwa-assets';
 
 const TH_PWA_ASSETS = [
-  '/assets/logo-vid.mp4',
-  '/assets/th_logo.svg'
+  '/assets/th_logo.svg?v=2.0'
 ];
 
 
@@ -135,7 +134,7 @@ self.addEventListener('push', (event) => {
 
     data: {
       url:
-        '/admin/admin-enquiries.html'
+        '/admin.html#enquiries'
     }
   };
 
@@ -184,7 +183,7 @@ self.addEventListener('notificationclick', (event) => {
 
       if (clients.openWindow) {
         return clients.openWindow(
-          '/admin/admin-enquiries.html'
+          '/admin.html#enquiries'
         );
       }
 
