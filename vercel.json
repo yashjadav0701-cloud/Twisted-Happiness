@@ -2,11 +2,12 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/admin", "destination": "/khushiified/index.html", "permanent": false }
+    { "source": "/admin", "destination": "/admin.html", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/khushifieed", "destination": "/khushiified/index.html" },
+    { "source": "/khushiified", "destination": "/admin.html" },
     { "source": "/product.html", "destination": "/index.html" },
+    { "source": "/share","destination": "/api/share"},
     { "source": "/checkout.html", "destination": "/index.html" },
     { "source": "/return-policy.html", "destination": "/index.html" },
     { "source": "/404.html", "destination": "/index.html" }

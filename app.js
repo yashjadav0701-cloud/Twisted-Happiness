@@ -1407,7 +1407,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function productShareURL(product) {
-    return `/?view=product&pid=${encodeURIComponent(product.id)}`;
+    return `https://twistedhappiness.in/share?pid=${encodeURIComponent(product.id)}`;
   }
 
   function showCatalogError(message) {
