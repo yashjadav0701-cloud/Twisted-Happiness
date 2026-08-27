@@ -7,17 +7,27 @@ function escapeHTML(str) {
 }
 
 module.exports = async function handler(req, res) {
-  // Deterministic ID extraction from Vercel rewrite parameter
-  const pid = req.query.pid;
+  // Extract product ID robustly across all Vercel invocation methods
+  let pid = req.query.pid;
   
+  if (!pid && req.url) {
+    const urlParts = req.url.split('?')[0].split('/');
+    const prodIdx = urlParts.indexOf('product');
+    if (prodIdx !== -1 && urlParts[prodIdx + 1]) {
+      pid = urlParts[prodIdx + 1];
+    } else if (urlParts.includes('share') && req.query.pid) {
+      pid = req.query.pid;
+    }
+  }
+
   let html = '';
   try {
     html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
   } catch (err) {
-    return res.status(500).send('Error loading app');
+    return res.status(500).send('Error loading application shell');
   }
 
-  // Fallback: If no product ID, serve standard homepage HTML
+  // If no product ID is present, return clean index.html
   if (!pid) {
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
@@ -42,7 +52,6 @@ module.exports = async function handler(req, res) {
         
         let img = 'https://twistedhappiness.vercel.app/assets/share-icon.png';
         
-        // Exact mirror of frontend Utils.safeImageURL logic. NO bucket guessing.
         let parsedImgs = product.images;
         if (typeof parsedImgs === 'string') {
             try { parsedImgs = JSON.parse(parsedImgs); } catch(e) { parsedImgs = parsedImgs.split(','); }
@@ -54,10 +63,10 @@ module.exports = async function handler(req, res) {
              if (['http:', 'https:'].includes(urlObj.protocol)) {
                img = escapeHTML(urlObj.href);
              }
-           } catch(e) {} // Fallback remains share-icon.png if URL parsing fails
+           } catch(e) {}
         }
 
-        // Exact string replacement of the hardcoded tags in index.html
+        // Inject dynamic metadata into the HTML template for crawlers & human browsers
         html = html
           .replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
           .replace(/content="Twisted Happiness — Handcrafted Art Studio"/gi, `content="${title}"`)
@@ -68,7 +77,7 @@ module.exports = async function handler(req, res) {
       }
     }
   } catch (e) {
-    // Silent fallback to standard HTML if DB fetch fails
+    // Fail silently to standard HTML shell if database errors occur
   }
 
   res.setHeader('Content-Type', 'text/html');

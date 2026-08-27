@@ -3,8 +3,8 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/khushiified", "destination": "/admin.html" },
-    { "source": "/product/:pid", "destination": "/api/share.js?pid=$pid" },
-    { "source": "/share", "destination": "/api/share.js" },
+    { "source": "/product/:pid", "destination": "/api/share" },
+    { "source": "/share", "destination": "/api/share" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
