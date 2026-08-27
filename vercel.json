@@ -3,11 +3,9 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/khushiified", "destination": "/admin.html" },
-    { "source": "/product.html", "destination": "/index.html" },
-    { "source": "/share", "destination": "/api/share.mjs" },
-    { "source": "/checkout.html", "destination": "/index.html" },
-    { "source": "/return-policy.html", "destination": "/index.html" },
-    { "source": "/404.html", "destination": "/index.html" }
+    { "source": "/product/:pid", "destination": "/api/share.js?pid=$pid" },
+    { "source": "/share", "destination": "/api/share.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -16,8 +14,7 @@
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'self'; base-uri 'self'; form-action 'self'" }
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     },
     {
