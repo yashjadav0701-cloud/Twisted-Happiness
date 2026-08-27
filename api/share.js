@@ -1,6 +1,6 @@
 'use strict';
 
-const SITE_URL = 'https://twistedhappiness.in';
+const SITE_URL = 'https://twistedhappiness.vercel.app/';
 const SUPABASE_URL = 'https://jlszvfevobpqqrmmjzpp.supabase.co';
 
 const FALLBACK_IMAGE = `${SITE_URL}/assets/share-icon.png?v=mtbkw1n3`;

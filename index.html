@@ -8,31 +8,31 @@
 
   <!-- Open Graph / WhatsApp / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://twistedhappiness.in/">
+  <meta property="og:url" content="https://twistedhappiness.vercel.app//">
   <meta property="og:title" content="Twisted Happiness — Handcrafted Art Studio">
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.in/assets/share-icon.png?v=mtbm5yuk">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app//assets/share-icon.png?v=mtbne5lx">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:secure_url" content="https://twistedhappiness.in/assets/share-icon.png?v=mtbm5yuk">
+  <meta property="og:image:secure_url" content="https://twistedhappiness.vercel.app//assets/share-icon.png?v=mtbne5lx">
 
   <!-- Twitter / Telegram / Discord -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://twistedhappiness.in/">
+  <meta name="twitter:url" content="https://twistedhappiness.vercel.app//">
   <meta name="twitter:title" content="Twisted Happiness — Handcrafted Art Studio">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.in/assets/share-icon.png?v=mtbm5yuk">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app//assets/share-icon.png?v=mtbne5lx">
 
-  <link rel="canonical" href="https://twistedhappiness.in/">
-  <link rel="icon" href="/assets/th_logo.svg?v=mtbm5yuk" type="image/svg+xml">
+  <link rel="canonical" href="https://twistedhappiness.vercel.app//">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtbne5lx" type="image/svg+xml">
   <title>Twisted Happiness | Handcrafted Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=mtbm5yuk">
+  <link rel="stylesheet" href="/styles.css?v=mtbne5lx">
 </head>
 <body data-page="catalog">
 
@@ -44,7 +44,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <header class="site-header">
     <div class="site-shell header-main">
       <a class="brand" href="/" aria-label="Twisted Happiness home" style="display: flex; align-items: center;">
-        <img src="/assets/th_logo_with_heading.svg?v=mtbm5yuk" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
+        <img src="/assets/th_logo_with_heading.svg?v=mtbne5lx" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
       </a>
       
       <div class="header-actions">
@@ -236,7 +236,10 @@ Made with imagination. Created with love. Made to make you smile. 💜">
           <label class="field-block"><span>Custom note <small>(optional)</small></span><textarea id="product-note" maxlength="180" rows="3" placeholder="Colour preference, name, gift message or another detail…"></textarea></label>
 
           <div id="product-vip-nudge" class="product-vip-nudge"><span>♕</span><div><strong>Build a bag to unlock automatic savings</strong><small id="product-vip-text">Add 2 items for your first VIP discount.</small></div></div>
-          <div class="product-actions" style="display: flex; gap: 10px; flex-wrap: wrap; flex-direction: row;"><button id="add-to-cart" class="app-button app-button--dark" type="button" style="flex: 1; min-width: 200px;">Add to saving bag</button><button id="single-whatsapp" class="app-button app-button--soft" type="button" style="flex: 1; min-width: 200px;">Order only this item</button></div>
+          <div class="product-actions" style="display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 24px;">
+            <button id="add-to-cart" class="app-button app-button--dark app-button--full" type="button" style="height: 48px; font-size: 0.85rem;">Add to saving bag</button>
+            <button id="single-whatsapp" class="single-order-link" type="button" style="align-self: center;">Order only this item</button>
+          </div>
 
           <section class="content-section"><h2>Story & inspiration</h2><div id="product-description"></div></section>
           <section id="care-section" class="content-section hidden"><h2>Care guide</h2><ul id="product-care" class="care-list"></ul></section>
@@ -584,6 +587,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/app.js?v=mtbm5yuk" type="module"></script>
+  <script src="/app.js?v=mtbne5lx" type="module"></script>
 </body>
 </html>

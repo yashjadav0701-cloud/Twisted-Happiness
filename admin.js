@@ -5,7 +5,7 @@
   const APP_CONFIG = Object.freeze({
     APP_NAME: 'Twisted Happiness',
     APP_VERSION: '2026.08.03-spa',
-    SITE_URL: 'https://twistedhappiness.in',
+    SITE_URL: 'https://twistedhappiness.vercel.app/',
     SUPABASE_URL: 'https://jlszvfevobpqqrmmjzpp.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc3p2ZmV2b2JwcXFybW1qenBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MzMwMTYsImV4cCI6MjEwMDMwOTAxNn0.WsaLFBk365cSO-nj2tezcLEtbxwKGm3YwZK1_eWoBmE',
     STORAGE_BUCKET: 'art-images',
