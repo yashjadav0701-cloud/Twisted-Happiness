@@ -3,7 +3,7 @@
 const TH_PWA_CACHE = 'twisted-happiness-pwa-assets';
 
 const TH_PWA_ASSETS = [
-  '/assets/th_logo.svg?v=2.1'
+  '/assets/icon-192.png?v=2.2'
 ];
 
 

@@ -76,7 +76,13 @@
     formatCurrency(value) { const n = Utils.roundMoney(value); return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n); },
     slugify(value) { return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90); },
     clamp(num, min, max) { return Math.min(Math.max(Number(num) || 0, min), max); },
-    sameCanvasSize(a, b) { return a && b && String(a.id) === String(b.id); },
+    sameCanvasSize(a, b) { 
+      if (!a || !b) return false;
+      if (String(a.id) === String(b.id)) return true;
+      if (a.shape !== b.shape) return false;
+      if (a.shape === 'circle') return Number(a.diameter) === Number(b.diameter);
+      return Number(a.width) === Number(b.width) && Number(a.height) === Number(b.height);
+    },
     calculateCanvasPrice(basePrice, baseSize, targetSize) {
       const price = Number(basePrice) || 0;
       if (!price || !baseSize || !targetSize) return price;
@@ -235,6 +241,33 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   async function initialiseApp() {
     try {
+      // 1. Instantly show the correct page skeleton before fetching database data
+      const initUrl = new URL(window.location.href);
+      const initPath = initUrl.pathname;
+      const initView = initUrl.searchParams.get('view');
+      
+      document.querySelectorAll('.spa-view').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
+      
+      if (initPath.startsWith('/product') || initView === 'product' || initPath.startsWith('/share')) {
+        document.getElementById('view-product').style.display = 'block';
+        document.body.dataset.page = 'product';
+      } else if (initPath.startsWith('/checkout') || initView === 'checkout') {
+        document.getElementById('view-checkout').style.display = 'block';
+        document.body.dataset.page = 'checkout';
+      } else if (initPath.startsWith('/return-policy') || initView === 'policy') {
+        document.getElementById('view-policy').style.display = 'block';
+        document.body.dataset.page = 'policy';
+      } else if (initPath !== '/' && initPath !== '/index.html' && initPath !== '/index' && !initView && !initPath.startsWith('/khushiified')) {
+        document.getElementById('view-404').style.display = 'block';
+        document.body.dataset.page = '404';
+      } else {
+        document.getElementById('view-home').style.display = 'block';
+        document.body.dataset.page = 'catalog';
+      }
+      
+      document.querySelector('.spa-view[style*="block"]')?.classList.add('active');
+
+      // 2. Proceed with normal initialization
       injectSharedCart();
       bindSharedCartEvents();
       bindGlobalEvents();
@@ -295,7 +328,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtbkw1n3'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtbm5yuk'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -548,7 +581,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtbm5yuk')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1306,6 +1339,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
 
     state.filteredProducts = products;
+    revealedProducts.clear(); // Reset memory so fresh searches animate cleanly
     renderCatalogProducts();
   }
 
@@ -1362,6 +1396,34 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const visible = state.filteredProducts.slice(0, state.visibleCount);
     grid.innerHTML = visible.map((product) => productCard(product)).join('');
     loadWrap?.classList.toggle('hidden', visible.length >= state.filteredProducts.length);
+    
+    // Trigger scroll animations dynamically
+    requestAnimationFrame(() => observeReveal(grid));
+  }
+
+  const revealedProducts = new Set();
+  let revealObserver = null;
+
+  function observeReveal(container) {
+    if (!window.IntersectionObserver) {
+      container.querySelectorAll('.product-card').forEach(c => { c.classList.add('is-revealed'); revealedProducts.add(c.dataset.productId); });
+      return;
+    }
+    if (!revealObserver) {
+      revealObserver = new IntersectionObserver((entries) => {
+        const visibleEntries = entries.filter(e => e.isIntersecting);
+        visibleEntries.forEach((entry, index) => {
+          setTimeout(() => { 
+            if (entry.target) {
+              entry.target.classList.add('is-revealed');
+              revealedProducts.add(entry.target.dataset.productId);
+            }
+          }, index * 80); // 80ms elegant staggered cascade
+          revealObserver.unobserve(entry.target);
+        });
+      }, { rootMargin: '0px 0px -40px 0px', threshold: 0.05 });
+    }
+    container.querySelectorAll('.product-card:not(.is-revealed)').forEach(c => revealObserver.observe(c));
   }
 
   function triggerBoomerang(element) {
@@ -1375,9 +1437,10 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function productCard(product, compact = false) {
     const discount = product.fake_price > product.actual_price ? Math.round((1 - product.actual_price / product.fake_price) * 100) : 0;
     const isCanvas = isCanvasProduct(product);
-    return `<article class="product-card" data-product-id="${Utils.escapeHTML(product.id)}">
+    const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
+    return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbm5yuk')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1451,7 +1514,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtbkw1n3`;
+      `${window.location.origin}/assets/share-icon.png?v=mtbm5yuk`;
 
     const shareDescription =
       String(
@@ -1464,53 +1527,47 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     document.title = `${product.title} | Twisted Happiness`;
 
-    document.getElementById('og-title')?.setAttribute(
+    document.querySelector('meta[property="og:title"]')?.setAttribute(
       'content',
-      product.title
+      `${product.title} | Twisted Happiness`
     );
 
-    document.getElementById('og-description')?.setAttribute(
-      'content',
-      shareDescription
-    );
-
-    document.getElementById('og-image')?.setAttribute(
-      'content',
-      primaryImage
-    );
-
-    document.querySelector(
-      'meta[property="og:url"]'
-    )?.setAttribute(
-      'content',
-      productPageURL
-    );
-
-    document.getElementById('twitter-title')?.setAttribute(
-      'content',
-      product.title
-    );
-
-    document.getElementById('twitter-description')?.setAttribute(
+    document.querySelector('meta[property="og:description"]')?.setAttribute(
       'content',
       shareDescription
     );
 
-    document.getElementById('twitter-image')?.setAttribute(
+    document.querySelector('meta[property="og:image"]')?.setAttribute(
       'content',
       primaryImage
     );
 
-    document.querySelector(
-      'meta[name="twitter:url"]'
-    )?.setAttribute(
+    document.querySelector('meta[property="og:url"]')?.setAttribute(
       'content',
       productPageURL
     );
 
-    document.querySelector(
-      'link[rel="canonical"]'
-    )?.setAttribute(
+    document.querySelector('meta[name="twitter:title"]')?.setAttribute(
+      'content',
+      `${product.title} | Twisted Happiness`
+    );
+
+    document.querySelector('meta[name="twitter:description"]')?.setAttribute(
+      'content',
+      shareDescription
+    );
+
+    document.querySelector('meta[name="twitter:image"]')?.setAttribute(
+      'content',
+      primaryImage
+    );
+
+    document.querySelector('meta[name="twitter:url"]')?.setAttribute(
+      'content',
+      productPageURL
+    );
+
+    document.querySelector('link[rel="canonical"]')?.setAttribute(
       'href',
       productPageURL
     );
@@ -1578,7 +1635,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtbkw1n3'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtbm5yuk'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -1960,7 +2017,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtbkw1n3',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtbm5yuk',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2031,7 +2088,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbm5yuk')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2164,7 +2221,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbm5yuk')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2258,7 +2315,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbm5yuk')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
