@@ -35,17 +35,13 @@
           <a data-admin-nav-link="settings" href="#settings">Settings</a>
         </nav>
       </div>
-      <button id="admin-logout" class="admin-logout" type="button">Secure logout</button>
+      <button id="admin-logout" class="admin-logout" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Secure logout
+      </button>
     </aside>
 
     <main class="admin-main">
-      <header class="admin-mobile-head">
-        <a class="admin-brand" href="#dashboard" aria-label="Admin Home">
-          <img src="/assets/th_logo_with_heading.svg?v=mtah96hf" alt="Twisted Happiness" class="admin-brand-logo-wide">
-        </a>
-        <button type="button" data-admin-menu aria-label="Open navigation">☰</button>
-      </header>
-
       <!-- ============================================== -->
       <!-- VIEW: DASHBOARD                                -->
       <!-- ============================================== -->
@@ -104,7 +100,7 @@
                   <div class="form-section-grid">
                     <label class="admin-field is-wide"><span>Product title *</span><input id="product-title" class="admin-input" type="text" maxlength="150" required placeholder="Pastel Peony Bouquet"></label>
                     
-                    <div class="admin-field">
+                    <div class="admin-field col-6">
                       <span>Category *</span>
                       <div class="admin-custom-select" id="category-dropdown-wrapper">
                         <input type="hidden" id="product-category" value="Whimsical Art" required>
@@ -116,26 +112,26 @@
                       </div>
                     </div>
                     
-                    <label class="admin-field"><span>Subcategory *</span><input id="product-subcategory" class="admin-input" type="text" maxlength="80" list="subcategory-list" required placeholder="e.g. Florals"><datalist id="subcategory-list"></datalist></label>
+                    <label class="admin-field col-6"><span>Subcategory *</span><input id="product-subcategory" class="admin-input" type="text" maxlength="80" list="subcategory-list" required placeholder="e.g. Florals"><datalist id="subcategory-list"></datalist></label>
                   </div>
                 </div>
 
                 <div class="form-section">
                   <h3 class="form-section-title">Pricing & Display</h3>
                   <div class="form-section-grid">
-                    <label class="admin-field"><span>Selling price (₹) *</span><input id="product-price" class="admin-input" type="number" min="1" step="0.01" required></label>
-                    <label class="admin-field"><span>MRP / strike price *</span><div class="input-action"><input id="product-mrp" class="admin-input" type="number" min="1" step="0.01" required><button id="generate-mrp" type="button">Auto</button></div><small id="mrp-hint">Generated once and stored.</small></label>
-                    <label class="admin-field"><span>Preparation time *</span><select id="product-preparation" class="admin-input" required><option>1-2 Days</option><option selected>2-3 Days</option><option>3-4 Days</option><option>5-6 Days</option><option>7-10 Days</option><option>10-14 Days</option></select></label>
-                    <label class="admin-field"><span>Display order</span><input id="product-sort-order" class="admin-input" type="number" min="0" step="1" value="100"></label>
+                    <label class="admin-field col-4"><span>Selling price (₹) *</span><input id="product-price" class="admin-input" type="number" min="1" step="0.01" required></label>
+                    <label class="admin-field col-4"><span>MRP / strike price *</span><div class="input-action"><input id="product-mrp" class="admin-input" type="number" min="1" step="0.01" required><button id="generate-mrp" type="button">Auto</button></div><small id="mrp-hint">Generated once and stored.</small></label>
+                    <label class="admin-field col-4"><span>Preparation time *</span><select id="product-preparation" class="admin-input" required><option>1-2 Days</option><option selected>2-3 Days</option><option>3-4 Days</option><option>5-6 Days</option><option>7-10 Days</option><option>10-14 Days</option></select></label>
+                    <label class="admin-field col-6"><span>Display order</span><input id="product-sort-order" class="admin-input" type="number" min="0" step="1" value="100"></label>
                   </div>
                 </div>
 
                 <fieldset id="canvas-fields" class="form-section canvas-fields hidden" style="margin: 0 0 16px;">
                   <legend style="padding:0; margin-bottom:12px; font-family:'Lora',serif; font-size:1.1rem; color:var(--pink-deep); border-bottom:1px solid var(--line); width:100%;">Canvas Configuration</legend>
                   <div class="form-section-grid">
-                    <label class="admin-field"><span>Shape</span><select id="canvas-shape" class="admin-input"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle</option></select></label>
-                    <label class="admin-field"><span>Select size *</span><select id="canvas-size-select" class="admin-input" required><option value="">Loading sizes...</option></select></label>
-                    <label id="canvas-orientation-field" class="admin-field hidden"><span>Default orientation</span><select id="canvas-orientation" class="admin-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
+                    <label class="admin-field col-4"><span>Shape</span><select id="canvas-shape" class="admin-input"><option value="square">Square</option><option value="rectangle">Rectangle</option><option value="circle">Circle</option></select></label>
+                    <label class="admin-field col-4"><span>Select size *</span><select id="canvas-size-select" class="admin-input" required><option value="">Loading sizes...</option></select></label>
+                    <label id="canvas-orientation-field" class="admin-field col-4 hidden"><span>Default orientation</span><select id="canvas-orientation" class="admin-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
                   </div>
                 </fieldset>
 
@@ -214,14 +210,18 @@
                 <label class="admin-field is-wide"><span>Announcement text</span><input id="setting-announcement" class="admin-input" type="text" maxlength="220"></label>
                 <label class="switch-field"><input id="setting-announcement-active" type="checkbox"><span><strong>Show announcement</strong><small>Displays above the header.</small></span></label>
                 <label class="switch-field"><input id="setting-vacation" type="checkbox"><span><strong>Vacation / waitlist mode</strong><small>Checkout becomes a waitlist enquiry.</small></span></label>
-                <div class="admin-form-actions"><button id="save-settings" class="admin-button admin-button--dark" type="submit">Save essentials</button></div>
+                <div class="admin-form-actions is-wide"><button id="save-settings" class="admin-button admin-button--dark" type="submit">Save essentials</button></div>
               </form>
             </div>
           </section>
 
-          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Structured sizes</p><h2>Canvas options</h2></div><button id="add-canvas-size" class="admin-button admin-button--soft admin-button--small" type="button">Add size</button></header><div class="admin-card__body"><p class="admin-help">No comma-separated text. Each shape and dimension is stored as structured JSON and validated by the database.</p><div id="canvas-size-list" class="structured-list"></div><div class="admin-form-actions"><button id="save-canvas-sizes" class="admin-button admin-button--dark" type="button">Save canvas sizes</button></div></div></section>
+          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Structured sizes</p><h2>Canvas options</h2></div></header><div class="admin-card__body"><p class="admin-help">No comma-separated text. Each shape and dimension is stored as structured JSON and validated by the database.</p>
+          <details class="admin-expander"><summary>Manage all canvas sizes <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></summary><div class="admin-expander-content" id="canvas-size-list"></div></details>
+          <div class="admin-form-actions" style="margin-top:16px;"><button id="save-canvas-sizes" class="admin-button admin-button--dark" type="button">Save canvas sizes</button></div></div></section>
 
-          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Buy more, save more</p><h2>VIP tiers</h2></div><button id="add-vip-tier" class="admin-button admin-button--soft admin-button--small" type="button">Add tier</button></header><div class="admin-card__body"><p class="admin-help">Tiers are applied by quantity. The secure checkout always chooses the highest eligible tier.</p><div id="vip-tier-list" class="structured-list"></div><div class="admin-form-actions"><button id="save-vip-tiers" class="admin-button admin-button--dark" type="button">Save VIP tiers</button></div></div></section>
+          <section class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Buy more, save more</p><h2>VIP tiers</h2></div><button id="add-vip-tier" class="admin-button admin-button--soft admin-button--small" type="button">Add tier</button></header><div class="admin-card__body"><p class="admin-help">Tiers are applied by quantity. The secure checkout always chooses the highest eligible tier.</p>
+          <details class="admin-expander"><summary>Manage VIP tiers <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></summary><div class="admin-expander-content" id="vip-tier-list"></div></details>
+          <div class="admin-form-actions" style="margin-top:16px;"><button id="save-vip-tiers" class="admin-button admin-button--dark" type="button">Save VIP tiers</button></div></div></section>
 
           <section id="coupons-section" class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Controlled offers</p><h2>Coupons</h2></div><button id="reset-coupon" class="admin-button admin-button--soft admin-button--small" type="button">New coupon</button></header><div class="admin-card__body two-column-body">
             <form id="coupon-form" class="admin-form compact-form">
@@ -236,24 +236,24 @@
               <label class="admin-field"><span>Starts at</span><input id="coupon-starts" class="admin-input" type="datetime-local"></label>
               <label class="admin-field"><span>Expires at</span><input id="coupon-expires" class="admin-input" type="datetime-local"></label>
               <label class="admin-field is-wide"><span>Customer label</span><input id="coupon-label" class="admin-input" type="text" maxlength="120" placeholder="Welcome 10% off"></label>
-              <label class="switch-field is-wide"><input id="coupon-stack-vip" type="checkbox" checked><span><strong>Stack with VIP</strong><small>Allow both savings.</small></span></label>
-              <label class="switch-field is-wide"><input id="coupon-active" type="checkbox" checked><span><strong>Coupon active</strong><small>Available for validation.</small></span></label>
-              <div class="admin-form-actions"><button id="save-coupon" class="admin-button admin-button--dark" type="submit">Save coupon</button></div>
+              <label class="switch-field"><input id="coupon-stack-vip" type="checkbox" checked><span><strong>Stack with VIP</strong><small>Allow both savings.</small></span></label>
+              <label class="switch-field"><input id="coupon-active" type="checkbox" checked><span><strong>Coupon active</strong><small>Available for validation.</small></span></label>
+              <div class="admin-form-actions is-wide"><button id="save-coupon" class="admin-button admin-button--dark" type="submit">Save coupon</button></div>
             </form>
-            <div id="coupon-list" class="coupon-list"></div>
+            <details class="admin-expander is-list-expander"><summary>View existing coupons <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></summary><div class="admin-expander-content"><div id="coupon-list" class="coupon-list"></div></div></details>
           </div></section>
 
           <section id="reviews-section" class="admin-card"><header class="admin-card__head"><div><p class="admin-eyebrow">Approved customer love</p><h2>Reviews</h2></div><button id="reset-review" class="admin-button admin-button--soft admin-button--small" type="button">New review</button></header><div class="admin-card__body two-column-body">
             <form id="review-form" class="admin-form compact-form">
               <input id="review-id" type="hidden">
-              <label class="admin-field is-wide"><span>Product *</span><select id="review-product" class="admin-input" required></select></label>
+              <div class="admin-field is-wide"><span>Product *</span><div id="review-product-container"><select id="review-product" class="admin-input" required></select></div></div>
               <label class="admin-field"><span>Customer name *</span><input id="review-name" class="admin-input" type="text" maxlength="80" required></label>
               <label class="admin-field"><span>Rating *</span><select id="review-rating" class="admin-input"><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></label>
               <label class="admin-field is-wide"><span>Review *</span><textarea id="review-text" class="admin-input" rows="4" maxlength="800" required></textarea></label>
               <label class="switch-field is-wide"><input id="review-approved" type="checkbox" checked><span><strong>Show publicly</strong><small>Only approved reviews appear.</small></span></label>
-              <div class="admin-form-actions"><button id="save-review" class="admin-button admin-button--dark" type="submit">Save review</button></div>
+              <div class="admin-form-actions is-wide"><button id="save-review" class="admin-button admin-button--dark" type="submit">Save review</button></div>
             </form>
-            <div id="review-list" class="coupon-list"></div>
+            <details class="admin-expander is-list-expander"><summary>View existing reviews <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></summary><div class="admin-expander-content"><div id="review-list" class="coupon-list"></div></div></details>
           </div></section>
         </div>
       </div>

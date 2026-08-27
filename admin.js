@@ -73,13 +73,16 @@
     slugify(value) { return String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90); },
     choice({ title = 'Please choose', message = '', icon = '✨', primaryLabel = 'Continue', secondaryLabel = 'Cancel', hideSecondary = false } = {}) {
       return new Promise((resolve) => {
-        document.getElementById('app-modal-overlay')?.remove();
-        const overlay = document.createElement('div'); overlay.id = 'app-modal-overlay'; overlay.className = 'app-modal-overlay';
-        overlay.innerHTML = `<section class="app-modal" role="dialog" aria-modal="true"><div class="app-modal__icon" aria-hidden="true">${Utils.escapeHTML(icon)}</div><h2>${Utils.escapeHTML(title)}</h2><p>${Utils.escapeHTML(message)}</p><div class="app-modal__actions">${hideSecondary ? '' : `<button type="button" class="admin-button admin-button--soft" data-modal-secondary>${Utils.escapeHTML(secondaryLabel)}</button>`}<button type="button" class="admin-button admin-button--dark" data-modal-primary>${Utils.escapeHTML(primaryLabel)}</button></div></section>`;
+        document.getElementById('admin-modal-overlay')?.remove();
+        const overlay = document.createElement('div'); overlay.id = 'admin-modal-overlay'; overlay.className = 'admin-modal-overlay';
+        overlay.innerHTML = `<section class="admin-modal-card" role="dialog" aria-modal="true"><div class="admin-modal-icon" aria-hidden="true">${Utils.escapeHTML(icon)}</div><h2 class="admin-modal-title">${Utils.escapeHTML(title)}</h2><p class="admin-modal-text">${Utils.escapeHTML(message)}</p><div class="admin-modal-actions">${hideSecondary ? '' : `<button type="button" class="admin-button admin-button--soft" data-modal-secondary>${Utils.escapeHTML(secondaryLabel)}</button>`}<button type="button" class="admin-button admin-button--dark" data-modal-primary>${Utils.escapeHTML(primaryLabel)}</button></div></section>`;
         document.body.appendChild(overlay);
-        overlay.querySelector('[data-modal-primary]')?.addEventListener('click', () => { overlay.remove(); resolve('primary'); });
-        overlay.querySelector('[data-modal-secondary]')?.addEventListener('click', () => { overlay.remove(); resolve('secondary'); });
-        overlay.addEventListener('click', (e) => { if (e.target === overlay && !hideSecondary) { overlay.remove(); resolve('dismiss'); } });
+        
+        requestAnimationFrame(() => overlay.classList.add('is-visible'));
+
+        overlay.querySelector('[data-modal-primary]')?.addEventListener('click', () => { overlay.classList.remove('is-visible'); setTimeout(() => { overlay.remove(); resolve('primary'); }, 200); });
+        overlay.querySelector('[data-modal-secondary]')?.addEventListener('click', () => { overlay.classList.remove('is-visible'); setTimeout(() => { overlay.remove(); resolve('secondary'); }, 200); });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay && !hideSecondary) { overlay.classList.remove('is-visible'); setTimeout(() => { overlay.remove(); resolve('dismiss'); }, 200); } });
       });
     },
     async compressImage(file, options = {}) {
@@ -121,7 +124,7 @@
   const CARE_GUIDES = {
     'Whimsical Art': `Keep away from water and direct humidity.\nDust gently with a soft, dry brush or lint roller.\nAdjust stems and petals gently without over-bending.\nAvoid prolonged direct sunlight to prevent fading.\nKeep out of reach of pets to protect the pipe-cleaner fuzz.`,
     'Painted Whispers': `Keep out of direct sunlight to protect the painted colours.\nWipe gently with a clean, dry microfiber cloth.\nAvoid high humidity areas to maintain canvas tension.\nHandle by the outer frame edges to avoid smudging.\nDo not lean sharp or heavy objects against the canvas.`,
-    'Clay Stories': `Keep strictly away from water and extreme moisture.\nDust gently using a small, soft-bristled brush.\nHandle delicate, sculpted details with extreme care.\nAvoid dropping on hard surfaces, as clay can chip.\nStore in a sturdy, dry box if not actively displayed.`,
+    'Clay Stories': `Keep strictly away from water and extreme moisture.\nDust gently using a small, soft-bristled brush.\nHard Clay: Handle with care and avoid dropping, as it can chip or break.\nSoft Clay: Keep away from sharp objects to prevent permanent dents or scratches.\nStore in a sturdy, dry box if not actively displayed.`,
     'Standard': `Keep away from direct water contact and heat sources.\nDust gently with a clean, dry brush or soft cloth.\nHandle any delicate handmade elements with care.\nAvoid direct sunlight to maintain the original finish.\nProtect from heavy objects resting on or crushing the piece.`
   };
 
@@ -163,6 +166,7 @@
   function handleRoute(hash) {
     const page = hash.replace('#', '') || 'dashboard';
     state.page = page;
+    document.body.dataset.adminPage = page;
     
     // Hide all views
     document.querySelectorAll('.spa-view').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
@@ -375,6 +379,7 @@
     const categories = [...new Set(state.products.map(p => p.main_category).filter(Boolean))];
     if (!categories.includes('Whimsical Art')) categories.unshift('Whimsical Art');
     if (!categories.includes('Painted Whispers')) categories.push('Painted Whispers');
+    if (!categories.includes('Clay Stories')) categories.push('Clay Stories');
     const uniqueCategories = [...new Set(categories)];
     
     menu.innerHTML = uniqueCategories.map(cat => `
@@ -430,6 +435,7 @@
           btn.setAttribute('aria-expanded', 'false');
           menu.classList.remove('is-open');
           updateProductCategoryUI();
+          if (CARE_GUIDES[val]) setValue('product-care', CARE_GUIDES[val]);
         }
       }
     });
@@ -508,7 +514,6 @@
     document.getElementById('product-price')?.addEventListener('change', handleSellingPriceChange);
     document.getElementById('product-mrp')?.addEventListener('input', () => { if (!state.suppressMRPTracking) state.mrpManuallyEdited = true; });
     document.getElementById('generate-mrp')?.addEventListener('click', () => generateAndSetMRP(true));
-    document.getElementById('upload-zone')?.addEventListener('click', (event) => { if (!event.target.closest('input')) document.getElementById('product-images')?.click(); });
     document.getElementById('product-images')?.addEventListener('change', handleImageSelection);
     document.getElementById('image-preview-list')?.addEventListener('click', handleImagePreviewAction);
     document.getElementById('product-search')?.addEventListener('input', renderProductList);
@@ -549,16 +554,16 @@
     if (!filtered.length) { host.innerHTML = '<div class="admin-empty">No products match this view.</div>'; return; }
     
     host.innerHTML = filtered.map((product) => `
-      <article data-product-id="${Utils.escapeHTML(product.id)}" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt="" style="width: 76px; height: 76px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; border: 1px solid var(--line);">
+      <article class="product-row" data-product-id="${Utils.escapeHTML(product.id)}">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt="">
         
-        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 5px;">
-          <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Utils.escapeHTML(product.title)}</h3>
-          <p style="margin: 0; font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep')}</p>
-          <span class="status-pill ${product.is_active ? 'is-active' : ''}" style="margin: 2px 0 0; align-self: flex-start;">${product.is_active ? 'Visible' : 'Hidden'}</span>
+        <div class="product-row-info">
+          <h3>${Utils.escapeHTML(product.title)}</h3>
+          <p>${Utils.escapeHTML(product.main_category || 'Uncategorised')} · ${Utils.formatCurrency(product.actual_price)} · ${Utils.escapeHTML(product.preparation_days || 'No prep')}</p>
+          <span class="status-pill ${product.is_active ? 'is-active' : ''}" style="align-self: flex-start; margin-top: 2px;">${product.is_active ? 'Visible' : 'Hidden'}</span>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; border-left: 1px solid var(--line-strong); padding-left: 16px;">
+        <div class="product-row-actions">
           <button type="button" class="admin-button admin-button--soft" data-product-action="edit" title="Edit" style="width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 8px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </button>
@@ -704,7 +709,11 @@
     const price = Number(document.getElementById('product-price')?.value || 0);
     if (!price) return;
     const changed = state.originalPrice === null || Math.abs(price - state.originalPrice) > 0.0001;
-    if (changed && !state.mrpManuallyEdited) generateAndSetMRP(false);
+    
+    // Only auto-generate MRP if the user hasn't explicitly set a custom one
+    if (changed && !state.mrpManuallyEdited) {
+      generateAndSetMRP(false);
+    }
   }
 
   function generateAndSetMRP(manualRequest) {
@@ -912,7 +921,6 @@
 
   function bindSettingsEvents() {
     document.getElementById('settings-form')?.addEventListener('submit', saveSettings);
-    document.getElementById('add-canvas-size')?.addEventListener('click', () => { state.canvasSizes.push({ id: crypto.randomUUID(), shape: 'square', width: 8, height: 8, label: '8 × 8 in' }); renderCanvasSizes(); });
     document.getElementById('canvas-size-list')?.addEventListener('input', updateStructuredCanvasState);
     document.getElementById('canvas-size-list')?.addEventListener('change', updateStructuredCanvasState);
     document.getElementById('canvas-size-list')?.addEventListener('click', handleCanvasSizeAction);
@@ -986,27 +994,27 @@
     const circles = [];
 
     state.canvasSizes.forEach((size, index) => {
-      const shape = size.shape || 'square';
-      const itemHTML = `
-        <div class="structured-row" data-canvas-index="${index}" style="display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px;">
-          <div style="display:grid;gap:8px;flex:1;">
-            ${shape === 'circle' 
-              ? `<label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Diameter (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.diameter || 8}"></label>`
-              : shape === 'rectangle'
-              ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-                   <label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Width (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>
-                   <label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Height (in)</span><input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || 10}"></label>
-                 </div>`
-              : `<label style="display:grid;gap:2px;"><span style="font-size:0.55rem;font-weight:900;color:var(--muted);">Size (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>`
-            }
-          </div>
-          <button type="button" data-canvas-action="remove" aria-label="Remove size" style="width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:14px;">×</button>
-        </div>`;
-      
-      if (shape === 'square') squares.push(itemHTML);
-      else if (shape === 'rectangle') rectangles.push(itemHTML);
-      else circles.push(itemHTML);
-    });
+        const shape = size.shape || 'square';
+        const itemHTML = `
+          <div class="structured-card" data-canvas-index="${index}">
+            <div class="structured-card__header">
+              <button type="button" class="structured-card__remove" data-canvas-action="remove" aria-label="Remove size" style="margin-left: auto;">×</button>
+            </div>
+            <div class="structured-card__body ${shape === 'rectangle' ? '' : 'single'}">
+              ${shape === 'circle' 
+                ? `<label><span>Diameter (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.diameter || 8}"></label>`
+                : shape === 'rectangle'
+                ? `<label><span>Width (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>
+                   <label><span>Height (in)</span><input class="admin-input" data-canvas-field="height" type="number" min="1" step="0.5" value="${size.height || size.width || 10}"></label>`
+                : `<label><span>Size (in)</span><input class="admin-input" data-canvas-field="primary" type="number" min="1" step="0.5" value="${size.width || 8}"></label>`
+              }
+            </div>
+          </div>`;
+        
+        if (shape === 'square') squares.push(itemHTML);
+        else if (shape === 'rectangle') rectangles.push(itemHTML);
+        else circles.push(itemHTML);
+      });
 
     host.innerHTML = `
       <div class="canvas-columns-grid">
@@ -1101,19 +1109,19 @@
     if (!host) return;
     
     const cards = state.vipTiers.map((tier, index) => `
-      <div class="structured-row is-vip" data-vip-index="${index}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <strong style="font-size:0.75rem;color:var(--charcoal);">Tier ${index + 1}</strong>
-          <button type="button" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''} style="width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--red);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:0.2s ease;${index === 0 ? 'opacity:0.3;cursor:not-allowed;' : ''}">×</button>
+      <div class="structured-card" data-vip-index="${index}">
+        <div class="structured-card__header">
+          <strong>Tier ${index + 1}</strong>
+          <button type="button" class="structured-card__remove" data-vip-action="remove" aria-label="Remove tier" ${index === 0 ? 'disabled' : ''}>×</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <label style="display:grid;gap:4px;">
-            <span style="font-size:0.65rem;font-weight:600;color:var(--muted);">Min quantity</span>
-            <input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''} style="min-height:36px;padding:6px 10px;">
+        <div class="structured-card__body">
+          <label>
+            <span>Min quantity</span>
+            <input class="admin-input" data-vip-field="minimumQuantity" type="number" min="1" step="1" value="${tier.minimumQuantity}" ${index === 0 ? 'readonly' : ''}>
           </label>
-          <label style="display:grid;gap:4px;">
-            <span style="font-size:0.65rem;font-weight:600;color:var(--muted);">Discount %</span>
-            <input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}" style="min-height:36px;padding:6px 10px;">
+          <label>
+            <span>Discount %</span>
+            <input class="admin-input" data-vip-field="percent" type="number" min="0" max="80" step="0.01" value="${tier.percent}">
           </label>
         </div>
       </div>`).join('');
@@ -1279,7 +1287,7 @@
   }
   
   function renderReviewProductOptions() {
-    const container = document.getElementById('review-product')?.parentElement;
+    const container = document.getElementById('review-product-container');
     if (!container) return;
 
     let hiddenInput = document.getElementById('review-product');
@@ -1491,115 +1499,90 @@
 
       // Render the collapsible row
       return `
-        <details class="admin-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" style="margin-bottom: 16px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
-          <summary class="enquiry-summary" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; cursor: pointer; list-style: none; user-select: none;">
-            <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 200px;">
-              <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(197, 139, 158, 0.12); color: var(--pink-deep); border-radius: 50%; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+        <details class="enquiry-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}">
+          <summary class="enquiry-summary">
+            <div class="enquiry-summary-left">
+              <div class="enquiry-summary-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
               <div>
-                <strong style="font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--charcoal); display: block;">${Utils.escapeHTML(enquiry.customer_name)}</strong>
-                <span style="font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(enquiry.reference)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</span>
+                <strong>${Utils.escapeHTML(enquiry.customer_name)}</strong>
+                <span>${Utils.escapeHTML(enquiry.reference)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</span>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 16px; justify-content: flex-end;">
-              <div style="text-align: right;">
-                <strong style="font-size: 0.9rem; color: var(--charcoal); display: block;">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
-              </div>
-              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}" style="margin:0; padding: 4px 10px; font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em; min-width: 76px; text-align: center;">${Utils.escapeHTML(enquiry.status)}</span>
-              <div class="enquiry-chevron" style="color: var(--muted); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: grid; place-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div class="enquiry-summary-right">
+              <strong class="enquiry-total-text">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
+              <div class="enquiry-chevron"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
             </div>
           </summary>
 
-          <div style="display: flex; flex-wrap: wrap; gap: 24px; padding: 0 20px 20px; border-top: 1px solid var(--line); margin-top: 4px; padding-top: 20px;">
+          <div class="enquiry-body">
             <!-- Column 1: Customer Details -->
-            <div style="flex: 1 1 0%; min-width: 220px; display: flex; flex-direction: column; gap: 10px;">
+            <div class="enquiry-col">
               <p class="admin-eyebrow">Customer & Delivery</p>
-              <div style="font-size: 0.8rem; color: var(--charcoal); display: flex; flex-direction: column; gap: 6px;">
-                <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>👤</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_name)}</span></span>
-                <span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>📱</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
-                ${enquiry.customer_email ? `<span style="display: flex; gap: 8px; align-items: center; color: var(--muted);"><strong>✉️</strong> <span style="color: var(--charcoal);">${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
-                <span style="display: flex; gap: 8px; align-items: start; line-height: 1.4; color: var(--muted);">
+              <div class="enquiry-details-list">
+                <span><strong>👤</strong> <span>${Utils.escapeHTML(enquiry.customer_name)}</span></span>
+                <span><strong>📱</strong> <span>${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
+                ${enquiry.customer_email ? `<span><strong>✉️</strong> <span>${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
+                <span class="align-start">
                   <strong>📍</strong> 
-                  <span style="color: var(--charcoal);">
+                  <span>
                     ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
                     ${enquiry.address_line_2 ? '<br>' + Utils.escapeHTML(enquiry.address_line_2) : ''}<br>
                     ${Utils.escapeHTML(enquiry.customer_city || '')}, ${Utils.escapeHTML(enquiry.state || '')} - ${Utils.escapeHTML(enquiry.pincode || '')}
                   </span>
                 </span>
-                ${enquiry.note ? `<div style="margin-top:6px; padding: 10px; background: var(--beige); border-radius: var(--radius-sm); border: 1px solid var(--line-strong); color: var(--charcoal); line-height: 1.4;"><strong style="color: var(--pink-deep); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Order Note:</strong>${Utils.escapeHTML(enquiry.note)}</div>` : ''}
+                ${enquiry.note ? `<div class="enquiry-note"><strong class="admin-eyebrow">Order Note:</strong>${Utils.escapeHTML(enquiry.note)}</div>` : ''}
               </div>
             </div>
 
             <!-- Column 2: Order Details & Price Distribution -->
-            <div style="flex: 1 1 0%; min-width: 240px; display: flex; flex-direction: column; gap: 14px;">
+            <div class="enquiry-col">
               <p class="admin-eyebrow">Order Summary</p>
-              <details class="admin-products-dropdown" style="background: var(--beige); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); overflow: hidden;">
-                <summary style="padding: 10px 14px; font-size: 0.75rem; font-weight: 600; color: var(--charcoal); cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; user-select: none; outline: none; transition: background-color 0.2s ease, box-shadow 0.2s ease;">
+              <details class="admin-products-dropdown">
+                <summary>
                   <span>${enquiry.items?.length || 0} item${enquiry.items?.length === 1 ? '' : 's'} in bag</span>
-                  <span class="dropdown-chevron" style="transition: transform 0.25s ease; display: grid; place-items: center;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-                  </span>
+                  <span class="dropdown-chevron"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
                 </summary>
-                <div style="padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto;">
+                <div class="enquiry-items-list">
                   ${(enquiry.items || []).map((item) => {
                     const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
                     const img = product?.images?.[0] || '/assets/th_logo.svg';
                     return `
-                      <div style="display: flex; gap: 12px; align-items: center; padding-top: 10px; border-top: 1px solid var(--line);">
-                        <img src="${Utils.escapeHTML(img)}" style="width: 42px; height: 42px; border-radius: 6px; object-fit: cover; border: 1px solid var(--line);">
-                        <div style="font-size: 0.75rem; line-height: 1.3;">
-                          <strong style="color: var(--charcoal);">${Utils.escapeHTML(item.title)}</strong> × ${item.quantity}<br>
-                          <span style="color: var(--muted); font-size: 0.65rem;">${item.selected_size?.label ? `${Utils.escapeHTML(item.selected_size.label)}` : ''}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</span>
+                      <div class="enquiry-item">
+                        <img src="${Utils.escapeHTML(img)}">
+                        <div>
+                          <strong>${Utils.escapeHTML(item.title)}</strong> × ${item.quantity}<br>
+                          <span>${item.selected_size?.label ? `${Utils.escapeHTML(item.selected_size.label)}` : ''}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</span>
                         </div>
                       </div>`;
                   }).join('')}
                 </div>
               </details>
               
-              <div style="font-size: 0.75rem; display: flex; flex-direction: column; gap: 6px; padding: 0 4px;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Price (MRP)</span>
-                  <strong>${Utils.formatCurrency(totalMrp)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
-                  <span>Discount</span>
-                  <strong>−${Utils.formatCurrency(mrpDiscount)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--charcoal);">Subtotal</span>
-                  <strong>${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
-                  <span>VIP Savings</span>
-                  <strong>−${Utils.formatCurrency(enquiry.vip_discount || 0)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; color: var(--pink-deep);">
-                  <span>Coupon ${enquiry.coupon_code ? `(${Utils.escapeHTML(enquiry.coupon_code)})` : ''}</span>
-                  <strong>−${Utils.formatCurrency(enquiry.coupon_discount || 0)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: var(--muted);">Shipping Fee</span>
-                  <strong>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'FREE'}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--charcoal);">
-                  <span><strong>Order Total</strong></span>
-                  <strong>${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
-                </div>
+              <div class="enquiry-financials">
+                <div><span class="muted">Price (MRP)</span><strong>${Utils.formatCurrency(totalMrp)}</strong></div>
+                <div class="highlight"><span>Discount</span><strong>−${Utils.formatCurrency(mrpDiscount)}</strong></div>
+                <div><span>Subtotal</span><strong>${Utils.formatCurrency(enquiry.subtotal || 0)}</strong></div>
+                <div class="highlight"><span>VIP Savings</span><strong>−${Utils.formatCurrency(enquiry.vip_discount || 0)}</strong></div>
+                <div class="highlight"><span>Coupon ${enquiry.coupon_code ? `(${Utils.escapeHTML(enquiry.coupon_code)})` : ''}</span><strong>−${Utils.formatCurrency(enquiry.coupon_discount || 0)}</strong></div>
+                <div><span class="muted">Shipping Fee</span><strong>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'FREE'}</strong></div>
+                <div class="total-row"><span><strong>Order Total</strong></span><strong>${Utils.formatCurrency(enquiry.total_amount || 0)}</strong></div>
               </div>
             </div>
 
             <!-- Column 3: Actions -->
-            <div style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 12px; min-width: 200px;">
+            <div class="enquiry-col">
               <p class="admin-eyebrow">Actions</p>
-              <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
-                <label style="display:flex; flex-direction: column; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--charcoal);">
+              <div class="enquiry-actions-stack">
+                <label>
                   Update Status
-                  <select class="admin-input" data-enquiry-status style="cursor: pointer; padding: 0 12px; height: 40px;">
+                  <select class="admin-input" data-enquiry-status>
                     ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status.charAt(0).toUpperCase() + status.slice(1)}</option>`).join('')}
                   </select>
                 </label>
                 
-                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; justify-content: center; height: 40px; color: #178a59; border-color: #178a59; background: #f0fdf4;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="margin-right: 8px; flex-shrink: 0;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button whatsapp-btn" target="_blank" rel="noopener">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
                   Message Customer
                 </a>
                 
@@ -1628,41 +1611,35 @@
   // 1. A beautiful, custom-styled modal to collect all details at once
   function promptShiprocketDetails() {
     return new Promise((resolve) => {
+      document.getElementById('admin-modal-overlay')?.remove();
       const overlay = document.createElement('div');
-      // Using inline layout styles to ensure it floats perfectly in the center of the screen
-      // while recycling your existing admin CSS classes for the inputs and buttons!
-      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(74,59,66,0.4);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity 0.2s ease;';
+      overlay.id = 'admin-modal-overlay';
+      overlay.className = 'admin-modal-overlay';
       
       overlay.innerHTML = `
-        <div style="background:var(--paper);padding:24px;border-radius:var(--radius-lg);width:90%;max-width:380px;box-shadow:var(--shadow-md);transform:translateY(10px);transition:transform 0.2s ease;">
-          <div style="text-align:center;margin-bottom:20px;">
-             <span style="font-size:24px;display:block;margin-bottom:8px;">📦</span>
-             <h2 style="margin:0;font-family:'Lora',serif;font-size:1.4rem;color:var(--charcoal);">Package Details</h2>
-             <p style="margin:4px 0 0;color:var(--muted);font-size:0.8rem;">Enter the exact dimensions for the courier.</p>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div class="admin-modal-card" role="dialog" aria-modal="true">
+          <div class="admin-modal-icon" aria-hidden="true">📦</div>
+          <h2 class="admin-modal-title">Package Details</h2>
+          <p class="admin-modal-text">Enter the exact dimensions for the courier.</p>
+          <div class="admin-modal-grid">
              <label class="admin-field"><span>Weight (kg) *</span><input id="sr-weight" class="admin-input" type="number" step="0.01" value="0.5"></label>
              <label class="admin-field"><span>Length (cm) *</span><input id="sr-length" class="admin-input" type="number" step="1" value="10"></label>
              <label class="admin-field"><span>Breadth (cm) *</span><input id="sr-breadth" class="admin-input" type="number" step="1" value="10"></label>
              <label class="admin-field"><span>Height (cm) *</span><input id="sr-height" class="admin-input" type="number" step="1" value="10"></label>
           </div>
-          <div style="display:flex;gap:10px;">
-             <button id="sr-cancel" class="admin-button admin-button--soft" style="flex:1;" type="button">Cancel</button>
-             <button id="sr-confirm" class="admin-button admin-button--dark" style="flex:1;" type="button">Push order</button>
+          <div class="admin-modal-actions">
+             <button id="sr-cancel" class="admin-button admin-button--soft" type="button">Cancel</button>
+             <button id="sr-confirm" class="admin-button admin-button--dark" type="button">Push order</button>
           </div>
         </div>
       `;
       document.body.appendChild(overlay);
 
-      // Trigger a tiny delay so the fade-in animation plays smoothly
-      requestAnimationFrame(() => {
-        overlay.style.opacity = '1';
-        overlay.firstElementChild.style.transform = 'translateY(0)';
-      });
+      requestAnimationFrame(() => overlay.classList.add('is-visible'));
 
       // Handle Cancel
       document.getElementById('sr-cancel').onclick = () => {
-        overlay.style.opacity = '0';
+        overlay.classList.remove('is-visible');
         setTimeout(() => { overlay.remove(); resolve(null); }, 200);
       };
 

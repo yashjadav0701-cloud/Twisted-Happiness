@@ -196,7 +196,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const view = url.searchParams.get('view');
     document.querySelectorAll('.spa-view').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
 
-    if (path.startsWith('/product') || view === 'product') {
+    if (path.startsWith('/product') || view === 'product' || path.startsWith('/share')) {
       state.page = 'product';
       document.getElementById('view-product').style.display = 'block';
       document.body.dataset.page = 'product';
@@ -2123,9 +2123,13 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     
     setText(`${prefix}-vip-label`, `VIP Savings (${totals.tier.percent}%)`); 
     setText(`${prefix}-vip-discount`, `−${Utils.formatCurrency(totals.vipDiscount)}`);
+    document.getElementById(`${prefix}-vip-row`)?.classList.toggle('hidden', totals.vipDiscount <= 0);
     
     setText(`${prefix}-coupon-label`, state.coupon ? `Coupon (${state.coupon.code})` : 'Coupon Savings');
     setText(`${prefix}-coupon-discount`, state.coupon?.discountType === 'shipping' ? 'Free delivery' : `−${Utils.formatCurrency(totals.couponDiscount)}`);
+    document.getElementById(`${prefix}-coupon-row`)?.classList.toggle('hidden', totals.couponDiscount <= 0 && state.coupon?.discountType !== 'shipping');
+    
+    document.getElementById(`${prefix}-mrp-discount`)?.parentElement.classList.toggle('hidden', totals.mrpDiscount <= 0);
     
     renderSavingsProgress(prefix, totals);
   }

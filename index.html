@@ -13,7 +13,7 @@
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtah96hf">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2.0">
   <meta property="og:image:type" content="image/png">
 
   <!-- Twitter / Telegram / Discord -->
@@ -23,15 +23,15 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtah96hf">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2.0">
 
   <link rel="canonical" href="https://twistedhappiness.vercel.app/">
-  <link rel="icon" href="/assets/th_logo.svg?v=mtah96hf" type="image/svg+xml">
+  <link rel="icon" href="/assets/th_logo.svg?v=2.0" type="image/svg+xml">
   <title>Twisted Happiness | Handcrafted Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=mtah96hf">
+  <link rel="stylesheet" href="/styles.css?v=2.0">
 </head>
 <body data-page="catalog">
 
@@ -43,7 +43,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <header class="site-header">
     <div class="site-shell header-main">
       <a class="brand" href="/" aria-label="Twisted Happiness home" style="display: flex; align-items: center;">
-        <img src="/assets/th_logo_with_heading.svg?v=mtah96hf" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
+        <img src="/assets/th_logo_with_heading.svg?v=2.0" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
       </a>
       
       <div class="header-actions">
@@ -221,7 +221,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
           <label class="field-block"><span>Custom note <small>(optional)</small></span><textarea id="product-note" maxlength="180" rows="3" placeholder="Colour preference, name, gift message or another detail…"></textarea></label>
 
           <div id="product-vip-nudge" class="product-vip-nudge"><span>♕</span><div><strong>Build a bag to unlock automatic savings</strong><small id="product-vip-text">Add 2 items for your first VIP discount.</small></div></div>
-          <div class="product-actions"><button id="add-to-cart" class="app-button app-button--dark app-button--full" type="button">Add to saving bag</button><button id="single-whatsapp" class="single-order-link" type="button">Order only this item on WhatsApp</button></div>
+          <div class="product-actions" style="display: flex; gap: 10px; flex-wrap: wrap; flex-direction: row;"><button id="add-to-cart" class="app-button app-button--dark" type="button" style="flex: 1; min-width: 200px;">Add to saving bag</button><button id="single-whatsapp" class="app-button app-button--soft" type="button" style="flex: 1; min-width: 200px;">Order only this item</button></div>
 
           <section class="content-section"><h2>Story & inspiration</h2><div id="product-description"></div></section>
           <section id="care-section" class="content-section hidden"><h2>Care guide</h2><ul id="product-care" class="care-list"></ul></section>
@@ -250,17 +250,21 @@ Made with imagination. Created with love. Made to make you smile. 💜">
         <div class="checkout-stack">
           <section class="checkout-card"><div class="checkout-card__head"><div><p class="eyebrow">For a clean WhatsApp message</p><h2>Delivery details</h2></div></div>
             <form id="checkout-form" class="simple-form">
-              <label><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Full name"></label>
-              <label><span>WhatsApp number *</span><input id="customer-phone" class="simple-input" type="tel" maxlength="16" required inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number"></label>
+              <div class="is-wide" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <label style="margin:0;"><span>Your name *</span><input id="customer-name" class="simple-input" type="text" maxlength="80" required autocomplete="name" placeholder="Full name"></label>
+                <label style="margin:0;"><span>WhatsApp number *</span><input id="customer-phone" class="simple-input" type="tel" maxlength="16" required inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number"></label>
+              </div>
               
               <label class="is-wide"><span>Email address *</span><input id="customer-email" class="simple-input" type="email" maxlength="120" required autocomplete="email" placeholder="Required for delivery tracking updates"></label>
               
               <label class="is-wide"><span>Address line 1 *</span><input id="customer-address-1" class="simple-input" type="text" maxlength="150" required autocomplete="address-line1" placeholder="House/Flat No., Building name, Street"></label>
               <label class="is-wide"><span>Address line 2 *</span><input id="customer-address-2" class="simple-input" type="text" maxlength="150" required autocomplete="address-line2" placeholder="Locality, Area, Landmark"></label>
               
-              <label><span>City *</span><input id="customer-city" class="simple-input" type="text" maxlength="80" required autocomplete="address-level2" placeholder="Delivery city"></label>
-              <label><span>State *</span><input id="customer-state" class="simple-input" type="text" maxlength="80" required autocomplete="address-level1" placeholder="e.g. Gujarat"></label>
-              <label><span>Pincode *</span><input id="customer-pincode" class="simple-input" type="text" maxlength="6" required inputmode="numeric" autocomplete="postal-code" placeholder="6-digit pincode"></label>
+              <div class="is-wide" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
+                <label style="margin:0;"><span>City *</span><input id="customer-city" class="simple-input" type="text" maxlength="80" required autocomplete="address-level2" placeholder="Delivery city"></label>
+                <label style="margin:0;"><span>State *</span><input id="customer-state" class="simple-input" type="text" maxlength="80" required autocomplete="address-level1" placeholder="e.g. Gujarat"></label>
+                <label style="margin:0;"><span>Pincode *</span><input id="customer-pincode" class="simple-input" type="text" maxlength="6" required inputmode="numeric" autocomplete="postal-code" placeholder="6-digit pincode"></label>
+              </div>
               
               <label class="is-wide"><span>Order note <small>(optional)</small></span><textarea id="customer-note" class="simple-input" rows="3" maxlength="260" placeholder="Gifting date, colour preference or another request…"></textarea></label>
             </form>
@@ -331,7 +335,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 
   <div id="shared-cart-root"></div>
 <nav class="mobile-nav" aria-label="Mobile navigation">
-    <a href="/index.html" class="mobile-nav__item">
+    <a href="/" class="mobile-nav__item" id="mobile-nav-home">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span>Home</span>
     </a>
@@ -565,6 +569,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/app.js?v=mtah96hf" type="module"></script>
+  <script src="/app.js?v=2.0" type="module"></script>
 </body>
 </html>
