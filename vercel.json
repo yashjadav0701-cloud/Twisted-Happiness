@@ -1,13 +1,10 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
-    { "source": "/admin", "destination": "/admin.html", "permanent": false }
-  ],
   "rewrites": [
     { "source": "/khushiified", "destination": "/admin.html" },
     { "source": "/product.html", "destination": "/index.html" },
-    { "source": "/share","destination": "/api/share"},
+    { "source": "/share", "destination": "/api/share.mjs" },
     { "source": "/checkout.html", "destination": "/index.html" },
     { "source": "/return-policy.html", "destination": "/index.html" },
     { "source": "/404.html", "destination": "/index.html" }

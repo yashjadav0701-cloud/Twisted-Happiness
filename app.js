@@ -295,7 +295,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtbkw1n3'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -548,7 +548,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1377,7 +1377,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const isCanvas = isCanvasProduct(product);
     return `<article class="product-card" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=2.0')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1385,8 +1385,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         <div class="product-card__price"><strong>${Utils.formatCurrency(product.actual_price)}</strong>${product.fake_price > product.actual_price ? `<del>${Utils.formatCurrency(product.fake_price)}</del><span class="product-card__discount">${discount}% off</span>` : ''}</div>
         <button type="button" class="product-card__action pop-click" data-card-action="${isCanvas ? 'choose' : 'add'}">
           ${isCanvas 
-            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg><span>Choose size</span>' 
-            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg><span>Add to bag</span>'}
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg><span>Choose size</span>' 
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>Add to bag</span>'}
         </button>
       </div>
     </article>`;
@@ -1451,7 +1451,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=2.0`;
+      `${window.location.origin}/assets/share-icon.png?v=mtbkw1n3`;
 
     const shareDescription =
       String(
@@ -1578,7 +1578,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtbkw1n3'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -1960,7 +1960,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtbkw1n3',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2031,7 +2031,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2164,7 +2164,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbkw1n3')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2258,7 +2258,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbkw1n3')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}

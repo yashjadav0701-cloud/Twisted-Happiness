@@ -6,7 +6,9 @@ const newVersion = Date.now().toString(36);
 
 const filesToUpdate = [
   path.join(__dirname, 'admin.html'),
-  path.join(__dirname, 'index.html')
+  path.join(__dirname, 'index.html'),
+  path.join(__dirname, 'app.js'),
+  path.join(__dirname, 'api', 'share.mjs')
 ];
 
 filesToUpdate.forEach(filePath => {

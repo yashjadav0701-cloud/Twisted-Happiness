@@ -13,7 +13,7 @@
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2.0">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtbkw1n3">
   <meta property="og:image:type" content="image/png">
 
   <!-- Twitter / Telegram / Discord -->
@@ -23,15 +23,15 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=2.0">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtbkw1n3">
 
   <link rel="canonical" href="https://twistedhappiness.vercel.app/">
-  <link rel="icon" href="/assets/th_logo.svg?v=2.0" type="image/svg+xml">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtbkw1n3" type="image/svg+xml">
   <title>Twisted Happiness | Handcrafted Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=2.0">
+  <link rel="stylesheet" href="/styles.css?v=mtbkw1n3">
 </head>
 <body data-page="catalog">
 
@@ -43,7 +43,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <header class="site-header">
     <div class="site-shell header-main">
       <a class="brand" href="/" aria-label="Twisted Happiness home" style="display: flex; align-items: center;">
-        <img src="/assets/th_logo_with_heading.svg?v=2.0" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
+        <img src="/assets/th_logo_with_heading.svg?v=mtbkw1n3" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
       </a>
       
       <div class="header-actions">
@@ -96,7 +96,12 @@ Made with imagination. Created with love. Made to make you smile. 💜">
             <!-- Refined VIP Tiers (Single Row) -->
             <div class="vip-hero-integration" style="margin: 12px auto 0; width: 100%;">
                 <p style="font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px; font-weight: 600;">Automatic VIP Savings</p>
-                <div id="home-vip-tiers" class="vip-tiers no-scrollbar" aria-label="VIP discount tiers"></div>
+                <div id="home-vip-tiers" class="vip-tiers no-scrollbar" aria-label="VIP discount tiers">
+                  <div class="skeleton-vip"></div>
+                  <div class="skeleton-vip"></div>
+                  <div class="skeleton-vip"></div>
+                  <div class="skeleton-vip"></div>
+                </div>
             </div>
 
             <div class="hero-actions" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;">
@@ -139,10 +144,19 @@ Made with imagination. Created with love. Made to make you smile. 💜">
         </div>
 
         <div class="catalog-tools" style="display: flex; flex-direction: column; align-items: stretch; gap: 24px; margin-bottom: 24px;">
-          <div id="category-chips" class="category-visual-grid no-scrollbar" aria-label="Product categories"></div>
+          <div id="category-chips" class="category-visual-grid no-scrollbar" aria-label="Product categories">
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+          </div>
         </div>
 
         <div id="catalog-loading" class="skeleton-grid" aria-label="Loading products">
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+          <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
           <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
         </div>
         <div id="product-grid" class="product-grid hidden" aria-live="polite"></div>
@@ -569,6 +583,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/app.js?v=2.0" type="module"></script>
+  <script src="/app.js?v=mtbkw1n3" type="module"></script>
 </body>
 </html>

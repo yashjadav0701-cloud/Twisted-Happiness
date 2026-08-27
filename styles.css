@@ -255,10 +255,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .skeleton-grid { grid-template-columns: repeat(4, minmax(0,1fr)); gap: 40px 20px; }
 }
 @media (min-width: 1024px) {
-  .skeleton-grid { grid-template-columns: repeat(6, minmax(0,1fr)); gap: 40px 20px; }
-}
-.skeleton { min-height: 360px; border-radius: var(--radius-md); background: linear-gradient(100deg, rgba(217,208,198,.35) 20%, rgba(255,255,255,.72) 40%, rgba(217,208,198,.35) 60%); background-size: 200% 100%; animation: shimmer 1.25s infinite linear; }
-@keyframes shimmer { to { background-position-x: -200%; } }
+      .skeleton-grid { grid-template-columns: repeat(6, minmax(0,1fr)); gap: 40px 20px; }
+    }
+    .skeleton, .skeleton-chip, .skeleton-vip { background: linear-gradient(100deg, rgba(217,208,198,.35) 20%, rgba(255,255,255,.72) 40%, rgba(217,208,198,.35) 60%); background-size: 200% 100%; animation: shimmer 1.25s infinite linear; }
+    .skeleton { min-height: 360px; border-radius: var(--radius-md); }
+    .skeleton-chip { flex: 0 0 130px; height: 140px; border-radius: var(--radius-lg); }
+    .skeleton-vip { flex: 1; height: 46px; border-radius: var(--radius-md); min-width: 0; }
+    @keyframes shimmer { to { background-position-x: -200%; } }
 .empty-state { min-height: 300px; display: grid; place-items: center; align-content: center; gap: 9px; padding: 30px; border: 1px dashed var(--line-strong); border-radius: var(--radius-lg); background: rgba(255,255,255,.42); text-align: center; }
 .empty-state > span { font-size: 2.2rem; }
 .empty-state h2, .empty-state h3 { margin: 0; font-family: "Lora", serif; }
@@ -624,10 +627,12 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
   .category-chip--all { gap: 6px; }
   .category-chip--all .all-icon { width: 30px; height: 30px; }
   .category-chip--all .all-icon svg { width: 14px; height: 14px; }
-  .category-chip--all span:not(.all-icon) { font-size: 0.65rem; }
-  .compact-select { align-self: flex-end; width: auto; max-width: 100%; }
-  
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px 12px; }
+      .category-chip--all span:not(.all-icon) { font-size: 0.65rem; }
+      .compact-select { align-self: flex-end; width: auto; max-width: 100%; }
+      .skeleton-chip { flex: 1 1 0; min-width: 0; max-width: 110px; height: auto; aspect-ratio: 1 / 1.1; }
+      .skeleton-vip { height: 42px; }
+      
+      .product-grid, .skeleton-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px 12px; }
   
   .reassurance-card { grid-template-columns: 1fr; gap: 16px; margin-bottom: 48px; padding: 32px 0; align-items: start; text-align: left; border-left: none; border-right: none; }
   .reassurance-card h2 { font-size: 1.5rem; }
