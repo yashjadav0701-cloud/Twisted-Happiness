@@ -473,8 +473,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .related-grid .product-card__price strong { font-size: 0.7rem; }
 .related-grid .product-card__price del { font-size: 0.6rem; }
 .related-grid .product-card__discount { font-size: 0.5rem; padding: 1px 4px; border-radius: 3px; }
-.related-grid .product-card__action { min-height: 26px; padding: 0 10px; font-size: 0.30rem; gap: 5px; margin-top: 6px; }
-.related-grid .product-card__action svg { width: 13px; height: 13px; stroke-width: 2; }
+.related-grid .product-card__action { min-height: 28px; padding: 0 8px; font-size: 0.42rem; gap: 4px; margin-top: 8px; }
+.related-grid .product-card__action svg { width: 12px; height: 12px; stroke-width: 2; flex-shrink: 0; }
 
 .reassurance-card { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 48px; margin-bottom: 96px; padding: 48px 0; border: none; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
 .reassurance-card h2 { font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.1; color: var(--charcoal); }
