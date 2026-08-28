@@ -119,9 +119,7 @@
     }
   };
 
-  const QUICK_ORDER_KEY = 'twisted_happiness_quick_order_v1';
-
-// Fresh seed for each page load.
+  // Fresh seed for each page load.
 // The Featured Mix order changes after every full refresh,
 // while remaining stable during filtering/sorting within the same page session.
 const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
@@ -130,8 +128,6 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     products: [],
     filteredProducts: [],
     cart: loadCart(),
-    quickOrder: readSession(QUICK_ORDER_KEY, null),
-    checkoutMode: new URLSearchParams(window.location.search).get('mode') === 'single' ? 'single' : 'cart',
     coupon: normaliseCoupon(readStorage(APP_CONFIG.STORAGE_KEYS.coupon, null)),
     store: {
       store_name: APP_CONFIG.DEFAULTS.storeName,
@@ -331,7 +327,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtbxj5i2'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtd5ybrm'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -342,10 +338,6 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function activeCheckoutItems() {
-    if (state.checkoutMode === 'single' && state.quickOrder) {
-      const item = normaliseCartItem(state.quickOrder);
-      return item ? [item] : [];
-    }
     return state.cart;
   }
 
@@ -353,7 +345,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     writeStorage(APP_CONFIG.STORAGE_KEYS.cart, state.cart);
     validateStoredCoupon();
     renderCart();
-    if (state.page === 'checkout' && state.checkoutMode === 'cart') renderCheckout();
+    if (state.page === 'checkout') renderCheckout();
   }
 
   async function fetchStoreConfiguration() {
@@ -401,14 +393,16 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function applyStoreConfiguration() {
     const announcement = document.getElementById('announcement-bar');
     const text = document.getElementById('announcement-text');
-    const dismissed = readStorage(APP_CONFIG.STORAGE_KEYS.announcement, '') === state.store.announcement_banner_text;
-    if (announcement && text && !dismissed && state.store.announcement_banner_active && state.store.announcement_banner_text) {
+    
+    // Always show if active (removed the 'dismissed' memory check)
+    if (announcement && text && state.store.announcement_banner_active && state.store.announcement_banner_text) {
       text.textContent = state.store.announcement_banner_text;
       announcement.classList.remove('hidden');
     }
+    
+    // Close button purely hides it for the current session without saving to memory
     document.getElementById('announcement-close')?.addEventListener('click', () => {
       announcement?.classList.add('hidden');
-      writeStorage(APP_CONFIG.STORAGE_KEYS.announcement, state.store.announcement_banner_text);
     });
 
     const helpMessage = state.store.vacation_mode
@@ -584,7 +578,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtbxj5i2')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtd5ybrm')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1443,7 +1437,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbxj5i2')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtd5ybrm')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1517,7 +1511,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtbxj5i2`;
+      `${window.location.origin}/assets/share-icon.png?v=mtd5ybrm`;
 
     const shareDescription =
       String(
@@ -1638,7 +1632,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtbxj5i2'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtd5ybrm'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -1762,11 +1756,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function updateProductPrice() {
-    setText('product-price', Utils.formatCurrency(state.activePrice));
+    const qtyInput = document.getElementById('product-qty');
+    const qty = qtyInput ? Math.floor(Utils.clamp(qtyInput.value, 1, APP_CONFIG.MAX_ITEM_QUANTITY)) : 1;
+    
+    setText('product-price', Utils.formatCurrency(state.activePrice * qty));
     const mrp = document.getElementById('product-mrp');
     const discount = document.getElementById('product-discount');
     if (state.activeMRP > state.activePrice) {
-      mrp.textContent = Utils.formatCurrency(state.activeMRP); mrp.classList.remove('hidden');
+      mrp.textContent = Utils.formatCurrency(state.activeMRP * qty); mrp.classList.remove('hidden');
       discount.textContent = `${Math.round((1 - state.activePrice / state.activeMRP) * 100)}% off`; discount.classList.remove('hidden');
     } else { mrp?.classList.add('hidden'); discount?.classList.add('hidden'); }
   }
@@ -1809,6 +1806,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           )
         )
       );
+      updateProductPrice();
     });
 
     document.getElementById('product-qty-plus')?.addEventListener('click', (e) => {
@@ -1822,6 +1820,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           )
         )
       );
+      updateProductPrice();
     });
 
     quantity?.addEventListener('change', () => {
@@ -1834,6 +1833,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           )
         )
       );
+      updateProductPrice();
     });
 
     document.getElementById('add-to-cart')?.addEventListener('click', () => {
@@ -1845,10 +1845,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       openCart();
     });
 
-    document.getElementById('single-whatsapp')?.addEventListener(
-      'click',
-      orderSingleProduct
-    );
+    // Single order logic removed
 
     document.getElementById('btn-fwd-item')?.addEventListener(
       'click',
@@ -1910,15 +1907,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     };
   }
 
-  async function orderSingleProduct() {
-    const selection = productSelections();
-    const choice = await Utils.choice({ icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>', title: 'A bigger bag saves more', message: 'You can add this creation to your bag and unlock automatic VIP savings, or continue with only this item.', primaryLabel: 'Add to saving bag', secondaryLabel: 'Order only this' });
-    if (choice === 'primary') { addProductToCart(state.activeProduct, selection); openCart(); return; }
-    if (choice !== 'secondary') return;
-    const quickItem = buildCartItem(state.activeProduct, selection);
-    writeSession(QUICK_ORDER_KEY, quickItem);
-    executeRouteTransition('/?view=checkout&mode=single');
-  }
+  
 
   function renderRelatedProducts(product) {
     const section = document.getElementById('related-section');
@@ -2053,7 +2042,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtbxj5i2',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtd5ybrm',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2124,7 +2113,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbxj5i2')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtd5ybrm')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2257,7 +2246,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtbxj5i2')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtd5ybrm')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2317,11 +2306,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   /* ---------------- Checkout and secure enquiry ---------------- */
   let checkoutEventsBound = false;
 
-  function initialiseCheckout(urlMode = null) {
-    const mode = urlMode || new URLSearchParams(window.location.search).get('mode');
-    state.checkoutMode = mode === 'single' ? 'single' : 'cart';
-    if (state.checkoutMode === 'single' && !state.quickOrder) state.checkoutMode = 'cart';
-    
+  function initialiseCheckout() {
     const stored = readStorage(APP_CONFIG.STORAGE_KEYS.customer, {});
     setInputValue('customer-name', stored.name || ''); 
     setInputValue('customer-phone', stored.phone || ''); 
@@ -2336,13 +2321,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       document.getElementById('checkout-apply-coupon')?.addEventListener('click', () => applyCoupon('checkout'));
       document.getElementById('checkout-form')?.addEventListener('submit', checkoutWhatsApp);
       document.getElementById('edit-bag-btn')?.addEventListener('click', () => {
-        if (state.checkoutMode === 'single') {
-          state.quickOrder = null;
-          sessionStorage.removeItem(QUICK_ORDER_KEY);
-          executeRouteTransition('/');
-        } else {
-          openCart();
-        }
+        openCart();
       });
       checkoutEventsBound = true;
     }
@@ -2351,7 +2330,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtbxj5i2')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtd5ybrm')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
