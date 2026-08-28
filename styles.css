@@ -64,9 +64,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .site-shell { width: calc(100% - 48px); max-width: 1200px; margin: 0 auto; }
 
-/* Shared header */
-.announcement-bar { min-height: 28px; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 4px 42px; background: var(--pink-deep); color: #fff; text-align: center; font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
-.announcement-bar button { position: absolute; right: 14px; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 1rem; }
+/* Premium Announcement Bar (Perfectly Centered Grid) */
+.announcement-bar { display: grid; grid-template-columns: 10px 1fr 40px; align-items: center; min-height: 38px; padding: 0; background: var(--charcoal); color: #ffffff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.announcement-bar.hidden { display: none !important; }
+#announcement-text { grid-column: 2; font-family: 'Inter', sans-serif; font-size: clamp(0.40rem, 1.8vw, 0.58rem); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; text-align: center !important; line-height: 1.4; padding: 6px 0; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #ffffff; }
+.announcement-bar button { grid-column: 3; width: 100%; height: 100%; min-height: 38px; border: none; background: transparent; color: #ffffff; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: color var(--ease-fast), opacity var(--ease-fast); opacity: 0.7; padding: 0; outline: none; }
+.announcement-bar button:hover { opacity: 1; color: var(--pink-deep); }
 .site-header { position: sticky; top: 0; z-index: 80; border-bottom: 1px solid var(--line); background: rgba(252, 250, 250, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .header-main { min-height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 6px; }
 .brand { display: inline-flex; align-items: center; min-width: 0; flex-shrink: 0; transition: opacity var(--ease-fast); }
@@ -108,7 +111,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Search Suggestions within Overlay */
 .search-suggestions { position: relative; z-index: 10; overflow-y: auto; background: transparent; border: none; box-shadow: none; border-radius: 0; flex: 1; min-height: 0; margin-top: 8px; }
-.search-suggestion { width: 100%; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 12px 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; transition: all var(--ease-fast); border-radius: var(--radius-sm); }
+.search-suggestion { width: 100%; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 12px 8px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: center; cursor: pointer; transition: all var(--ease-fast); border-radius: var(--radius-sm); }
 .search-suggestion:last-child { border-bottom: 0; }
 .search-suggestion:hover, .search-suggestion.is-active { background: var(--beige); transform: translateX(4px); }
 .search-suggestion img { width: 56px; height: 56px; border-radius: var(--radius-sm); object-fit: cover; background: var(--beige); box-shadow: var(--shadow-xs); }
@@ -129,9 +132,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @keyframes loaderFloat { 50% { transform: translateY(-5px) scale(1.02); } }
 @keyframes loaderHalo { 0% { transform: scale(.82); opacity: 0; } 40% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0; } }
 
-/* Shared header */
-.announcement-bar { min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 42px; background: var(--charcoal); color: #fff; text-align: center; font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 500; letter-spacing: 0.05em; }
-.announcement-bar button { position: absolute; right: 14px; border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 1.2rem; }
+/* (Duplicate announcement bar CSS removed) */
 .site-header { position: sticky; top: 0; z-index: 80; border-bottom: 1px solid var(--line); background: rgba(250, 250, 247, 0.98); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 
 /* Buttons */
