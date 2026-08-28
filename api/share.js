@@ -22,7 +22,11 @@ module.exports = async function handler(req, res) {
 
   let html = '';
   try {
-    html = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
+    // Robust pathing for Vercel Serverless environment
+    const targetPath = fs.existsSync(path.join(process.cwd(), 'index.html')) 
+      ? path.join(process.cwd(), 'index.html') 
+      : path.join(__dirname, '../index.html');
+    html = fs.readFileSync(targetPath, 'utf8');
   } catch (err) {
     return res.status(500).send('Error loading application shell');
   }
@@ -71,9 +75,9 @@ module.exports = async function handler(req, res) {
           .replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
           .replace(/content="Twisted Happiness — Handcrafted Art Studio"/gi, `content="${title}"`)
           .replace(/content="Where creativity comes to life.*?smile\. 💜"/gi, `content="${desc}"`)
-          .replace(/content="https:\/\/twistedhappiness\.vercel\.app\/\/assets\/share-icon\.png\?v=mtbne5lx"/gi, `content="${img}"`)
-          .replace(/content="https:\/\/twistedhappiness\.vercel\.app\/\/"/gi, `content="${url}"`)
-          .replace(/href="https:\/\/twistedhappiness\.vercel\.app\/\/"/gi, `href="${url}"`);
+          .replace(/content="https:\/\/twistedhappiness\.vercel\.app\/assets\/share-icon\.png[^"]*"/gi, `content="${img}"`)
+          .replace(/content="https:\/\/twistedhappiness\.vercel\.app\/"/gi, `content="${url}"`)
+          .replace(/href="https:\/\/twistedhappiness\.vercel\.app\/"/gi, `href="${url}"`);
       }
     }
   } catch (e) {
