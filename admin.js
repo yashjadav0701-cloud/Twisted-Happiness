@@ -1671,7 +1671,7 @@
     }
 
     else if (action === 'invoice') {
-      generateInvoice(enquiry);
+      await generateInvoice(enquiry, btn);
     }
 
     else if (action === 'delete') {
@@ -1688,120 +1688,162 @@
     }
   }
 
-  function generateInvoice(enquiry) {
-    const win = window.open('', '_blank');
-    const storeName = state.settings?.store_name || APP_CONFIG.DEFAULTS.storeName;
-    const dateStr = new Date(enquiry.created_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  async function generateInvoice(enquiry, btn) {
+    if (btn) setLoading(btn, true, 'Generating PDF...');
     
-    const itemsHtml = (enquiry.items || []).map((item) => {
-      const price = item.item_total / (item.quantity || 1);
-      return `
-        <tr>
-          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea;">
-            <strong>${Utils.escapeHTML(item.title)}</strong><br>
-            <span style="font-size:0.85em; color:#777;">${item.selected_size?.label || ''} ${item.orientation || ''}</span>
-          </td>
-          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:center;">${item.quantity}</td>
-          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:right;">${Utils.formatCurrency(price)}</td>
-          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:right;"><strong>${Utils.formatCurrency(item.item_total)}</strong></td>
-        </tr>
+    try {
+      const storeName = state.settings?.store_name || APP_CONFIG.DEFAULTS.storeName;
+      const dateStr = new Date(enquiry.created_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      
+      // Clean filename generation
+      const safeName = (enquiry.customer_name || 'Customer').replace(/[^a-zA-Z0-9 ]/g, '').trim();
+      const safeRef = (enquiry.reference || 'Order').trim();
+      const filename = `${safeName}_${safeRef}.pdf`;
+      
+      const itemsHtml = (enquiry.items || []).map((item) => {
+        const price = item.item_total / (item.quantity || 1);
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; font-size:13px; line-height:1.4;">
+            <div style="flex:1; padding-right:16px;">
+              <strong style="color:#4A3B42; font-weight:600;">${Utils.escapeHTML(item.title)}</strong>
+              ${item.selected_size?.label || item.orientation ? `<div style="color:#9C8C94; font-size:11px; margin-top:3px;">${Utils.escapeHTML(item.selected_size?.label || '')} ${Utils.escapeHTML(item.orientation || '')}</div>` : ''}
+            </div>
+            <div style="width:110px; text-align:right; color:#7f7077; font-size:12px;">
+              ${item.quantity} &times; ${Utils.formatCurrency(price)}
+            </div>
+            <div style="width:100px; text-align:right; color:#4A3B42; font-weight:600;">
+              ${Utils.formatCurrency(item.item_total)}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Create a hidden container for the thermal layout
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      
+      // Premium Boutique Layout - 640px width allows single-row items without wrapping
+      // Added advanced text-rendering and anti-aliasing styles for crystal-clear full zoom
+      container.innerHTML = `
+        <div id="pdf-invoice-wrapper" style="width: 640px; margin: 0; background-color: #FCFAFA; padding: 28px 36px; font-family: 'Inter', sans-serif; color: #4A3B42; box-sizing: border-box; text-align: left; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: geometricPrecision;">
+          
+          <!-- Header (Logo Left, Receipt Details Right) -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #F2D5DF; padding-bottom: 16px; margin-bottom: 20px;">
+            <img src="${window.location.origin}/assets/th_logo_with_heading.svg" style="width: 210px; height: auto; display: block;" crossorigin="anonymous">
+            <div style="text-align: right;">
+              <h1 style="font-family: 'Lora', serif; font-size: 28px; color: #C58B9E; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 4px; line-height: 1;">Receipt</h1>
+              <div style="font-size: 11px; color: #9C8C94; line-height: 1.5;">
+                <div style="margin-bottom: 4px;">Ref: <strong style="color:#4A3B42;">${Utils.escapeHTML(enquiry.reference)}</strong></div>
+                <div>Date: <strong style="color:#4A3B42;">${Utils.escapeHTML(dateStr)}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Details -->
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; margin-bottom: 6px;">Billed & Shipped To</div>
+            <strong style="font-size: 14px; color: #4A3B42; display:block; margin-bottom:2px;">${Utils.escapeHTML(enquiry.customer_name)}</strong>
+            <div style="font-size: 12px; color: #7f7077; line-height: 1.5;">
+              ${Utils.escapeHTML(enquiry.customer_phone)}${enquiry.customer_email ? ' &bull; ' + Utils.escapeHTML(enquiry.customer_email) : ''}<br>
+              ${Utils.escapeHTML(enquiry.address_line_1)}<br>
+              ${enquiry.address_line_2 ? Utils.escapeHTML(enquiry.address_line_2) + '<br>' : ''}
+              ${Utils.escapeHTML(enquiry.customer_city)}, ${Utils.escapeHTML(enquiry.state)} - ${Utils.escapeHTML(enquiry.pincode)}
+            </div>
+          </div>
+          
+          <!-- Items Header -->
+          <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; margin-bottom: 12px; border-bottom: 1px solid #F2D5DF; padding-bottom: 6px; display: flex;">
+            <div style="flex: 1;">Item Description</div>
+            <div style="width: 110px; text-align: right;">Qty &times; Price</div>
+            <div style="width: 100px; text-align: right;">Total</div>
+          </div>
+          
+          <!-- Items List -->
+          ${itemsHtml}
+
+          <!-- Totals (Right Aligned) -->
+          <div style="border-top: 1px solid #F2D5DF; padding-top: 12px; margin-top: 4px; width: 300px; margin-left: auto;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;">
+              <span>Subtotal</span>
+              <strong style="color: #4A3B42;">${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
+            </div>
+            ${enquiry.vip_discount ? `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;"><span>VIP Savings</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.vip_discount)}</strong></div>` : ''}
+            ${enquiry.coupon_discount ? `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;"><span>Coupon (${Utils.escapeHTML(enquiry.coupon_code)})</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.coupon_discount)}</strong></div>` : ''}
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #7f7077;">
+              <span>Shipping</span>
+              <strong style="color: #4A3B42;">${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'Free'}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F2D5DF; font-size: 18px; color: #C58B9E;">
+              <strong style="font-family: 'Lora', serif; font-weight:600;">Total Amount</strong>
+              <strong style="color: #C58B9E; font-weight:700;">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+            </div>
+          </div>
+
+          <!-- Signature & Footer -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 36px; padding-top: 16px; border-top: 1px solid #F2D5DF;">
+            <div style="font-size: 11px; color: #9C8C94; line-height: 1.6;">
+              <strong style="color: #4A3B42; font-size: 12px;">Thank you for choosing handmade! 💖</strong><br>
+              ${Utils.escapeHTML(storeName)}
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 160px;">
+              <img src="${window.location.origin}/assets/sign.svg" style="height: 40px; width: auto; margin-bottom: 6px; display: block;" crossorigin="anonymous">
+              <div style="font-size: 8px; color: #9C8C94; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #D5CCD0; padding-top: 6px; width: 100%; text-align: center; white-space: nowrap;">Authorized Signatory</div>
+            </div>
+          </div>
+
+        </div>
       `;
-    }).join('');
+      document.body.appendChild(container);
 
-    const html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <title>Invoice - ${Utils.escapeHTML(enquiry.reference)}</title>
-        <style>
-          body { font-family: 'Inter', -apple-system, sans-serif; color: #222; padding: 40px 60px; margin: 0 auto; max-width: 900px; -webkit-print-color-adjust: exact; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #222; padding-bottom: 24px; margin-bottom: 32px; }
-          .logo { height: 65px; max-width: 240px; object-fit: contain; }
-          .invoice-title { font-size: 32px; font-weight: 700; color: #b75e74; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Lora', serif; }
-          .meta { font-size: 14px; color: #555; text-align: right; line-height: 1.6; }
-          .meta strong { color: #222; font-weight: 600; }
-          .addresses { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 48px; font-size: 14px; line-height: 1.7; }
-          .address-box { flex: 1; padding: 24px; background: #fafafa; border-radius: 8px; border: 1px solid #eaeaea; }
-          .address-title { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1.5px; color: #888; margin-bottom: 12px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 14px; }
-          th { background: #222; color: #fff; padding: 14px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-          .totals { width: 50%; margin-left: auto; border-top: 2px solid #222; padding-top: 16px; font-size: 14px; line-height: 2; }
-          .totals-row { display: flex; justify-content: space-between; }
-          .totals-row.grand { font-size: 18px; font-weight: 700; border-top: 1px solid #eaeaea; padding-top: 12px; margin-top: 8px; color: #b75e74; }
-          .footer { margin-top: 80px; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #eaeaea; padding-top: 24px; }
-          .sign { margin-top: 80px; text-align: right; }
-          .sign div { border-top: 1px solid #222; width: 220px; margin-left: auto; padding-top: 10px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: #555; }
-          @media print { body { padding: 0; } .address-box { background: transparent; } }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <img src="https://twistedhappiness.vercel.app/assets/th_logo_with_heading.svg" class="logo" alt="Logo">
-          </div>
-          <div class="meta">
-            <h1 class="invoice-title">Invoice</h1>
-            <div><strong>Ref:</strong> ${Utils.escapeHTML(enquiry.reference)}</div>
-            <div><strong>Date:</strong> ${Utils.escapeHTML(dateStr)}</div>
-          </div>
-        </div>
-        
-        <div class="addresses">
-          <div class="address-box">
-            <div class="address-title">Billed & Shipped To</div>
-            <strong style="font-size:16px; color:#222;">${Utils.escapeHTML(enquiry.customer_name)}</strong><br>
-            ${Utils.escapeHTML(enquiry.address_line_1)}<br>
-            ${enquiry.address_line_2 ? Utils.escapeHTML(enquiry.address_line_2) + '<br>' : ''}
-            ${Utils.escapeHTML(enquiry.customer_city)}, ${Utils.escapeHTML(enquiry.state)} - ${Utils.escapeHTML(enquiry.pincode)}<br>
-            Ph: ${Utils.escapeHTML(enquiry.customer_phone)}<br>
-            ${enquiry.customer_email ? `Email: ${Utils.escapeHTML(enquiry.customer_email)}` : ''}
-          </div>
-          <div class="address-box">
-            <div class="address-title">Shipped From</div>
-            <strong style="font-size:16px; color:#222;">${Utils.escapeHTML(storeName)}</strong><br>
-            Handcrafted Art Studio<br>
-            Nadiad, Gujarat, India<br>
-            WhatsApp: ${Utils.escapeHTML(state.settings?.admin_whatsapp || APP_CONFIG.DEFAULTS.whatsapp)}
-          </div>
-        </div>
+      // Force wait for the logo and signature to load before rendering
+      const wrapper = document.getElementById('pdf-invoice-wrapper');
+      const images = Array.from(wrapper.querySelectorAll('img'));
+      await Promise.all(images.map(img => new Promise((resolve) => {
+        if (img.complete) return resolve();
+        img.onload = resolve;
+        img.onerror = resolve; 
+      })));
 
-        <table>
-          <thead>
-            <tr>
-              <th>Product Description</th>
-              <th style="text-align:center;">Qty</th>
-              <th style="text-align:right;">Unit Price</th>
-              <th style="text-align:right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-        </table>
+      // Render ultra-crisp high definition image from HTML (Scale 4 ensures zero pixelation on full zoom)
+      const canvas = await html2canvas(wrapper, {
+        scale: 4, 
+        useCORS: true,
+        backgroundColor: '#FCFAFA',
+        logging: false
+      });
 
-        <div class="totals">
-          <div class="totals-row"><span>Subtotal</span> <span>${Utils.formatCurrency(enquiry.subtotal || 0)}</span></div>
-          ${enquiry.vip_discount ? `<div class="totals-row"><span>VIP Savings</span> <span>-${Utils.formatCurrency(enquiry.vip_discount)}</span></div>` : ''}
-          ${enquiry.coupon_discount ? `<div class="totals-row"><span>Coupon (${Utils.escapeHTML(enquiry.coupon_code)})</span> <span>-${Utils.formatCurrency(enquiry.coupon_discount)}</span></div>` : ''}
-          <div class="totals-row"><span>Shipping</span> <span>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'Free'}</span></div>
-          <div class="totals-row grand"><span>Order Total</span> <span>${Utils.formatCurrency(enquiry.total_amount || 0)}</span></div>
-        </div>
+      // High quality JPEG encoding optimized to stay under 500 KB with flawless clarity
+      const imgData = canvas.toDataURL('image/jpeg', 0.88);
+      
+      // Calculate dynamic PDF dimensions (1px = 0.264583mm) to fit exactly one page
+      const pdfWidth = wrapper.offsetWidth * 0.264583;
+      const pdfHeight = wrapper.offsetHeight * 0.264583;
 
-        <div class="sign">
-          <div>Authorized Signatory</div>
-        </div>
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [pdfWidth, pdfHeight]
+      });
 
-        <div class="footer">
-          Thank you for choosing handmade! We put our heart into every piece.<br>
-          This is a computer-generated invoice and does not require a physical signature.
-        </div>
-      </body>
-      </html>
-    `;
-    
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => win.print(), 800);
+      // Use 'FAST' compression preset built into jsPDF
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      
+      // Download directly
+      pdf.save(filename);
+      
+      // Cleanup
+      document.body.removeChild(container);
+      notify('Invoice downloaded successfully.', 'success');
+      
+    } catch (error) {
+      console.error('Invoice generation failed:', error);
+      notify('Failed to generate invoice. Please try again.', 'error');
+    } finally {
+      if (btn) setLoading(btn, false);
+    }
   }
 
   // 1. A beautiful, custom-styled modal to collect all details at once
