@@ -1442,8 +1442,7 @@
       document.getElementById('refresh-enquiries')?.addEventListener('click', loadEnquiries);
       document.getElementById('enquiry-search')?.addEventListener('input', renderEnquiries);
       document.getElementById('enquiry-filter')?.addEventListener('change', renderEnquiries);
-      document.getElementById('enquiry-list')?.addEventListener('change', handleEnquiryStatusChange);
-      document.getElementById('enquiry-list')?.addEventListener('click', handleShiprocketPush); 
+      document.getElementById('enquiry-list')?.addEventListener('click', handleEnquiryAction);
       enquiriesBound = true;
     }
     // We must load the product catalog into memory first so we can match product images 
@@ -1466,40 +1465,82 @@
   
   function renderEnquiries() { 
     const host = document.getElementById('enquiry-list'); if (!host) return; 
-    const search = document.getElementById('enquiry-search')?.value.trim().toLowerCase() || ''; 
-    const filter = document.getElementById('enquiry-filter')?.value || 'all'; 
+    
+    // Remember which accordions are currently expanded before refreshing
+    const openIds = new Set(Array.from(host.querySelectorAll('details[open]')).map(d => d.dataset.enquiryId));
+    
+    const search = document.getElementById('enquiry-search')?.value.trim().toLowerCase() || '';
+    const filter = document.getElementById('enquiry-filter')?.value || 'active'; 
     const list = state.enquiries.filter((enquiry) => { 
       const text = `${enquiry.reference} ${enquiry.customer_name} ${enquiry.customer_phone}`.toLowerCase(); 
-      return (!search || text.includes(search)) && (filter === 'all' || enquiry.status === filter); 
+      const searchMatch = !search || text.includes(search);
+      let filterMatch = true;
+      // Added 'completed' and 'rejected' to catch the strict DB constraints
+      const archivedStatuses = ['completed', 'rejected', 'cancelled', 'archived', 'shipped'];
+      if (filter === 'active') filterMatch = !archivedStatuses.includes(enquiry.status);
+      if (filter === 'archived') filterMatch = archivedStatuses.includes(enquiry.status);
+      return searchMatch && filterMatch; 
     }); 
-    if (!list.length) { host.innerHTML = '<div class="admin-empty">No enquiries match this view.</div>'; return; } 
+    if (!list.length) { host.innerHTML = '<div class="admin-empty">No orders found in this view.</div>'; return; } 
     
     host.innerHTML = list.map((enquiry) => {
-      // Conditionally render the Shiprocket button
-      let shiprocketButton = '';
-      if (enquiry.shiprocket_order_id) {
-        shiprocketButton = `<a href="https://app.shiprocket.in/orders/processing" class="admin-button admin-button--soft" target="_blank" rel="noopener" style="width: 100%; height: 38px;">Track on Shiprocket</a>`;
-      } else if (enquiry.status === 'completed') {
-        shiprocketButton = `<button class="admin-button admin-button--dark" type="button" data-push-shiprocket="${Utils.escapeHTML(enquiry.id)}" style="width: 100%; height: 38px;">Push to Shiprocket</button>`;
-      }
-
-      // Calculate the exact Total MRP dynamically for the admin view
       let computedTotalMrp = 0;
       (enquiry.items || []).forEach((item) => {
+          const itemTotal = Number(item.item_total ?? ((item.estimatedPrice || item.price || 0) * (item.quantity || 1)));
           const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
-          let itemMrp = item.item_total;
+          let itemMrp = itemTotal;
           if (product && product.actual_price > 0 && product.fake_price > product.actual_price) {
               const ratio = product.fake_price / product.actual_price;
-              itemMrp = item.item_total * ratio;
+              itemMrp = itemTotal * ratio;
           }
           computedTotalMrp += itemMrp;
       });
       const totalMrp = Utils.roundMoney(computedTotalMrp);
       const mrpDiscount = Utils.roundMoney(Math.max(0, totalMrp - (enquiry.subtotal || 0)));
 
-      // Render the collapsible row
+      // Dynamic Action Buttons
+      const isArchived = ['completed', 'rejected', 'cancelled', 'archived', 'shipped'].includes(enquiry.status);
+      const isConfirmed = enquiry.status === 'confirmed';
+      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+      const waLink = `https://wa.me/${phoneClean}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}`;
+
+      const callSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+      const waSVG = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>`;
+      const acceptSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+      const rejectSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      const shipSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`;
+      const invoiceSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+      const deleteSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+
+      const commonBtns = `
+        <a href="tel:${phoneClean}" class="admin-action-btn action-call" title="Call">${callSVG} <span>Call</span></a>
+        <a href="${waLink}" class="admin-action-btn action-wa" target="_blank" title="WhatsApp">${waSVG} <span>WhatsApp</span></a>
+      `;
+
+      let actionButtons = '';
+      if (isArchived) {
+        actionButtons = `
+          ${commonBtns}
+          <button type="button" data-enquiry-action="invoice" class="admin-action-btn action-invoice" title="Download Invoice">${invoiceSVG} <span>Invoice</span></button>
+          <button type="button" data-enquiry-action="delete" class="admin-action-btn action-delete is-danger-text" title="Delete Order">${deleteSVG} <span>Delete</span></button>
+        `;
+      } else if (isConfirmed) {
+        actionButtons = `
+          ${commonBtns}
+          <button type="button" data-enquiry-action="shiprocket" class="admin-action-btn action-ship" title="Push to Shiprocket">${shipSVG} <span>Shiprocket</span></button>
+          <button type="button" data-enquiry-action="reject" class="admin-action-btn action-reject" title="Reject Order">${rejectSVG} <span>Reject</span></button>
+        `;
+      } else {
+        actionButtons = `
+          ${commonBtns}
+          <button type="button" data-enquiry-action="accept" class="admin-action-btn action-accept" title="Accept Order">${acceptSVG} <span>Accept</span></button>
+          <button type="button" data-enquiry-action="reject" class="admin-action-btn action-reject" title="Reject Order">${rejectSVG} <span>Reject</span></button>
+        `;
+      }
+
+      const isOpen = openIds.has(String(enquiry.id)) ? 'open' : '';
       return `
-        <details class="enquiry-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}">
+        <details class="enquiry-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" ${isOpen}>
           <summary class="enquiry-summary">
             <div class="enquiry-summary-left">
               <div class="enquiry-summary-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
@@ -1510,21 +1551,20 @@
             </div>
             <div class="enquiry-summary-right">
               <strong class="enquiry-total-text">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
-              <span class="status-pill ${enquiry.status !== 'cancelled' ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
+              <span class="status-pill ${enquiry.status !== 'cancelled' && !isArchived ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
               <div class="enquiry-chevron"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
             </div>
           </summary>
 
           <div class="enquiry-body">
-            <!-- Column 1: Customer Details -->
             <div class="enquiry-col">
               <p class="admin-eyebrow">Customer & Delivery</p>
               <div class="enquiry-details-list">
-                <span><strong>👤</strong> <span>${Utils.escapeHTML(enquiry.customer_name)}</span></span>
-                <span><strong>📱</strong> <span>${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
-                ${enquiry.customer_email ? `<span><strong>✉️</strong> <span>${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span>${Utils.escapeHTML(enquiry.customer_name)}</span></span>
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span>${Utils.escapeHTML(enquiry.customer_phone)}</span></span>
+                ${enquiry.customer_email ? `<span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> <span>${Utils.escapeHTML(enquiry.customer_email)}</span></span>` : ''}
                 <span class="align-start">
-                  <strong>📍</strong> 
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                   <span>
                     ${Utils.escapeHTML(enquiry.address_line_1 || 'Address pending')}
                     ${enquiry.address_line_2 ? '<br>' + Utils.escapeHTML(enquiry.address_line_2) : ''}<br>
@@ -1535,7 +1575,6 @@
               </div>
             </div>
 
-            <!-- Column 2: Order Details & Price Distribution -->
             <div class="enquiry-col">
               <p class="admin-eyebrow">Order Summary</p>
               <details class="admin-products-dropdown">
@@ -1570,42 +1609,199 @@
               </div>
             </div>
 
-            <!-- Column 3: Actions -->
             <div class="enquiry-col">
-              <p class="admin-eyebrow">Actions</p>
-              <div class="enquiry-actions-stack">
-                <label>
-                  Update Status
-                  <select class="admin-input" data-enquiry-status>
-                    ${['new','contacted','confirmed','completed','cancelled'].map((status) => `<option value="${status}" ${enquiry.status === status ? 'selected' : ''}>${status.charAt(0).toUpperCase() + status.slice(1)}</option>`).join('')}
-                  </select>
-                </label>
-                
-                <a href="https://wa.me/${String(enquiry.customer_phone || '').replace(/\D/g,'')}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}" class="admin-button whatsapp-btn" target="_blank" rel="noopener">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                  Message Customer
-                </a>
-                
-                ${shiprocketButton}
+              <p class="admin-eyebrow">Order Actions</p>
+              <div class="enquiry-action-grid">
+                ${actionButtons}
               </div>
             </div>
-
           </div>
         </details>`;
     }).join(''); 
   }
-  
-  async function handleEnquiryStatusChange(event) { 
-    if (!event.target.matches('[data-enquiry-status]')) return; 
-    const id = event.target.closest('[data-enquiry-id]').dataset.enquiryId; 
-    const { error } = await supabaseClient.from('whatsapp_enquiries').update({ status: event.target.value, updated_at: new Date().toISOString() }).eq('id', id); 
-    if (error) notify(error.message, 'error'); 
-    else { 
-      notify('Enquiry status updated.', 'success'); 
-      const enquiry = state.enquiries.find((item) => item.id === id); 
-      if (enquiry) enquiry.status = event.target.value; 
-      renderEnquiries(); // Re-render to show/hide Shiprocket button if needed
-    } 
+
+  async function handleEnquiryAction(event) {
+    const btn = event.target.closest('[data-enquiry-action]');
+    if (!btn) return;
+    
+    const id = btn.closest('[data-enquiry-id]').dataset.enquiryId;
+    const enquiry = state.enquiries.find((item) => item.id === id);
+    if (!enquiry) return;
+
+    const action = btn.dataset.enquiryAction;
+      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+
+      // FIX: Force updated_at to be mathematically greater than created_at to bypass the 23514 check constraint error
+      const safeUpdatedAt = new Date(Math.max(Date.now(), new Date(enquiry.created_at).getTime() + 1000)).toISOString();
+
+      if (action === 'accept') {
+        setLoading(btn, true, '');
+        const { error } = await supabaseClient.from('whatsapp_enquiries').update({ status: 'confirmed', updated_at: safeUpdatedAt }).eq('id', id);
+        if (error) { notify(error.message, 'error'); setLoading(btn, false); return; }
+        
+        enquiry.status = 'confirmed';
+        notify('Order accepted.', 'success');
+        renderEnquiries();
+        
+        const itemsList = (enquiry.items || []).map(item => `- ${item.quantity}x ${item.title}`).join('\n');
+        const text = `*Twisted Happiness Studio*\n\nHello *${enquiry.customer_name}*,\nGreat news! Your order has been officially accepted.\n\n*ORDER SUMMARY*\n• Reference: #${enquiry.reference}\n• Amount: ${Utils.formatCurrency(enquiry.total_amount)}\n\n*ITEMS ORDERED:*\n${itemsList}\n\n>> Your handcrafted creations are now being prepared with love and care. We will notify you as soon as they are ready to dispatch.\n\nThank you for choosing handmade!`;
+        window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
+      } 
+      
+      else if (action === 'reject') {
+        const choice = await Utils.choice({ title: 'Reject & Delete Order?', message: 'This will permanently delete the order from the database.' });
+        if (choice !== 'primary') return;
+        
+        setLoading(btn, true, '');
+        // Delete the order entirely to completely bypass the database status check constraint
+        const { error } = await supabaseClient.from('whatsapp_enquiries').delete().eq('id', id);
+        if (error) { notify(error.message, 'error'); setLoading(btn, false); return; }
+        
+        // Remove the order from local state memory
+        state.enquiries = state.enquiries.filter(e => e.id !== id);
+        notify('Order rejected and permanently deleted.', 'success');
+        renderEnquiries();
+        
+        const text = `*Twisted Happiness Studio*\n\nHello *${enquiry.customer_name}*,\n\nRegarding your recent enquiry (Ref: *#${enquiry.reference}*):\n\nWe are truly sorry, but we are unable to fulfill this order at this time. This is typically due to limited material availability or our current crafting capacity.\n\n*STATUS: CANCELLED*\n(No payment has been processed for this request.)\n\nWe sincerely apologize for the inconvenience and hope to create something beautiful for you in the near future.`;
+        window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
+      }
+
+    else if (action === 'shiprocket') {
+      handleShiprocketPush(id, btn);
+    }
+
+    else if (action === 'invoice') {
+      generateInvoice(enquiry);
+    }
+
+    else if (action === 'delete') {
+      const choice = await Utils.choice({ title: 'Delete Permanently?', message: 'This will erase the order record forever.', icon: '🗑️', primaryLabel: 'Delete' });
+      if (choice !== 'primary') return;
+      
+      setLoading(btn, true, '');
+      const { error } = await supabaseClient.from('whatsapp_enquiries').delete().eq('id', id);
+      if (error) { notify(error.message, 'error'); setLoading(btn, false); return; }
+      
+      state.enquiries = state.enquiries.filter(e => e.id !== id);
+      notify('Order deleted.', 'success');
+      renderEnquiries();
+    }
+  }
+
+  function generateInvoice(enquiry) {
+    const win = window.open('', '_blank');
+    const storeName = state.settings?.store_name || APP_CONFIG.DEFAULTS.storeName;
+    const dateStr = new Date(enquiry.created_at).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    
+    const itemsHtml = (enquiry.items || []).map((item) => {
+      const price = item.item_total / (item.quantity || 1);
+      return `
+        <tr>
+          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea;">
+            <strong>${Utils.escapeHTML(item.title)}</strong><br>
+            <span style="font-size:0.85em; color:#777;">${item.selected_size?.label || ''} ${item.orientation || ''}</span>
+          </td>
+          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:center;">${item.quantity}</td>
+          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:right;">${Utils.formatCurrency(price)}</td>
+          <td style="padding:14px 12px; border-bottom:1px solid #eaeaea; text-align:right;"><strong>${Utils.formatCurrency(item.item_total)}</strong></td>
+        </tr>
+      `;
+    }).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <title>Invoice - ${Utils.escapeHTML(enquiry.reference)}</title>
+        <style>
+          body { font-family: 'Inter', -apple-system, sans-serif; color: #222; padding: 40px 60px; margin: 0 auto; max-width: 900px; -webkit-print-color-adjust: exact; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #222; padding-bottom: 24px; margin-bottom: 32px; }
+          .logo { height: 65px; max-width: 240px; object-fit: contain; }
+          .invoice-title { font-size: 32px; font-weight: 700; color: #b75e74; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 2px; font-family: 'Lora', serif; }
+          .meta { font-size: 14px; color: #555; text-align: right; line-height: 1.6; }
+          .meta strong { color: #222; font-weight: 600; }
+          .addresses { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 48px; font-size: 14px; line-height: 1.7; }
+          .address-box { flex: 1; padding: 24px; background: #fafafa; border-radius: 8px; border: 1px solid #eaeaea; }
+          .address-title { font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1.5px; color: #888; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 32px; font-size: 14px; }
+          th { background: #222; color: #fff; padding: 14px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+          .totals { width: 50%; margin-left: auto; border-top: 2px solid #222; padding-top: 16px; font-size: 14px; line-height: 2; }
+          .totals-row { display: flex; justify-content: space-between; }
+          .totals-row.grand { font-size: 18px; font-weight: 700; border-top: 1px solid #eaeaea; padding-top: 12px; margin-top: 8px; color: #b75e74; }
+          .footer { margin-top: 80px; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #eaeaea; padding-top: 24px; }
+          .sign { margin-top: 80px; text-align: right; }
+          .sign div { border-top: 1px solid #222; width: 220px; margin-left: auto; padding-top: 10px; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: #555; }
+          @media print { body { padding: 0; } .address-box { background: transparent; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <img src="https://twistedhappiness.vercel.app/assets/th_logo_with_heading.svg" class="logo" alt="Logo">
+          </div>
+          <div class="meta">
+            <h1 class="invoice-title">Invoice</h1>
+            <div><strong>Ref:</strong> ${Utils.escapeHTML(enquiry.reference)}</div>
+            <div><strong>Date:</strong> ${Utils.escapeHTML(dateStr)}</div>
+          </div>
+        </div>
+        
+        <div class="addresses">
+          <div class="address-box">
+            <div class="address-title">Billed & Shipped To</div>
+            <strong style="font-size:16px; color:#222;">${Utils.escapeHTML(enquiry.customer_name)}</strong><br>
+            ${Utils.escapeHTML(enquiry.address_line_1)}<br>
+            ${enquiry.address_line_2 ? Utils.escapeHTML(enquiry.address_line_2) + '<br>' : ''}
+            ${Utils.escapeHTML(enquiry.customer_city)}, ${Utils.escapeHTML(enquiry.state)} - ${Utils.escapeHTML(enquiry.pincode)}<br>
+            Ph: ${Utils.escapeHTML(enquiry.customer_phone)}<br>
+            ${enquiry.customer_email ? `Email: ${Utils.escapeHTML(enquiry.customer_email)}` : ''}
+          </div>
+          <div class="address-box">
+            <div class="address-title">Shipped From</div>
+            <strong style="font-size:16px; color:#222;">${Utils.escapeHTML(storeName)}</strong><br>
+            Handcrafted Art Studio<br>
+            Nadiad, Gujarat, India<br>
+            WhatsApp: ${Utils.escapeHTML(state.settings?.admin_whatsapp || APP_CONFIG.DEFAULTS.whatsapp)}
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product Description</th>
+              <th style="text-align:center;">Qty</th>
+              <th style="text-align:right;">Unit Price</th>
+              <th style="text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="totals-row"><span>Subtotal</span> <span>${Utils.formatCurrency(enquiry.subtotal || 0)}</span></div>
+          ${enquiry.vip_discount ? `<div class="totals-row"><span>VIP Savings</span> <span>-${Utils.formatCurrency(enquiry.vip_discount)}</span></div>` : ''}
+          ${enquiry.coupon_discount ? `<div class="totals-row"><span>Coupon (${Utils.escapeHTML(enquiry.coupon_code)})</span> <span>-${Utils.formatCurrency(enquiry.coupon_discount)}</span></div>` : ''}
+          <div class="totals-row"><span>Shipping</span> <span>${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'Free'}</span></div>
+          <div class="totals-row grand"><span>Order Total</span> <span>${Utils.formatCurrency(enquiry.total_amount || 0)}</span></div>
+        </div>
+
+        <div class="sign">
+          <div>Authorized Signatory</div>
+        </div>
+
+        <div class="footer">
+          Thank you for choosing handmade! We put our heart into every piece.<br>
+          This is a computer-generated invoice and does not require a physical signature.
+        </div>
+      </body>
+      </html>
+    `;
+    
+    win.document.write(html);
+    win.document.close();
+    setTimeout(() => win.print(), 800);
   }
 
   // 1. A beautiful, custom-styled modal to collect all details at once
@@ -1657,11 +1853,15 @@
   }
 
   // 2. The updated push function that calls the beautiful modal
-  async function handleShiprocketPush(event) {
-    const button = event.target.closest('[data-push-shiprocket]');
-    if (!button) return;
-    
-    const enquiryId = button.dataset.pushShiprocket;
+  async function handleShiprocketPush(enquiryId, button) {
+    const enquiry = state.enquiries.find((item) => item.id === enquiryId);
+    if (!enquiry) return;
+
+    // Strict duplicate prevention: block if already pushed
+    if (enquiry.shiprocket_order_id) {
+      notify('This order has already been pushed to Shiprocket.', 'error');
+      return;
+    }
 
     // Trigger the custom modal instead of the browser prompts!
     const boxDetails = await promptShiprocketDetails();
@@ -1684,16 +1884,41 @@
       if (error) throw error;
       if (data && data.error) throw new Error(data.error);
 
-      notify('Order pushed to Shiprocket successfully!', 'success');
+      // Validate Shiprocket actually generated an order
+      if (!data || !data.order_id) {
+        throw new Error('Shiprocket did not return a valid Order ID. Please check the order details.');
+      }
+
+      // FIX: Ensure updated_at easily passes any timezone DB check constraints
+      const safeUpdatedAt = new Date(Math.max(Date.now(), new Date(enquiry.created_at).getTime() + 1000)).toISOString();
+
+      // Successfully pushed! Mark as completed in Database to pass status check constraints
+      const { error: dbError } = await supabaseClient.from('whatsapp_enquiries').update({ 
+        shiprocket_order_id: data.order_id,
+        status: 'completed',
+        updated_at: safeUpdatedAt
+      }).eq('id', enquiryId);
       
-      // Update local memory to display the tracking link button
-      const enquiry = state.enquiries.find((item) => item.id === enquiryId);
-      if (enquiry) enquiry.shiprocket_order_id = data.order_id;
+      if (dbError) throw dbError;
+
+      notify('Order pushed and marked as completed!', 'success');
+      
+      // Update local memory to remove it from "Active" and send it to "Archive"
+      enquiry.shiprocket_order_id = data.order_id;
+      enquiry.status = 'completed';
       
       renderEnquiries();
+
+      // Open professional WhatsApp Shipping confirmation
+      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+      const itemsList = (enquiry.items || []).map(item => `- ${item.quantity}x ${item.title}`).join('\n');
+      const text = `*Twisted Happiness Studio*\n\nHello *${enquiry.customer_name}*,\nExciting news! Your order is securely packed and ready to ship.\n\n*ORDER REFERENCE:* #${enquiry.reference}\n\n*ITEMS DISPATCHED:*\n${itemsList}\n\n>> We have handed your package over to our trusted delivery partner. You will receive an SMS and email with your tracking link very shortly.\n\nThank you for supporting our small handmade studio. We hope you love your creations!`;
+      window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
       
     } catch (error) {
-      notify(error.message || 'Failed to push to Shiprocket.', 'error');
+      // If the push fails, execution jumps here. 
+      // The order state remains untouched ('confirmed'), keeping it in the Active view with the Shiprocket button intact.
+      notify(error.message || 'Failed to push to Shiprocket. Order remains active.', 'error');
     } finally {
       setLoading(button, false);
     }

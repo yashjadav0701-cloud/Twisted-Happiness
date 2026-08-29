@@ -327,7 +327,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtdd8j1a'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtem4aeb'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -406,8 +406,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
 
     const helpMessage = state.store.vacation_mode
-      ? 'Hello Twisted Happiness 🌸 I would like to join the waitlist for a handcrafted order.'
-      : 'Hello Twisted Happiness 🌸 I need help choosing a handcrafted product.';
+      ? 'Hello Twisted Happiness,\n\nI would like to join the waitlist for a handcrafted order.'
+      : 'Hello Twisted Happiness,\n\nI need help choosing a handcrafted product.';
     const helpURL = whatsappURL(helpMessage);
     ['header-whatsapp', 'footer-whatsapp', 'reassurance-whatsapp'].forEach((id) => {
       const link = document.getElementById(id);
@@ -578,7 +578,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtdd8j1a')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtem4aeb')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1437,7 +1437,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtdd8j1a')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtem4aeb')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1511,7 +1511,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtdd8j1a`;
+      `${window.location.origin}/assets/share-icon.png?v=mtem4aeb`;
 
     const shareDescription =
       String(
@@ -1632,7 +1632,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtdd8j1a'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtem4aeb'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2042,7 +2042,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtdd8j1a',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtem4aeb',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2113,7 +2113,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtdd8j1a')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtem4aeb')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2246,7 +2246,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtdd8j1a')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtem4aeb')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2330,7 +2330,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtdd8j1a')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtem4aeb')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2387,18 +2387,27 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         note: item.note
       }));
       const customerPayload = { name, phone, email, address_line_1, address_line_2, city, state: stateStr, pincode, note: note || null };
+      const localRef = Utils.createLocalReference();
+      
       const { data, error } = await supabaseClient.rpc(APP_CONFIG.RPC.createEnquiry, {
         p_cart: cartPayload,
         p_customer: customerPayload,
         p_coupon_code: state.coupon?.code || null,
-        p_client_reference: Utils.createLocalReference()
+        p_client_reference: localRef
       });
       if (error) throw error;
+      
       const quote = Array.isArray(data) ? data[0] : data;
-      const secureWhatsAppURL = quote?.whatsapp_url || (quote?.whatsapp_message && quote?.whatsapp_number
-        ? `https://wa.me/${String(quote.whatsapp_number).replace(/\D/g, '')}?text=${encodeURIComponent(quote.whatsapp_message)}`
-        : null);
-      if (!secureWhatsAppURL) throw new Error('The secure quote did not return WhatsApp details.');
+      
+      // Override the database message text to guarantee professional, universally compatible typography
+      const reference = quote?.reference || quote?.client_reference || localRef;
+      const adminPhone = String(quote?.whatsapp_number || state.store.admin_whatsapp || APP_CONFIG.DEFAULTS.whatsapp).replace(/\D/g, '');
+      const totals = calculateTotals(items);
+      const itemsList = items.map(item => `- ${item.quantity}x ${item.title}${item.selectedSize ? ` (${item.selectedSize.label})` : ''}`).join('\n');
+      
+      const messageText = `*NEW ORDER REQUEST*\n\nHello Twisted Happiness Studio,\nI would like to place a secure order. My details are below:\n\n*ORDER SUMMARY*\n• Reference: #${reference}\n• Total Amount: ${Utils.formatCurrency(totals.total)}\n\n*ITEMS ORDERED:*\n${itemsList}\n\n*DELIVERY DETAILS:*\n• Name: ${name}\n• Phone: ${phone}\n• City: ${city}, ${stateStr} - ${pincode}\n${note ? `• Note: ${note}\n` : ''}\n>> Please confirm availability and share the payment details. Thank you!`;
+
+      const secureWhatsAppURL = `https://wa.me/${adminPhone}?text=${encodeURIComponent(messageText)}`;
       
       // 1. Show the beautiful success animation
       showCheckoutSuccessAnimation();
