@@ -369,7 +369,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfqdkbf'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfqyb8p'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -631,7 +631,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfqdkbf')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1514,7 +1514,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqdkbf')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1592,7 +1592,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtfqdkbf`;
+      `${window.location.origin}/assets/share-icon.png?v=mtfqyb8p`;
 
     const shareDescription =
       String(
@@ -1713,7 +1713,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfqdkbf'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfqyb8p'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2047,8 +2047,17 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         .cart-drawer .cart-head { padding: 10px 16px; min-height: auto; }
         .cart-drawer .cart-head h2 { font-size: 1.05rem; }
         .cart-drawer .cart-frozen-top { padding: 8px 16px !important; }
-        .cart-drawer .savings-card { padding: 8px 12px; margin-bottom: 4px; }
-        .cart-drawer .savings-card__icon { width: 32px; height: 32px; }
+        
+        /* VIP Savings Card Perfect Alignment */
+        .cart-drawer .savings-card { display: flex; align-items: center; gap: 14px; padding: 12px 14px; margin-bottom: 4px; background: #fff; border: 1px solid rgba(197, 139, 158, 0.25); border-radius: 8px; box-shadow: 0 2px 6px rgba(74, 59, 66, 0.04); }
+        .cart-drawer .savings-card__icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; height: 38px; background: rgba(197, 139, 158, 0.15); color: var(--pink-deep); border-radius: 50%; }
+        .cart-drawer .savings-card__icon svg { width: 18px; height: 18px; }
+        .cart-drawer .savings-card > div:last-child { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; margin-top: 2px; }
+        .cart-drawer #cart-savings-title { display: block; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.2; margin-bottom: 3px; }
+        .cart-drawer #cart-savings-message { display: block; font-size: 0.65rem; color: var(--muted); line-height: 1.2; margin-bottom: 8px; }
+        .cart-drawer .progress-track { width: 100%; height: 4px; background: rgba(197, 139, 158, 0.2); border-radius: 99px; overflow: hidden; }
+        .cart-drawer #cart-savings-progress { display: block; height: 100%; background: var(--pink-deep); border-radius: 99px; transition: width 0.4s ease; }
+        
         .cart-drawer .shipping-progress { font-size: 0.7rem; margin-top: 2px; }
         .cart-drawer .cart-footer { padding: 10px 16px 16px; }
         .cart-drawer .coupon-control { margin-bottom: 4px !important; }
@@ -2057,14 +2066,24 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         .cart-drawer .cart-totals { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
         .cart-drawer .cart-total-row { font-size: 0.75rem; }
         .cart-drawer .cart-total-row.is-total { margin-top: 2px; padding-top: 6px; font-size: 0.9rem; }
-        .cart-drawer .cart-items-scrollable { padding: 6px 16px 10px; gap: 10px !important; }
+        .cart-drawer .cart-items-scrollable { padding: 6px 16px 10px; gap: 8px !important; }
       </style>
       <div id="cart-overlay" class="cart-overlay" aria-hidden="true"></div>
       <aside id="cart-drawer" class="cart-drawer" aria-labelledby="cart-title" aria-hidden="true">
         <header class="cart-head"><h2 id="cart-title">Your Saving Bag</h2><button id="cart-close" class="round-button" type="button" aria-label="Close bag"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></header>
         
         <div class="cart-frozen-top" style="padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--cream);">
-          <div class="savings-card"><div class="savings-card__icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg></div><div><strong id="cart-savings-title">Buy more, save more</strong><span id="cart-savings-message">Add products to unlock automatic savings.</span><div class="progress-track"><i id="cart-savings-progress" style="width:0%"></i></div></div></div>
+          <div class="savings-card">
+            <div class="savings-card__icon">
+              <!-- Premium Crown SVG -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+            </div>
+            <div>
+              <strong id="cart-savings-title">Buy more, save more</strong>
+              <span id="cart-savings-message">Add products to unlock automatic savings.</span>
+              <div class="progress-track"><i id="cart-savings-progress" style="width:0%"></i></div>
+            </div>
+          </div>
           <div id="cart-shipping-progress" class="shipping-progress"></div>
         </div>
 
@@ -2174,7 +2193,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfqdkbf',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfqyb8p',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2246,23 +2265,27 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
-    return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqdkbf')}" alt="${Utils.escapeHTML(item.title)}">
-      <div>
-        <h3>${Utils.escapeHTML(item.title)}</h3>
-        ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
-        ${item.note ? `<p>Note: ${Utils.escapeHTML(item.note)}</p>` : ''}
-        <p>${Utils.formatCurrency(item.estimatedPrice)} each · Prep ${Utils.escapeHTML(item.preparationDays)}</p>
-        <div class="cart-item-actions">
-          <span class="quantity-control">
-            <button type="button" data-${actionPrefix}-action="decrease" aria-label="Decrease quantity"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button>
-            <input ${location === 'checkout' ? 'readonly' : 'data-cart-quantity'} type="number" min="1" max="${APP_CONFIG.MAX_ITEM_QUANTITY}" value="${item.quantity}" aria-label="Quantity">
-            <button type="button" data-${actionPrefix}-action="increase" aria-label="Increase quantity"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+    return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+          <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
+          <strong class="${location === 'checkout' ? '' : 'cart-item__price'}" style="font-size: 0.8rem; color: var(--charcoal); flex-shrink: 0; font-family: 'Inter', sans-serif; line-height: 1.2;">${Utils.formatCurrency(item.estimatedPrice * item.quantity)}</strong>
+        </div>
+        <p style="margin: 0; font-size: 0.65rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">
+          ${Utils.formatCurrency(item.estimatedPrice)} each · Prep ${Utils.escapeHTML(item.preparationDays)}
+          ${item.selectedSize ? ` · ${Utils.escapeHTML(item.selectedSize.label)}` : ''}
+          ${item.note ? ` · Note: ${Utils.escapeHTML(item.note)}` : ''}
+        </p>
+        <div class="cart-item-actions" style="display: flex; align-items: center; justify-content: space-between;">
+          <span class="quantity-control" style="display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 99px; height: 24px; overflow: hidden; background: var(--paper);">
+            <button type="button" data-${actionPrefix}-action="decrease" aria-label="Decrease quantity" style="background: transparent; border: none; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; color: var(--charcoal); padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button>
+            <input ${location === 'checkout' ? 'readonly' : 'data-cart-quantity'} type="number" min="1" max="${APP_CONFIG.MAX_ITEM_QUANTITY}" value="${item.quantity}" aria-label="Quantity" style="width: 20px; height: 24px; text-align: center; border: none; background: transparent; font-size: 0.75rem; font-weight: 600; padding: 0; margin: 0; outline: none; -moz-appearance: textfield; pointer-events: none; color: var(--charcoal);">
+            <button type="button" data-${actionPrefix}-action="increase" aria-label="Increase quantity" style="background: transparent; border: none; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; color: var(--charcoal); padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
           </span>
-          <button class="remove-svg-btn" type="button" data-${actionPrefix}-action="remove" aria-label="Remove item"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+          <button class="remove-svg-btn" type="button" data-${actionPrefix}-action="remove" aria-label="Remove item" style="background: transparent; border: none; color: #a3949b; cursor: pointer; display: grid; place-items: center; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
         </div>
       </div>
-      <strong class="${location === 'checkout' ? '' : 'cart-item__price'}">${Utils.formatCurrency(item.estimatedPrice * item.quantity)}</strong>
     </article>`;
   }
 
@@ -2492,7 +2515,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqdkbf')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2651,7 +2674,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqdkbf')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
