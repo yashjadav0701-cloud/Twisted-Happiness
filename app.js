@@ -369,7 +369,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfqyb8p'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtg0zpvu'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -631,7 +631,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtg0zpvu')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1272,7 +1272,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     host.innerHTML = categories.map((category) => {
       if (category === 'All') {
         return `<button type="button" class="category-chip category-chip--all ${state.category === 'All' ? 'is-active' : ''}" data-category="All">
-          <span class="all-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>
+          <span class="all-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="3" y="3" width="7.5" height="7.5" rx="2"/>
+              <rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/>
+              <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>
+              <rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/>
+            </svg>
+          </span>
           <span>Explore All</span>
         </button>`;
       }
@@ -1514,7 +1521,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtg0zpvu')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1592,7 +1599,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtfqyb8p`;
+      `${window.location.origin}/assets/share-icon.png?v=mtg0zpvu`;
 
     const shareDescription =
       String(
@@ -1713,7 +1720,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfqyb8p'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtg0zpvu'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2193,7 +2200,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfqyb8p',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtg0zpvu',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2210,8 +2217,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     else state.cart.push(item);
     persistCart();
     
-    // Pass 400ms into our native delay. The button bounce ends here, and the slide-in triggers smoothly.
-    Utils.toast(`${product.title} added to your saving bag.`, 'success', 400);
+    // Trigger the unified premium VIP bounce animation for the correct button based on screen size
+    const targetSelector = window.matchMedia('(max-width: 720px)').matches ? '.mobile-nav [data-open-cart]' : '.site-header [data-open-cart]';
+    document.querySelectorAll(targetSelector).forEach(btn => {
+      btn.classList.remove('bag-cheering');
+      void btn.offsetWidth;
+      btn.classList.add('bag-cheering');
+      setTimeout(() => btn.classList.remove('bag-cheering'), 800);
+    });
   }
 
   function cartKey(productId, selectedSize, orientation, note) {
@@ -2266,7 +2279,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtg0zpvu')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -2360,39 +2373,46 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     container.id = 'th-toast-container';
     container.style.cssText = 'position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden;';
 
-    // 1. Subtle celebration effect: Soft green bloom from the top of the page
+    // 1. Soft green bloom from top
     const bloom = document.createElement('div');
-    bloom.style.cssText = 'position:absolute;top:0;left:0;right:0;height:40vh;background:radial-gradient(ellipse at top, rgba(89, 122, 104, 0.2) 0%, transparent 70%);opacity:0;animation:thBloom 1.2s ease-out forwards;';
+    bloom.style.cssText = 'position:absolute;top:0;left:0;right:0;height:40vh;background:radial-gradient(ellipse at top, rgba(89, 122, 104, 0.25) 0%, transparent 70%);opacity:0;animation:thBloom 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;';
 
-    // 2. Premium Rich Green Slide-Down Toast (Changed border-radius to 12px, duration to 2s)
+    // 2. Premium VIP Slide-Down Toast with smooth glass shadow and internal shimmer
     const toast = document.createElement('div');
-    toast.style.cssText = 'position:absolute;top:max(16px, env(safe-area-inset-top));left:50%;transform:translate(-50%, -150%);display:flex;align-items:center;gap:12px;padding:8px 24px 8px 8px;background:linear-gradient(135deg, var(--green) 0%, #466353 100%);border:1px solid rgba(255,255,255,0.25);border-radius:12px;box-shadow:0 12px 32px rgba(89,122,104,0.35), inset 0 1px 0 rgba(255,255,255,0.1);opacity:0;width:max-content;max-width:90vw;animation:thToastSlide 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;';
+    // Notice: overflow:hidden added to contain the shimmer inside the rounded edges
+    toast.style.cssText = 'position:absolute;top:max(16px, env(safe-area-inset-top));left:50%;display:flex;align-items:center;gap:12px;padding:10px 24px 10px 12px;background:linear-gradient(135deg, var(--green) 0%, #3d5648 100%);border:1px solid rgba(255,255,255,0.3);border-radius:14px;box-shadow:0 16px 36px rgba(89,122,104,0.4), inset 0 1px 0 rgba(255,255,255,0.3);opacity:0;width:max-content;max-width:90vw;animation:thToastSlide 2.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;overflow:hidden;';
     
-    // Rounded rectangle white icon container
     toast.innerHTML = `
-      <div style="display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:8px;background:#ffffff;color:var(--green);box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      <div class="toast-shimmer"></div>
+      <div style="display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:9px;background:#ffffff;color:var(--green);box-shadow:0 4px 12px rgba(0,0,0,0.15);position:relative;z-index:2;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </div>
-      <span style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;color:#ffffff;letter-spacing:0.02em;line-height:1.3;">${Utils.escapeHTML(message)}</span>
+      <span style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;color:#ffffff;letter-spacing:0.02em;line-height:1.3;position:relative;z-index:2;text-shadow:0 1px 2px rgba(0,0,0,0.2);">${Utils.escapeHTML(message)}</span>
       <style>
         @keyframes thBloom {
           0% { opacity: 0; transform: scaleY(0.8); }
-          30% { opacity: 1; transform: scaleY(1); }
+          35% { opacity: 1; transform: scaleY(1); }
           100% { opacity: 0; transform: scaleY(1.1); }
         }
         @keyframes thToastSlide {
-          0% { transform: translate(-50%, -150%); opacity: 0; }
-          15%, 85% { transform: translate(-50%, 0); opacity: 1; }
-          100% { transform: translate(-50%, -150%); opacity: 0; }
+          0% { transform: translate(-50%, -120%) scale(0.9); opacity: 0; }
+          15%, 85% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -120%) scale(0.95); opacity: 0; }
         }
-        @keyframes thBagTada {
-          0% { transform: scale(1); }
-          10%, 20% { transform: scale(0.9) rotate(-4deg); }
-          30%, 50%, 70%, 90% { transform: scale(1.15) rotate(6deg); }
-          40%, 60%, 80% { transform: scale(1.15) rotate(-6deg); }
-          100% { transform: scale(1) rotate(0); }
+        /* Beautiful glass glare sweep animation */
+        @keyframes toastShimmer {
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(250%) skewX(-15deg); }
         }
-        .bag-cheering { animation: thBagTada 1s cubic-bezier(0.22, 1, 0.36, 1) !important; color: var(--pink-deep) !important; }
+        .toast-shimmer {
+          position: absolute;
+          top: 0; left: 0; width: 50%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+          z-index: 1;
+          animation: toastShimmer 1.2s ease-in-out forwards;
+          animation-delay: 0.2s;
+          pointer-events: none;
+        }
       </style>
     `;
 
@@ -2400,8 +2420,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     container.appendChild(toast);
     document.body.appendChild(container);
 
-    // Removes from DOM slightly after the 2 second animation finishes
-    setTimeout(() => container.remove(), 2100);
+    setTimeout(() => container.remove(), 2500);
   }
 
   function evaluateSavingsAndAnimate(totals) {
@@ -2440,8 +2459,9 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       // Fire the sleek top-sliding notification
       showGlobalCelebration(finalMsg);
       
-      // Fire the joyful 'tada' ring on the shopping bag icons
-      document.querySelectorAll('[data-open-cart]').forEach(btn => {
+      // Fire the joyful 'tada' ring on the correct shopping bag icon based on screen size
+      const targetSelector = window.matchMedia('(max-width: 720px)').matches ? '.mobile-nav [data-open-cart]' : '.site-header [data-open-cart]';
+      document.querySelectorAll(targetSelector).forEach(btn => {
         btn.classList.remove('bag-cheering');
         void btn.offsetWidth; // Force CSS reflow to restart animation
         btn.classList.add('bag-cheering');
@@ -2515,7 +2535,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfqyb8p')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtg0zpvu')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2674,7 +2694,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfqyb8p')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtg0zpvu')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
