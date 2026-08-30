@@ -1199,7 +1199,7 @@
     setValue('coupon-minimum', coupon.min_spend_amount ?? 0); 
     setValue('coupon-maximum', coupon.max_discount ?? ''); 
     setValue('coupon-usage-limit', coupon.usage_limit ?? ''); 
-    setValue('coupon-customer-limit', coupon.per_phone_limit ?? 1); 
+    setValue('coupon-customer-limit', coupon.per_phone_limit ?? ''); 
     setValue('coupon-starts', toLocalInput(coupon.starts_at)); 
     setValue('coupon-expires', toLocalInput(coupon.expires_at)); 
     setValue('coupon-label', coupon.display_label || ''); 
@@ -1211,7 +1211,7 @@
   
   function resetCouponForm() { 
     const form = document.getElementById('coupon-form'); form?.reset(); if (!form) return; 
-    setValue('coupon-id', ''); setValue('coupon-minimum', 0); setValue('coupon-customer-limit', 1); 
+    setValue('coupon-id', ''); setValue('coupon-minimum', 0); setValue('coupon-customer-limit', ''); 
     document.getElementById('coupon-stack-vip').checked = true; 
     document.getElementById('coupon-active').checked = true; 
     setText('save-coupon', 'Save coupon'); 
