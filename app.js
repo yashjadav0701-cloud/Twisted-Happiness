@@ -98,10 +98,18 @@
     toast(message, type = 'success') {
       let region = document.getElementById('toast-region');
       if (!region) { region = document.createElement('div'); region.id = 'toast-region'; region.className = 'toast-region'; document.body.appendChild(region); }
-      const toast = document.createElement('div'); toast.className = `app-toast app-toast--${type}`; toast.textContent = message;
+      const toast = document.createElement('div'); toast.className = `app-toast app-toast--${type}`;
+      
+      const icon = type === 'success' 
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` 
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        
+      toast.innerHTML = `<span class="app-toast__icon">${icon}</span><span class="app-toast__text">${Utils.escapeHTML(message)}</span>`;
       region.appendChild(toast);
+      
       requestAnimationFrame(() => toast.classList.add('is-visible'));
-      setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 220); }, 3000);
+      // Changed from 3000ms to 1000ms (exactly 1 second duration before sliding out)
+      setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 400); }, 1000);
     },
     choice({ title = 'Please choose', message = '', icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>', primaryLabel = 'Continue', secondaryLabel = 'Cancel', hideSecondary = false } = {}) {
       return new Promise((resolve) => {
@@ -327,7 +335,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfli72g'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfmivfe'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -578,7 +586,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1437,7 +1445,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1511,7 +1519,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtfli72g`;
+      `${window.location.origin}/assets/share-icon.png?v=mtfmivfe`;
 
     const shareDescription =
       String(
@@ -1632,7 +1640,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfli72g'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfmivfe'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2071,7 +2079,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfli72g',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfmivfe',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2142,7 +2150,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfli72g')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfmivfe')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2229,20 +2237,20 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     container.id = 'th-toast-container';
     container.style.cssText = 'position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden;';
 
-    // 1. Subtle celebration effect: Soft pink bloom from the top of the page
+    // 1. Subtle celebration effect: Soft green bloom from the top of the page
     const bloom = document.createElement('div');
-    bloom.style.cssText = 'position:absolute;top:0;left:0;right:0;height:40vh;background:radial-gradient(ellipse at top, rgba(197, 139, 158, 0.15) 0%, transparent 70%);opacity:0;animation:thBloom 1.2s ease-out forwards;';
+    bloom.style.cssText = 'position:absolute;top:0;left:0;right:0;height:40vh;background:radial-gradient(ellipse at top, rgba(89, 122, 104, 0.2) 0%, transparent 70%);opacity:0;animation:thBloom 1.2s ease-out forwards;';
 
-    // 2. Premium Slide-Down Toast
+    // 2. Premium Rich Green Slide-Down Toast (Changed border-radius to 12px, duration to 2s)
     const toast = document.createElement('div');
-    toast.style.cssText = 'position:absolute;top:max(16px, env(safe-area-inset-top));left:50%;transform:translate(-50%, -150%);display:flex;align-items:center;gap:12px;padding:8px 20px 8px 10px;background:var(--paper);border:1px solid rgba(197,139,158,0.25);border-radius:99px;box-shadow:0 12px 32px rgba(74,59,66,0.08);opacity:0;width:max-content;max-width:90vw;animation:thToastSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;';
+    toast.style.cssText = 'position:absolute;top:max(16px, env(safe-area-inset-top));left:50%;transform:translate(-50%, -150%);display:flex;align-items:center;gap:12px;padding:8px 24px 8px 8px;background:linear-gradient(135deg, var(--green) 0%, #466353 100%);border:1px solid rgba(255,255,255,0.25);border-radius:12px;box-shadow:0 12px 32px rgba(89,122,104,0.35), inset 0 1px 0 rgba(255,255,255,0.1);opacity:0;width:max-content;max-width:90vw;animation:thToastSlide 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;';
     
-    // Using the clean SVG heart from your library
+    // Rounded rectangle white icon container
     toast.innerHTML = `
-      <div style="display:grid;place-items:center;width:28px;height:28px;flex-shrink:0;border-radius:50%;background:rgba(197,139,158,0.12);color:var(--pink-deep);">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <div style="display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:8px;background:#ffffff;color:var(--green);box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </div>
-      <span style="font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;color:var(--charcoal);letter-spacing:0.02em;line-height:1.3;">${Utils.escapeHTML(message)}</span>
+      <span style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:600;color:#ffffff;letter-spacing:0.02em;line-height:1.3;">${Utils.escapeHTML(message)}</span>
       <style>
         @keyframes thBloom {
           0% { opacity: 0; transform: scaleY(0.8); }
@@ -2251,7 +2259,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         }
         @keyframes thToastSlide {
           0% { transform: translate(-50%, -150%); opacity: 0; }
-          10%, 85% { transform: translate(-50%, 0); opacity: 1; }
+          15%, 85% { transform: translate(-50%, 0); opacity: 1; }
           100% { transform: translate(-50%, -150%); opacity: 0; }
         }
         @keyframes thBagTada {
@@ -2269,7 +2277,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     container.appendChild(toast);
     document.body.appendChild(container);
 
-    setTimeout(() => container.remove(), 3600);
+    // Removes from DOM slightly after the 2 second animation finishes
+    setTimeout(() => container.remove(), 2100);
   }
 
   function evaluateSavingsAndAnimate(totals) {
@@ -2383,7 +2392,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2403,7 +2412,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       // Safely clear out both locations
       ['cart', 'checkout'].forEach(loc => {
         const stat = document.getElementById(`${loc}-coupon-status`);
-        if (stat) { stat.textContent = 'Coupon removed.'; stat.style.color = '#4A3B42'; }
+        if (stat) { stat.textContent = 'Coupon removed.'; stat.style.color = 'var(--charcoal)'; stat.style.fontWeight = '500'; }
       });
       renderCart(); 
       if (state.page === 'checkout') renderCheckout(); 
@@ -2414,7 +2423,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     if (!code) { 
       ['cart', 'checkout'].forEach(loc => {
         const stat = document.getElementById(`${loc}-coupon-status`);
-        if (stat) { stat.textContent = 'Enter a coupon code.'; stat.style.color = '#BA6677'; }
+        if (stat) { stat.textContent = 'Enter a coupon code.'; stat.style.color = '#C5305A'; stat.style.fontWeight = '600'; }
       });
       return; 
     }
@@ -2422,7 +2431,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     button.disabled = true; button.textContent = 'Checking…';
     ['cart', 'checkout'].forEach(loc => {
       const stat = document.getElementById(`${loc}-coupon-status`);
-      if (stat) stat.textContent = '';
+      if (stat) { stat.textContent = ''; }
     });
     
     try {
@@ -2431,18 +2440,29 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       if (error) throw error;
       
       const row = Array.isArray(data) ? data[0] : data;
+      
+      // CRITICAL LOGIC: Intercept the specific error message provided by the server
+      if (row && row.valid === false) {
+         throw new Error(row.message || 'This coupon is invalid or inactive.');
+      }
+
       const coupon = normaliseCoupon(row);
       if (!coupon || !coupon.active) throw new Error('This coupon is invalid or inactive.');
       
       state.coupon = coupon; writeStorage(APP_CONFIG.STORAGE_KEYS.coupon, coupon);
       Utils.toast(`${code} applied.`, 'success');
-      // The green success text is now safely handled globally by syncCouponControls!
       
     } catch (error) {
       state.coupon = null; localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); 
       ['cart', 'checkout'].forEach(loc => {
         const stat = document.getElementById(`${loc}-coupon-status`);
-        if (stat) { stat.textContent = friendlyDatabaseError(error, 'Coupon could not be applied.'); stat.style.color = '#BA6677'; }
+        if (stat) { 
+          // Display the direct server message
+          const errorMsg = error.message && !error.message.includes('Failed to fetch') ? error.message : friendlyDatabaseError(error, 'Coupon could not be applied.');
+          stat.textContent = errorMsg; 
+          stat.style.color = '#C5305A'; // Deep, crisp red for high contrast
+          stat.style.fontWeight = '600'; 
+        }
       });
     } finally { 
       button.disabled = false; renderCart(); if (state.page === 'checkout') renderCheckout(); 
@@ -2478,10 +2498,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       }
       if (button) button.textContent = state.coupon ? 'Remove' : 'Apply';
       
-      // Ensures the success message is green and visible whether in the Cart OR Checkout
+      // Ensures the success message is vividly green and bold
       if (status && state.coupon) {
         status.textContent = `${state.coupon.code} applied successfully.`;
-        status.style.color = '#597A68'; // Strict Green
+        status.style.color = '#347A55'; // Crisp, high-contrast green
+        status.style.fontWeight = '600';
       }
     });
   }
@@ -2513,7 +2534,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfli72g')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfmivfe')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
