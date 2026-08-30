@@ -327,7 +327,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtffg7xc'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfli72g'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -578,7 +578,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtffg7xc')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1437,7 +1437,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtffg7xc')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1511,7 +1511,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtffg7xc`;
+      `${window.location.origin}/assets/share-icon.png?v=mtfli72g`;
 
     const shareDescription =
       String(
@@ -1632,7 +1632,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtffg7xc'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfli72g'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2071,7 +2071,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtffg7xc',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfli72g',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2142,7 +2142,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtffg7xc')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfli72g')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2219,8 +2219,116 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     if (state.coupon && !couponIsValid(state.coupon, subtotal)) { state.coupon = null; localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); }
   }
 
+  let savingsTracker = null;
+
+  function showGlobalCelebration(message) {
+    // Prevent stacking
+    document.getElementById('th-toast-container')?.remove();
+
+    const container = document.createElement('div');
+    container.id = 'th-toast-container';
+    container.style.cssText = 'position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden;';
+
+    // 1. Subtle celebration effect: Soft pink bloom from the top of the page
+    const bloom = document.createElement('div');
+    bloom.style.cssText = 'position:absolute;top:0;left:0;right:0;height:40vh;background:radial-gradient(ellipse at top, rgba(197, 139, 158, 0.15) 0%, transparent 70%);opacity:0;animation:thBloom 1.2s ease-out forwards;';
+
+    // 2. Premium Slide-Down Toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:absolute;top:max(16px, env(safe-area-inset-top));left:50%;transform:translate(-50%, -150%);display:flex;align-items:center;gap:12px;padding:8px 20px 8px 10px;background:var(--paper);border:1px solid rgba(197,139,158,0.25);border-radius:99px;box-shadow:0 12px 32px rgba(74,59,66,0.08);opacity:0;width:max-content;max-width:90vw;animation:thToastSlide 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;';
+    
+    // Using the clean SVG heart from your library
+    toast.innerHTML = `
+      <div style="display:grid;place-items:center;width:28px;height:28px;flex-shrink:0;border-radius:50%;background:rgba(197,139,158,0.12);color:var(--pink-deep);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </div>
+      <span style="font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:600;color:var(--charcoal);letter-spacing:0.02em;line-height:1.3;">${Utils.escapeHTML(message)}</span>
+      <style>
+        @keyframes thBloom {
+          0% { opacity: 0; transform: scaleY(0.8); }
+          30% { opacity: 1; transform: scaleY(1); }
+          100% { opacity: 0; transform: scaleY(1.1); }
+        }
+        @keyframes thToastSlide {
+          0% { transform: translate(-50%, -150%); opacity: 0; }
+          10%, 85% { transform: translate(-50%, 0); opacity: 1; }
+          100% { transform: translate(-50%, -150%); opacity: 0; }
+        }
+        @keyframes thBagTada {
+          0% { transform: scale(1); }
+          10%, 20% { transform: scale(0.9) rotate(-4deg); }
+          30%, 50%, 70%, 90% { transform: scale(1.15) rotate(6deg); }
+          40%, 60%, 80% { transform: scale(1.15) rotate(-6deg); }
+          100% { transform: scale(1) rotate(0); }
+        }
+        .bag-cheering { animation: thBagTada 1s cubic-bezier(0.22, 1, 0.36, 1) !important; color: var(--pink-deep) !important; }
+      </style>
+    `;
+
+    container.appendChild(bloom);
+    container.appendChild(toast);
+    document.body.appendChild(container);
+
+    setTimeout(() => container.remove(), 3600);
+  }
+
+  function evaluateSavingsAndAnimate(totals) {
+    const isFreeShipping = totals.shipping === 0 && totals.subtotal > 0;
+    
+    // First load: silently record the baseline without animating
+    if (!savingsTracker) {
+      savingsTracker = { vip: totals.tier.percent, shipping: isFreeShipping, coupon: state.coupon?.code };
+      return;
+    }
+
+    let unlockedMessages = [];
+    
+    // 1. Did they upgrade their VIP Tier?
+    if (totals.tier.percent > savingsTracker.vip) {
+      unlockedMessages.push(`${totals.tier.percent}% VIP Saving`);
+    }
+    
+    // 2. Did they just unlock free shipping?
+    if (isFreeShipping && !savingsTracker.shipping) {
+      unlockedMessages.push('Free Delivery');
+    }
+    
+    // 3. Did they just successfully apply a new coupon?
+    if (state.coupon && state.coupon.code !== savingsTracker.coupon) {
+      unlockedMessages.push('Coupon');
+    }
+
+    // Save the new state so we don't duplicate animations on the next click
+    savingsTracker = { vip: totals.tier.percent, shipping: isFreeShipping, coupon: state.coupon?.code };
+
+    // Trigger premium global celebration if ANY new saving was unlocked
+    if (unlockedMessages.length > 0) {
+      const finalMsg = unlockedMessages.join(' & ') + ' Unlocked!';
+      
+      // Fire the sleek top-sliding notification
+      showGlobalCelebration(finalMsg);
+      
+      // Fire the joyful 'tada' ring on the shopping bag icons
+      document.querySelectorAll('[data-open-cart]').forEach(btn => {
+        btn.classList.remove('bag-cheering');
+        void btn.offsetWidth; // Force CSS reflow to restart animation
+        btn.classList.add('bag-cheering');
+        
+        setTimeout(() => {
+          btn.classList.remove('bag-cheering');
+        }, 1100);
+      });
+    }
+  }
+
   function renderFinancialSummary(prefix, items = activeCheckoutItems()) {
     const totals = calculateTotals(items);
+    
+    // Only track savings during the main cart render to prevent double-firing
+    if (prefix === 'cart') {
+      evaluateSavingsAndAnimate(totals);
+    }
+    
     const prepElement = document.getElementById(`${prefix}-prep-time`);
     if (prepElement) {
       prepElement.textContent = totals.totalPrepDays > 0 ? `${totals.totalPrepDays} day${totals.totalPrepDays === 1 ? '' : 's'}` : 'Ready to ship';
@@ -2275,7 +2383,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtffg7xc')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfli72g')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2286,25 +2394,59 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   async function applyCoupon(location) {
-    const input = document.getElementById(`${location}-coupon`); const status = document.getElementById(`${location}-coupon-status`); const button = document.getElementById(`${location}-apply-coupon`);
+    const input = document.getElementById(`${location}-coupon`); 
+    const button = document.getElementById(`${location}-apply-coupon`);
+    
     if (state.coupon) {
-      state.coupon = null; localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); if (status) status.textContent = 'Coupon removed.'; renderCart(); if (state.page === 'checkout') renderCheckout(); return;
+      state.coupon = null; 
+      localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); 
+      // Safely clear out both locations
+      ['cart', 'checkout'].forEach(loc => {
+        const stat = document.getElementById(`${loc}-coupon-status`);
+        if (stat) { stat.textContent = 'Coupon removed.'; stat.style.color = '#4A3B42'; }
+      });
+      renderCart(); 
+      if (state.page === 'checkout') renderCheckout(); 
+      return;
     }
-    const code = input?.value.trim().toUpperCase(); if (!code) { if (status) status.textContent = 'Enter a coupon code.'; return; }
+    
+    const code = input?.value.trim().toUpperCase(); 
+    if (!code) { 
+      ['cart', 'checkout'].forEach(loc => {
+        const stat = document.getElementById(`${loc}-coupon-status`);
+        if (stat) { stat.textContent = 'Enter a coupon code.'; stat.style.color = '#BA6677'; }
+      });
+      return; 
+    }
+    
     button.disabled = true; button.textContent = 'Checking…';
+    ['cart', 'checkout'].forEach(loc => {
+      const stat = document.getElementById(`${loc}-coupon-status`);
+      if (stat) stat.textContent = '';
+    });
+    
     try {
-      const subtotal = calculateTotals(location === 'checkout' ? activeCheckoutItems() : state.cart).subtotal;
+      const subtotal = calculateTotals(activeCheckoutItems()).subtotal;
       const { data, error } = await supabaseClient.rpc(APP_CONFIG.RPC.validateCoupon, { p_code: code, p_subtotal: subtotal });
       if (error) throw error;
+      
       const row = Array.isArray(data) ? data[0] : data;
       const coupon = normaliseCoupon(row);
       if (!coupon || !coupon.active) throw new Error('This coupon is invalid or inactive.');
+      
       state.coupon = coupon; writeStorage(APP_CONFIG.STORAGE_KEYS.coupon, coupon);
-      if (status) status.textContent = `${code} applied successfully.`;
       Utils.toast(`${code} applied.`, 'success');
+      // The green success text is now safely handled globally by syncCouponControls!
+      
     } catch (error) {
-      state.coupon = null; localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); if (status) status.textContent = friendlyDatabaseError(error, 'Coupon could not be applied.');
-    } finally { button.disabled = false; renderCart(); if (state.page === 'checkout') renderCheckout(); }
+      state.coupon = null; localStorage.removeItem(APP_CONFIG.STORAGE_KEYS.coupon); 
+      ['cart', 'checkout'].forEach(loc => {
+        const stat = document.getElementById(`${loc}-coupon-status`);
+        if (stat) { stat.textContent = friendlyDatabaseError(error, 'Coupon could not be applied.'); stat.style.color = '#BA6677'; }
+      });
+    } finally { 
+      button.disabled = false; renderCart(); if (state.page === 'checkout') renderCheckout(); 
+    }
   }
 
   function normaliseCoupon(data) {
@@ -2326,9 +2468,21 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function syncCouponControls() {
     ['cart', 'checkout'].forEach((location) => {
-      const input = document.getElementById(`${location}-coupon`); const button = document.getElementById(`${location}-apply-coupon`);
-      if (input) { input.value = state.coupon?.code || ''; input.disabled = Boolean(state.coupon); }
+      const input = document.getElementById(`${location}-coupon`); 
+      const button = document.getElementById(`${location}-apply-coupon`);
+      const status = document.getElementById(`${location}-coupon-status`);
+      
+      if (input) { 
+        input.value = state.coupon?.code || ''; 
+        input.disabled = Boolean(state.coupon); 
+      }
       if (button) button.textContent = state.coupon ? 'Remove' : 'Apply';
+      
+      // Ensures the success message is green and visible whether in the Cart OR Checkout
+      if (status && state.coupon) {
+        status.textContent = `${state.coupon.code} applied successfully.`;
+        status.style.color = '#597A68'; // Strict Green
+      }
     });
   }
 
@@ -2359,7 +2513,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtffg7xc')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfli72g')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
