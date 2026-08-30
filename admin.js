@@ -1702,16 +1702,22 @@
       
       const itemsHtml = (enquiry.items || []).map((item) => {
         const price = item.item_total / (item.quantity || 1);
+        
+        // Fetch the corresponding product to get the image
+        const product = state.products.find(p => String(p.id) === String(item.product_id || item.productId || item.id));
+        const img = product?.images?.[0] || '/assets/th_logo.svg';
+        
         return `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; font-size:13px; line-height:1.4;">
-            <div style="flex:1; padding-right:16px;">
-              <strong style="color:#4A3B42; font-weight:600;">${Utils.escapeHTML(item.title)}</strong>
-              ${item.selected_size?.label || item.orientation ? `<div style="color:#9C8C94; font-size:11px; margin-top:3px;">${Utils.escapeHTML(item.selected_size?.label || '')} ${Utils.escapeHTML(item.orientation || '')}</div>` : ''}
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:12px; line-height:1.4;">
+            <img src="${Utils.escapeHTML(img)}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(197, 139, 158, 0.2); margin-right: 12px; flex-shrink: 0;" crossorigin="anonymous">
+            <div style="flex:1; padding-right:12px;">
+              <strong style="color:#4A3B42; font-weight:600; display:block; margin-bottom:2px;">${Utils.escapeHTML(item.title)}</strong>
+              ${item.selected_size?.label || item.orientation ? `<div style="color:#9C8C94; font-size:10px;">${Utils.escapeHTML(item.selected_size?.label || '')} ${Utils.escapeHTML(item.orientation || '')}</div>` : ''}
             </div>
-            <div style="width:110px; text-align:right; color:#7f7077; font-size:12px;">
+            <div style="width:85px; text-align:right; color:#7f7077; font-size:11px;">
               ${item.quantity} &times; ${Utils.formatCurrency(price)}
             </div>
-            <div style="width:100px; text-align:right; color:#4A3B42; font-weight:600;">
+            <div style="width:80px; text-align:right; color:#4A3B42; font-weight:600;">
               ${Utils.formatCurrency(item.item_total)}
             </div>
           </div>
@@ -1724,28 +1730,32 @@
       container.style.left = '-9999px';
       container.style.top = '0';
       
-      // Premium Boutique Layout - 640px width allows single-row items without wrapping
+      // Premium Boutique Layout - 480px width (25% narrower)
       // Added advanced text-rendering and anti-aliasing styles for crystal-clear full zoom
       container.innerHTML = `
-        <div id="pdf-invoice-wrapper" style="width: 640px; margin: 0; background-color: #FCFAFA; padding: 28px 36px; font-family: 'Inter', sans-serif; color: #4A3B42; box-sizing: border-box; text-align: left; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: geometricPrecision;">
+        <div id="pdf-invoice-wrapper" style="width: 480px; margin: 0; background-color: #FCFAFA; padding: 32px 36px; font-family: 'Inter', sans-serif; color: #4A3B42; box-sizing: border-box; text-align: left; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: geometricPrecision;">
           
-          <!-- Header (Logo Left, Receipt Details Right) -->
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #F2D5DF; padding-bottom: 16px; margin-bottom: 20px;">
-            <img src="${window.location.origin}/assets/th_logo_with_heading.svg" style="width: 210px; height: auto; display: block;" crossorigin="anonymous">
+          <!-- Top Centered INVOICE Title -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h1 style="font-family: 'Lora', serif; font-size: 26px; color: #C58B9E; margin: 0; text-transform: uppercase; letter-spacing: 6px;">Invoice</h1>
+          </div>
+          
+          <!-- Header (Logo Left, Details Right) -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #F2D5DF; padding-bottom: 16px; margin-bottom: 20px;">
+            <img src="${window.location.origin}/assets/th_logo_with_heading.svg" style="width: 170px; height: auto; display: block;" crossorigin="anonymous">
             <div style="text-align: right;">
-              <h1 style="font-family: 'Lora', serif; font-size: 28px; color: #C58B9E; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 4px; line-height: 1;">Receipt</h1>
-              <div style="font-size: 11px; color: #9C8C94; line-height: 1.5;">
-                <div style="margin-bottom: 4px;">Ref: <strong style="color:#4A3B42;">${Utils.escapeHTML(enquiry.reference)}</strong></div>
-                <div>Date: <strong style="color:#4A3B42;">${Utils.escapeHTML(dateStr)}</strong></div>
+              <div style="font-size: 10px; color: #9C8C94; line-height: 1.6;">
+                <div style="margin-bottom: 2px;">Ref: <strong style="color:#4A3B42; font-size: 11px;">${Utils.escapeHTML(enquiry.reference)}</strong></div>
+                <div>Date: <strong style="color:#4A3B42; font-size: 11px;">${Utils.escapeHTML(dateStr)}</strong></div>
               </div>
             </div>
           </div>
 
           <!-- Customer Details -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; margin-bottom: 6px;">Billed & Shipped To</div>
-            <strong style="font-size: 14px; color: #4A3B42; display:block; margin-bottom:2px;">${Utils.escapeHTML(enquiry.customer_name)}</strong>
-            <div style="font-size: 12px; color: #7f7077; line-height: 1.5;">
+          <div style="margin-bottom: 24px; background: #FFFFFF; border: 1px solid rgba(197, 139, 158, 0.15); border-radius: 8px; padding: 14px;">
+            <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.2px; font-size: 9px; margin-bottom: 8px;">Billed & Shipped To</div>
+            <strong style="font-size: 13px; color: #4A3B42; display:block; margin-bottom:4px;">${Utils.escapeHTML(enquiry.customer_name)}</strong>
+            <div style="font-size: 11px; color: #7f7077; line-height: 1.5;">
               ${Utils.escapeHTML(enquiry.customer_phone)}${enquiry.customer_email ? ' &bull; ' + Utils.escapeHTML(enquiry.customer_email) : ''}<br>
               ${Utils.escapeHTML(enquiry.address_line_1)}<br>
               ${enquiry.address_line_2 ? Utils.escapeHTML(enquiry.address_line_2) + '<br>' : ''}
@@ -1754,42 +1764,43 @@
           </div>
           
           <!-- Items Header -->
-          <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.5px; font-size: 10px; margin-bottom: 12px; border-bottom: 1px solid #F2D5DF; padding-bottom: 6px; display: flex;">
+          <div style="font-weight: 700; color: #C58B9E; text-transform: uppercase; letter-spacing: 1.2px; font-size: 9px; margin-bottom: 12px; border-bottom: 1px solid #F2D5DF; padding-bottom: 8px; display: flex;">
+            <div style="width: 56px;"></div><!-- Spacer for Image -->
             <div style="flex: 1;">Item Description</div>
-            <div style="width: 110px; text-align: right;">Qty &times; Price</div>
-            <div style="width: 100px; text-align: right;">Total</div>
+            <div style="width: 85px; text-align: right;">Qty &times; Price</div>
+            <div style="width: 80px; text-align: right;">Total</div>
           </div>
           
           <!-- Items List -->
           ${itemsHtml}
 
           <!-- Totals (Right Aligned) -->
-          <div style="border-top: 1px solid #F2D5DF; padding-top: 12px; margin-top: 4px; width: 300px; margin-left: auto;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;">
+          <div style="border-top: 1px solid #F2D5DF; padding-top: 8px; margin-top: 4px; width: 170px; margin-left: auto;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: #7f7077;">
               <span>Subtotal</span>
               <strong style="color: #4A3B42;">${Utils.formatCurrency(enquiry.subtotal || 0)}</strong>
             </div>
-            ${enquiry.vip_discount ? `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;"><span>VIP Savings</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.vip_discount)}</strong></div>` : ''}
-            ${enquiry.coupon_discount ? `<div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #7f7077;"><span>Coupon (${Utils.escapeHTML(enquiry.coupon_code)})</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.coupon_discount)}</strong></div>` : ''}
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #7f7077;">
+            ${enquiry.vip_discount ? `<div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: #7f7077;"><span>VIP Savings</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.vip_discount)}</strong></div>` : ''}
+            ${enquiry.coupon_discount ? `<div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; color: #7f7077;"><span>Coupon (${Utils.escapeHTML(enquiry.coupon_code)})</span><strong style="color: #597A68;">-${Utils.formatCurrency(enquiry.coupon_discount)}</strong></div>` : ''}
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #7f7077;">
               <span>Shipping</span>
               <strong style="color: #4A3B42;">${enquiry.delivery_fee ? Utils.formatCurrency(enquiry.delivery_fee) : 'Free'}</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F2D5DF; font-size: 18px; color: #C58B9E;">
+            <div style="display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #D5CCD0; font-size: 13px; color: #C58B9E;">
               <strong style="font-family: 'Lora', serif; font-weight:600;">Total Amount</strong>
               <strong style="color: #C58B9E; font-weight:700;">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
             </div>
           </div>
 
           <!-- Signature & Footer -->
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 36px; padding-top: 16px; border-top: 1px solid #F2D5DF;">
-            <div style="font-size: 11px; color: #9C8C94; line-height: 1.6;">
-              <strong style="color: #4A3B42; font-size: 12px;">Thank you for choosing handmade! 💖</strong><br>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; padding-top: 20px; border-top: 2px solid #F2D5DF;">
+            <div style="font-size: 10px; color: #9C8C94; line-height: 1.6;">
+              <strong style="color: #4A3B42; font-size: 11px;">Thank you for choosing handmade! 💖</strong><br>
               ${Utils.escapeHTML(storeName)}
             </div>
-            <div style="display: flex; flex-direction: column; align-items: center; width: 160px;">
-              <img src="${window.location.origin}/assets/sign.svg" style="height: 40px; width: auto; margin-bottom: 6px; display: block;" crossorigin="anonymous">
-              <div style="font-size: 8px; color: #9C8C94; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #D5CCD0; padding-top: 6px; width: 100%; text-align: center; white-space: nowrap;">Authorized Signatory</div>
+            <div style="display: flex; flex-direction: column; align-items: center; width: 120px;">
+              <img src="${window.location.origin}/assets/sign.svg" style="height: 46px; width: auto; margin-bottom: 6px; display: block;" crossorigin="anonymous">
+              <div style="font-size: 4px; color: #9C8C94; text-transform: uppercase; letter-spacing: 1px; border-top: 1px solid #D5CCD0; padding-top: 6px; width: 140%; text-align: center; white-space: nowrap;">Authorized Signatory</div>
             </div>
           </div>
 
@@ -1797,7 +1808,7 @@
       `;
       document.body.appendChild(container);
 
-      // Force wait for the logo and signature to load before rendering
+      // Force wait for the logo, products, and signature to load before rendering
       const wrapper = document.getElementById('pdf-invoice-wrapper');
       const images = Array.from(wrapper.querySelectorAll('img'));
       await Promise.all(images.map(img => new Promise((resolve) => {
