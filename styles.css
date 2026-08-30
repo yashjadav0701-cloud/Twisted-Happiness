@@ -527,8 +527,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .shipping-progress { margin-top: 10px; color: var(--green); font-size: 0.75rem; font-weight: 500; text-align: left; }
 .cart-footer { flex-shrink: 0; padding: 16px; border-top: 1px solid var(--line); background: var(--paper); box-shadow: 0 -4px 16px rgba(74, 59, 66, 0.03); }
 .coupon-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 8px; }
-.coupon-control input { min-width: 0; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--cream); padding: 0 12px; text-transform: uppercase; font-size: 0.8rem; min-height: 40px; font-family: 'Inter', sans-serif; transition: border-color var(--ease-fast); }
+.coupon-control input { min-width: 0; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--cream); padding: 0 12px; text-transform: uppercase; font-size: 0.8rem; min-height: 40px; font-family: 'Inter', sans-serif; transition: all var(--ease-fast); }
 .coupon-control input:focus { outline: none; border-color: var(--charcoal); }
+.coupon-control input:disabled { background: rgba(74, 59, 66, 0.04); border-color: transparent; color: var(--charcoal); font-weight: 600; opacity: 0.65; -webkit-text-fill-color: var(--charcoal); cursor: not-allowed; box-shadow: inset 0 2px 4px rgba(74, 59, 66, 0.06); pointer-events: none; }
 .coupon-control button { min-height: 40px; font-size: 0.7rem; border-radius: var(--radius-sm); }
 .coupon-status { min-height: 16px; margin: 4px 4px 0; color: var(--muted); font-size: 0.7rem; font-weight: 500; }
 .recommendations { margin-top: 16px; padding: 0 16px 16px; }
