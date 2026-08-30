@@ -95,7 +95,7 @@
     debounce(func, wait) { let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; },
     setBodyLocked(locked) { if (locked) { document.documentElement.classList.add('is-locked'); document.body.classList.add('is-locked'); } else { document.documentElement.classList.remove('is-locked'); document.body.classList.remove('is-locked'); } },
     createLocalReference() { return `TH-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString().slice(-4)}`; },
-    toast(message, type = 'success') {
+    toast(message, type = 'success', delayMs = 0) {
       let region = document.getElementById('toast-region');
       if (!region) { region = document.createElement('div'); region.id = 'toast-region'; region.className = 'toast-region'; document.body.appendChild(region); }
       const toast = document.createElement('div'); toast.className = `app-toast app-toast--${type}`;
@@ -107,9 +107,12 @@
       toast.innerHTML = `<span class="app-toast__icon">${icon}</span><span class="app-toast__text">${Utils.escapeHTML(message)}</span>`;
       region.appendChild(toast);
       
-      requestAnimationFrame(() => toast.classList.add('is-visible'));
-      // Changed from 3000ms to 1000ms (exactly 1 second duration before sliding out)
-      setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 400); }, 1000);
+      // Delay the start of the slide-in animation safely
+      setTimeout(() => {
+        void toast.offsetWidth; // CRITICAL: Forces browser reflow so the slide CSS transition never skips!
+        toast.classList.add('is-visible');
+        setTimeout(() => { toast.classList.remove('is-visible'); setTimeout(() => toast.remove(), 400); }, 1000);
+      }, delayMs);
     },
     choice({ title = 'Please choose', message = '', icon = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>', primaryLabel = 'Continue', secondaryLabel = 'Cancel', hideSecondary = false } = {}) {
       return new Promise((resolve) => {
@@ -335,7 +338,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfmivfe'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtfnkj5t'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -586,7 +589,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtfnkj5t')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1439,13 +1442,37 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     setTimeout(() => element.classList.remove('is-popping'), 250);
   }
 
+  // New engine to handle the temporary green "Added" state
+  function showButtonSuccessState(button) {
+    if (!button || button.dataset.isAnimating === 'true') return;
+    button.dataset.isAnimating = 'true';
+    
+    const originalHtml = button.innerHTML;
+    
+    // Lock the width so the button doesn't shrink when text changes to a shorter word
+    const currentWidth = button.offsetWidth;
+    if (currentWidth > 0) button.style.width = `${currentWidth}px`;
+    
+    // Switch to premium green success state
+    button.classList.add('is-added-success');
+    button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Added</span>`;
+    
+    // Restore the original state after 1.5 seconds
+    setTimeout(() => {
+      button.classList.remove('is-added-success');
+      button.innerHTML = originalHtml;
+      button.style.width = '';
+      button.dataset.isAnimating = 'false';
+    }, 1500);
+  }
+
   function productCard(product, compact = false) {
     const discount = product.fake_price > product.actual_price ? Math.round((1 - product.actual_price / product.fake_price) * 100) : 0;
     const isCanvas = isCanvasProduct(product);
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfnkj5t')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1466,8 +1493,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     triggerBoomerang(action);
     const product = state.products.find((item) => String(item.id) === action.closest('[data-product-id]')?.dataset.productId);
     if (!product) return;
-    if (action.dataset.cardAction === 'choose') executeRouteTransition(productURL(product));
-    else addProductToCart(product, { quantity: 1 });
+    if (action.dataset.cardAction === 'choose') {
+      executeRouteTransition(productURL(product));
+    } else {
+      addProductToCart(product, { quantity: 1 });
+      showButtonSuccessState(action); // Trigger the "Added" animation
+    }
   }
 
   function productURL(product) {
@@ -1519,7 +1550,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtfmivfe`;
+      `${window.location.origin}/assets/share-icon.png?v=mtfnkj5t`;
 
     const shareDescription =
       String(
@@ -1640,7 +1671,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfmivfe'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtfnkj5t'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -1844,12 +1875,13 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       updateProductPrice();
     });
 
-    document.getElementById('add-to-cart')?.addEventListener('click', () => {
+    document.getElementById('add-to-cart')?.addEventListener('click', (e) => {
+      triggerBoomerang(e.currentTarget);
       addProductToCart(
         state.activeProduct,
         productSelections()
       );
-
+      showButtonSuccessState(e.currentTarget); // Trigger the "Added" animation
       openCart();
     });
 
@@ -2079,7 +2111,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfmivfe',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtfnkj5t',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2095,7 +2127,9 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     if (existing) existing.quantity = Math.floor(Utils.clamp(existing.quantity + item.quantity, 1, APP_CONFIG.MAX_ITEM_QUANTITY));
     else state.cart.push(item);
     persistCart();
-    Utils.toast(`${product.title} added to your saving bag.`, 'success');
+    
+    // Pass 400ms into our native delay. The button bounce ends here, and the slide-in triggers smoothly.
+    Utils.toast(`${product.title} added to your saving bag.`, 'success', 400);
   }
 
   function cartKey(productId, selectedSize, orientation, note) {
@@ -2150,7 +2184,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfmivfe')}" alt="${Utils.escapeHTML(item.title)}">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfnkj5t')}" alt="${Utils.escapeHTML(item.title)}">
       <div>
         <h3>${Utils.escapeHTML(item.title)}</h3>
         ${item.selectedSize ? `<p>${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
@@ -2392,14 +2426,20 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfmivfe')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtfnkj5t')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
     const button = event.target.closest('[data-recommendation-action]'); if (!button) return;
     const product = state.products.find((item) => String(item.id) === button.closest('[data-recommendation-id]')?.dataset.recommendationId); if (!product) return;
-    if (button.dataset.recommendationAction === 'choose') executeRouteTransition(productURL(product));
-    else { addProductToCart(product, { quantity: 1 }); if (state.page === 'checkout') executeRouteTransition('/?view=checkout'); }
+    if (button.dataset.recommendationAction === 'choose') {
+      executeRouteTransition(productURL(product));
+    } else { 
+      triggerBoomerang(button);
+      addProductToCart(product, { quantity: 1 }); 
+      showButtonSuccessState(button); // Trigger the "Added" animation
+      if (state.page === 'checkout') executeRouteTransition('/?view=checkout'); 
+    }
   }
 
   async function applyCoupon(location) {
@@ -2534,7 +2574,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfmivfe')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtfnkj5t')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}

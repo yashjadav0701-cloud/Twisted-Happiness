@@ -136,12 +136,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* Buttons */
 .app-button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius-sm); font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: all var(--ease-fast); }
-.app-button:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+@media (hover: hover) {
+  .app-button:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+  .app-button--dark:hover { background: #B3758A; }
+  .app-button--soft:hover { background: var(--beige); border-color: var(--charcoal); }
+}
+.app-button:active { transform: scale(0.96); }
 .app-button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 .app-button--dark { background: var(--pink-deep); color: #fff; }
-.app-button--dark:hover { background: #B3758A; }
 .app-button--soft { background: var(--paper); color: var(--charcoal); border-color: var(--line-strong); box-shadow: var(--shadow-xs); }
-.app-button--soft:hover { background: var(--beige); border-color: var(--charcoal); }
+
+/* In-place Button Success Animation State */
+.is-added-success { background: var(--green) !important; color: #fff !important; border-color: var(--green) !important; box-shadow: 0 4px 12px rgba(89, 122, 104, 0.25) !important; pointer-events: none; }
+.is-added-success svg { stroke: #fff !important; }
 .app-button--whatsapp { background: var(--green); color: #fff; }
 .app-button--small { min-height: 32px; padding-inline: 12px; font-size: 0.65rem; }
 .app-button--full { width: 100%; }
@@ -246,8 +253,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .pop-click { transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, color 0.2s, border-color 0.2s !important; }
 .pop-click.is-popping { transform: scale(0.86) !important; }
 
-.product-card__action { display: inline-flex; align-items: center; justify-content: center; align-self: center; gap: 6px; width: fit-content; min-height: 34px; padding: 0 14px; margin-top: 12px; border-radius: 99px; background: var(--paper); border: 1px solid rgba(197, 139, 158, 0.35); color: var(--pink-deep); box-shadow: var(--shadow-xs); cursor: pointer; outline: none; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
-.product-card__action:hover { background: var(--pink-deep); color: #fff; border-color: var(--pink-deep); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+.product-card__action { display: inline-flex; align-items: center; justify-content: center; align-self: center; gap: 6px; width: fit-content; min-height: 34px; padding: 0 14px; margin-top: 12px; border-radius: 99px; background: var(--paper); border: 1px solid rgba(197, 139, 158, 0.35); color: var(--pink-deep); box-shadow: var(--shadow-xs); cursor: pointer; outline: none; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; transition: all 0.2s ease; }
+@media (hover: hover) {
+  .product-card__action:hover { background: var(--pink-deep); color: #fff; border-color: var(--pink-deep); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+}
+.product-card__action:active { transform: scale(0.92); }
 .product-card__action svg { width: 14px; height: 14px; stroke-width: 2.5; flex-shrink: 0; }
 .skeleton-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
 
@@ -529,7 +539,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .recommendation-card strong { min-height: 2.6em; margin-top: 8px; overflow: hidden; font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--charcoal); }
 .recommendation-card span { margin-top: 2px; font-size: 0.75rem; font-weight: 600; display: block; color: var(--charcoal); }
 .recommendation-card button { width: 100%; min-height: 28px; margin-top: 6px; border: 1px solid rgba(197, 139, 158, 0.4); border-radius: 99px; background: rgba(255, 255, 255, 0.8); color: var(--pink-deep); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 700; transition: all var(--ease-fast); text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(197, 139, 158, 0.08); outline: none; }
-.recommendation-card button:hover { background: var(--pink-deep); color: #fff; border-color: var(--pink-deep); box-shadow: 0 4px 8px rgba(197, 139, 158, 0.2); transform: translateY(-1px); }
+@media (hover: hover) {
+  .recommendation-card button:hover { background: var(--pink-deep); color: #fff; border-color: var(--pink-deep); box-shadow: 0 4px 8px rgba(197, 139, 158, 0.2); transform: translateY(-1px); }
+}
+.recommendation-card button:active { transform: scale(0.92); }
 .cart-totals { display: grid; gap: 6px; margin-block: 16px; }
 .cart-total-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 0.85rem; font-family: 'Inter', sans-serif; color: var(--charcoal); }
 .cart-total-row.is-saving { color: var(--green); font-weight: 500; }
