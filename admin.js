@@ -1443,6 +1443,22 @@
       document.getElementById('enquiry-search')?.addEventListener('input', renderEnquiries);
       bindEnquiryFilterDropdown();
       document.getElementById('enquiry-list')?.addEventListener('click', handleEnquiryAction);
+      
+      // Exclusive Accordion & Smooth Auto-Scroll into View
+      document.getElementById('enquiry-list')?.addEventListener('toggle', (e) => {
+        const details = e.target;
+        if (details && details.open && details.classList.contains('enquiry-card')) {
+          document.querySelectorAll('#enquiry-list details.enquiry-card').forEach((card) => {
+            if (card !== details) card.removeAttribute('open');
+          });
+          
+          // Smoothly scroll the newly opened card into view so it fits perfectly on screen
+          setTimeout(() => {
+            details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 120);
+        }
+      }, true); // true enables capture phase since 'toggle' does not bubble
+
       enquiriesBound = true;
     }
     // We must load the product catalog into memory first so we can match product images 
@@ -1576,17 +1592,22 @@
       return `
         <details class="enquiry-card" data-enquiry-id="${Utils.escapeHTML(enquiry.id)}" ${isOpen}>
           <summary class="enquiry-summary">
-            <div class="enquiry-summary-left">
-              <div class="enquiry-summary-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
-              <div>
-                <strong>${Utils.escapeHTML(enquiry.customer_name)}</strong>
-                <span>${Utils.escapeHTML(enquiry.reference)} · ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</span>
+            <div class="enquiry-summary-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            
+            <div class="enquiry-summary-details">
+              <strong class="enquiry-customer">${Utils.escapeHTML(enquiry.customer_name)}</strong>
+              <span class="enquiry-ref-date">${Utils.escapeHTML(enquiry.reference)} &bull; ${Utils.escapeHTML(new Date(enquiry.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</span>
+              
+              <div class="enquiry-price-status">
+                <strong class="enquiry-total-text">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
+                <span class="status-pill ${enquiry.status !== 'cancelled' && !isArchived ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
               </div>
             </div>
-            <div class="enquiry-summary-right">
-              <strong class="enquiry-total-text">${Utils.formatCurrency(enquiry.total_amount || 0)}</strong>
-              <span class="status-pill ${enquiry.status !== 'cancelled' && !isArchived ? 'is-active' : ''}">${Utils.escapeHTML(enquiry.status)}</span>
-              <div class="enquiry-chevron"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            
+            <div class="enquiry-chevron">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
             </div>
           </summary>
 
