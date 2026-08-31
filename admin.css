@@ -453,24 +453,28 @@ textarea:focus-visible {
   margin-top: 2px;
 }
 
+/* --- 3D Unified Admin Inputs & Fields --- */
 .admin-input {
   width: 100%;
-  min-height: 40px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--beige);
-  padding: 8px 12px;
+  min-height: 44px;
+  border: 1px solid rgba(197, 139, 158, 0.25);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px 14px;
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   color: var(--charcoal);
-  transition: all var(--ease-fast);
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.06), inset 0 2px 4px rgba(74, 59, 66, 0.02);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.admin-input:focus {
+.admin-input:focus,
+.admin-input:hover {
   outline: none;
   border-color: var(--pink-deep);
-  background: var(--paper);
-  box-shadow: 0 0 0 3px rgba(197, 139, 158, 0.15);
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(197, 139, 158, 0.15), inset 0 2px 4px rgba(74, 59, 66, 0.01);
 }
 
 textarea.admin-input {
@@ -486,13 +490,22 @@ textarea.admin-input {
 }
 
 .input-action button {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  padding-inline: 12px;
+  border: 1px solid rgba(197, 139, 158, 0.3);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--beige) 100%);
+  padding-inline: 14px;
   cursor: pointer;
-  font-size: 0.62rem;
-  font-weight: 900;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--pink-deep);
+  box-shadow: 0 2px 6px rgba(197, 139, 158, 0.1);
+  transition: all 0.2s ease;
+}
+
+.input-action button:hover {
+  background: #ffffff;
+  border-color: var(--pink-deep);
+  transform: translateY(-1px);
 }
 
 .canvas-fields {
@@ -500,35 +513,43 @@ textarea.admin-input {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 13px;
   margin: 0;
-  padding: 14px;
-  border: 1px solid var(--line);
+  padding: 16px;
+  border: 1px solid rgba(197, 139, 158, 0.25);
   border-radius: 16px;
-  background: rgba(244, 143, 177, 0.05);
+  background: linear-gradient(135deg, rgba(244, 143, 177, 0.05) 0%, rgba(255, 255, 255, 0.6) 100%);
+  box-shadow: inset 0 2px 6px rgba(197, 139, 158, 0.05);
 }
 
 .canvas-fields legend {
   padding: 0 7px;
   color: var(--pink-deep);
-  font-size: 0.65rem;
-  font-weight: 900;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
+/* --- 3D Tactile Switch Cards --- */
 .switch-field {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--paper);
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(197, 139, 158, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfafa 100%);
   cursor: pointer;
   grid-column: span 6;
   width: 100%;
   min-width: 0;
-  transition: border-color var(--ease-fast);
+  box-shadow: 0 4px 10px rgba(197, 139, 158, 0.08), inset 0 1px 0 #ffffff;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .switch-field:hover {
   border-color: var(--pink-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(197, 139, 158, 0.15), inset 0 1px 0 #ffffff;
 }
 
 .switch-field > div {
@@ -541,9 +562,10 @@ textarea.admin-input {
 }
 
 .switch-field input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--charcoal);
+  width: 20px;
+  height: 20px;
+  accent-color: var(--pink-deep);
+  cursor: pointer;
 }
 
 .switch-field strong,
@@ -552,20 +574,81 @@ textarea.admin-input {
 }
 
 .switch-field strong {
-  font-size: 0.66rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--charcoal);
 }
 
 .switch-field small {
-  margin-top: 2px;
+  margin-top: 3px;
   color: var(--muted);
-  font-size: 0.57rem;
+  font-size: 0.65rem;
 }
 
 .admin-form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+/* --- 3D Structured Cards (Canvas Sizes, VIP Tiers) --- */
+.structured-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(197, 139, 158, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfafa 100%);
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.08), inset 0 1px 0 #ffffff;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.structured-card:hover {
+  border-color: var(--pink-deep);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(197, 139, 158, 0.15), inset 0 1px 0 #ffffff;
+}
+
+.structured-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.structured-card__header strong {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.structured-card__remove {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(186, 102, 119, 0.3);
+  border-radius: 50%;
+  background: #fff0f2;
+  color: var(--red);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(186, 102, 119, 0.15);
+  transition: all 0.2s ease;
+}
+
+.structured-card__remove:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.structured-card__remove:not(:disabled):hover {
+  background: var(--red);
+  color: #fff;
+  transform: scale(1.1);
 }
 
 /* File Upload & Image Previews */
@@ -667,8 +750,46 @@ textarea.admin-input {
 
 /* Form Sections & Custom Dropdown */
 .product-editor-form { display: flex; flex-direction: column; gap: 0; }
-.form-section { background: rgba(245, 239, 239, 0.3); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
-.form-section-title { margin: 0 0 16px; font-family: 'Lora', serif; font-size: 1.1rem; font-weight: 600; color: var(--pink-deep); border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.form-section { 
+  background: linear-gradient(180deg, #ffffff 0%, #fcfafa 100%); 
+  border: 1px solid rgba(197, 139, 158, 0.22); 
+  border-radius: 16px; 
+  padding: 22px; 
+  margin-bottom: 18px; 
+  box-shadow: 0 6px 18px rgba(197, 139, 158, 0.06), inset 0 1px 0 #ffffff;
+}
+
+.form-section-title { 
+  margin: 0 0 16px; 
+  font-family: 'Lora', serif; 
+  font-size: 1.15rem; 
+  font-weight: 600; 
+  color: var(--pink-deep); 
+  border-bottom: 1px solid rgba(197, 139, 158, 0.15); 
+  padding-bottom: 10px; 
+}
+
+/* 3D Upload Zone Enhancement */
+.upload-zone {
+  min-height: 90px;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  border: 2px dashed rgba(197, 139, 158, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(245, 239, 239, 0.5) 0%, rgba(255, 255, 255, 0.8) 100%);
+  cursor: pointer;
+  text-align: center;
+  box-shadow: inset 0 2px 6px rgba(197, 139, 158, 0.05);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.upload-zone:hover {
+  border-color: var(--pink-deep);
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(197, 139, 158, 0.12), inset 0 2px 6px rgba(197, 139, 158, 0.03);
+}
 /* 12-column grid layout for dense, space-efficient forms */
 .form-section-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px 14px; }
 .form-section-grid > .admin-field, .form-section-grid > .switch-field { grid-column: span 12; }
@@ -693,22 +814,41 @@ textarea.admin-input {
 
 /* Catalog Lists */
 .admin-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 14px;
+  display: grid !important;
+  grid-template-columns: 1fr 190px !important;
+  gap: 14px !important;
+  padding: 16px 20px !important;
+  background: linear-gradient(to bottom, rgba(245, 239, 239, 0.6), transparent);
   border-bottom: 1px solid var(--line);
 }
-.admin-toolbar > input[type="search"] {
-  flex: 1;
-  min-width: 200px;
-}
+
+.admin-toolbar > input[type="search"],
 .admin-toolbar > .admin-custom-select {
-  width: 220px;
-  flex-shrink: 0;
+  width: 100% !important;
+  min-width: 0 !important;
 }
-@media (max-width: 560px) {
-  .admin-toolbar > .admin-custom-select { width: 100%; }
+
+.admin-toolbar .admin-input {
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.08), inset 0 2px 4px rgba(74, 59, 66, 0.02);
+  border: 1px solid rgba(197, 139, 158, 0.25);
+  background: #ffffff;
+  border-radius: 12px;
+  min-height: 44px;
+}
+
+.admin-toolbar .admin-input:focus,
+.admin-toolbar .admin-input:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(197, 139, 158, 0.15), inset 0 2px 4px rgba(74, 59, 66, 0.01);
+  border-color: var(--pink-deep);
+}
+
+@media (max-width: 600px) {
+  .admin-toolbar {
+    grid-template-columns: 1.4fr 1fr !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
 }
 
 .enquiry-list { display: grid; }
@@ -908,8 +1048,44 @@ textarea.admin-input {
   color: var(--red);
 }
 
-/* Enquiries Accordion */
-.enquiry-toolbar { padding: 15px; }
+/* Enquiries Accordion - 3D Sticky Toolbar */
+.enquiry-toolbar { 
+  display: grid !important; 
+  grid-template-columns: 1fr 180px !important; 
+  gap: 16px !important; 
+  padding: 20px !important; 
+  background: linear-gradient(to bottom, rgba(245, 239, 239, 0.6), transparent); 
+  border-bottom: 1px solid var(--line); 
+}
+
+.enquiry-toolbar .admin-input {
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.08), inset 0 2px 4px rgba(74, 59, 66, 0.02);
+  border: 1px solid rgba(197, 139, 158, 0.25);
+  background: #ffffff;
+  border-radius: 12px;
+  min-height: 44px;
+  font-weight: 500;
+}
+
+.enquiry-toolbar .admin-input:focus,
+.enquiry-toolbar .admin-input:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(197, 139, 158, 0.15), inset 0 2px 4px rgba(74, 59, 66, 0.01);
+  border-color: var(--pink-deep);
+}
+
+@media (max-width: 600px) {
+  .enquiry-toolbar { 
+    grid-template-columns: 1.5fr 1fr !important; 
+    padding: 14px !important;
+    gap: 10px !important;
+  }
+  .enquiry-toolbar .admin-input {
+    min-height: 40px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+}
 .enquiry-card { margin-bottom: 16px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .enquiry-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; cursor: pointer; list-style: none; user-select: none; }
 .enquiry-summary-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 140px; }
@@ -945,11 +1121,57 @@ textarea.admin-input {
 .enquiry-financials .highlight { color: var(--pink-deep); }
 .enquiry-financials .total-row { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--charcoal); }
 
-.enquiry-actions-stack { width: 100%; display: flex; flex-direction: column; gap: 8px; }
-.enquiry-actions-stack label { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--charcoal); }
-.enquiry-actions-stack select { cursor: pointer; padding: 0 12px; height: 40px; }
-.whatsapp-btn { justify-content: center; height: 40px; color: #178a59 !important; border-color: #178a59 !important; background: #f0fdf4 !important; }
-.whatsapp-btn svg { margin-right: 8px; flex-shrink: 0; }
+/* Premium 3D Admin Action Buttons */
+.enquiry-action-grid { 
+  display: flex; gap: 6px; margin-top: 14px; padding-bottom: 2px;
+}
+
+.admin-action-btn { 
+  flex: 1; min-width: 0; height: 52px; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; 
+  border-radius: 10px; border: 1px solid rgba(197, 139, 158, 0.3); 
+  background: linear-gradient(180deg, #ffffff 0%, var(--beige) 100%); 
+  color: var(--charcoal); font-family: 'Inter', sans-serif; font-size: 0.58rem; font-weight: 700; 
+  cursor: pointer; text-decoration: none; text-align: center; padding: 0 2px;
+  box-shadow: 0 4px 10px rgba(197, 139, 158, 0.15), inset 0 -3px 0 rgba(197, 139, 158, 0.2), inset 0 1px 0 #ffffff;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.admin-action-btn:active { 
+  transform: scale(0.94) translateY(2px); 
+  box-shadow: inset 0 3px 6px rgba(197, 139, 158, 0.25); 
+  border-color: transparent; 
+}
+
+.admin-action-btn:hover { 
+  background: #ffffff; border-color: var(--pink-deep); color: var(--pink-deep); 
+  transform: translateY(-2px); 
+  box-shadow: 0 8px 18px rgba(197, 139, 158, 0.25), inset 0 -3px 0 rgba(197, 139, 158, 0.3), inset 0 1px 0 #ffffff; 
+}
+
+.admin-action-btn svg { width: 16px; height: 16px; margin: 0; stroke-width: 2.2px; transition: transform 0.25s ease; }
+.admin-action-btn:hover svg { transform: scale(1.1); }
+
+.admin-action-btn.is-danger-text { color: var(--red); border-color: rgba(186, 102, 119, 0.3); }
+.admin-action-btn.is-danger-text:hover { 
+  color: var(--red); border-color: var(--red); 
+  box-shadow: 0 8px 18px rgba(186, 102, 119, 0.25), inset 0 -3px 0 rgba(186, 102, 119, 0.3), inset 0 1px 0 #ffffff; 
+}
+
+/* Fix WhatsApp Icon rendering */
+.admin-action-btn.action-wa { color: #178a59; border-color: rgba(23, 138, 89, 0.3); background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%); }
+.admin-action-btn.action-wa svg { fill: #178a59 !important; stroke: none !important; stroke-width: 0 !important; }
+.admin-action-btn.action-wa:hover { 
+  border-color: #178a59; color: #178a59; 
+  box-shadow: 0 8px 18px rgba(23, 138, 89, 0.25), inset 0 -3px 0 rgba(23, 138, 89, 0.3), inset 0 1px 0 #ffffff; 
+}
+
+/* Desktop 2x2 Grid Arrangement */
+@media (min-width: 768px) {
+  .enquiry-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .admin-action-btn { width: 100%; min-width: 0; height: 48px; flex-direction: row; justify-content: center; font-size: 0.7rem; gap: 6px; }
+  .admin-action-btn svg { margin: 0; width: 16px; height: 16px; }
+}
 
 /* Expanders for Settings */
 .admin-expander { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-md); margin-top: 16px; transition: all var(--ease-fast); }
@@ -1370,26 +1592,31 @@ textarea.admin-input {
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     transition:
-      transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
       color 0.22s ease,
-      background 0.22s ease;
+      background 0.22s ease,
+      box-shadow 0.22s ease;
   }
 
   .admin-bottom-nav__item:active {
-    transform: scale(0.92);
+    transform: scale(0.90) translateY(2px);
   }
 
   .admin-bottom-nav__icon {
     position: relative;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
     border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(245, 239, 239, 0.3) 100%);
+    border: 1px solid rgba(197, 139, 158, 0.15);
+    box-shadow: 0 2px 6px rgba(197, 139, 158, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
     transition:
-      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
       background 0.22s ease,
-      box-shadow 0.22s ease;
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
   }
 
   .admin-bottom-nav__icon::after {

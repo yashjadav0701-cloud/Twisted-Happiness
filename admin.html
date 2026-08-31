@@ -5,35 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#fcf7f8">
-  <link rel="icon" href="/assets/th_logo.svg?v=mtgchh06" type="image/svg+xml">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtgyytmo" type="image/svg+xml">
   <title>Admin Command Center | Twisted Happiness</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/admin.css?v=mtgchh06">
-  <style>
-    /* Premium Admin Action Buttons Grid */
-    .enquiry-action-grid { display: flex; gap: 6px; margin-top: 14px; }
-    .admin-action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: 1; min-width: 0; height: 56px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--charcoal); font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02); padding: 0 2px; text-align: center; }
-    .admin-action-btn:hover { background: var(--beige); border-color: var(--pink-deep); color: var(--pink-deep); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(197, 139, 158, 0.1); }
-    .admin-action-btn svg { width: 18px; height: 18px; margin: 0; stroke-width: 2px; }
-    .admin-action-btn.is-danger-text { color: var(--red); }
-    .admin-action-btn.is-danger-text:hover { background: #fff0f2; border-color: var(--red); }
-    /* Fix WhatsApp Icon rendering */
-    .admin-action-btn.action-wa svg { fill: #178a59 !important; stroke: none !important; stroke-width: 0 !important; }
-    .admin-action-btn.action-wa:hover { background: #f0fdf4 !important; border-color: #178a59 !important; color: #178a59 !important; }
-    .admin-action-btn.action-wa svg { fill: #178a59 !important; stroke: none !important; stroke-width: 0 !important; }
-    .admin-action-btn.action-wa:hover { background: #f0fdf4 !important; border-color: #178a59 !important; color: #178a59 !important; }
-    
-    /* Desktop Vertical Arrangement */
-    @media (min-width: 768px) {
-      .enquiry-action-grid { flex-direction: column; gap: 8px; }
-      .admin-action-btn { flex-direction: row; justify-content: flex-start; height: 42px; padding-left: 16px; font-size: 0.75rem; }
-      .admin-action-btn svg { width: 16px; height: 16px; margin-right: 4px; }
-    }
-  </style>
+  <link rel="stylesheet" href="/admin.css?v=mtgyytmo">
 </head>
 
 <body data-admin-page="dashboard">
@@ -47,7 +26,7 @@
     <aside class="admin-sidebar">
       <div>
         <a class="admin-brand" href="#dashboard" aria-label="Admin Home">
-          <img src="/assets/th_logo_with_heading.svg?v=mtgchh06" alt="Twisted Happiness" class="admin-brand-logo-wide">
+          <img src="/assets/th_logo_with_heading.svg?v=mtgyytmo" alt="Twisted Happiness" class="admin-brand-logo-wide">
         </a>
         <nav class="admin-nav">
           <a data-admin-nav-link="dashboard" class="is-active" href="#dashboard">Overview</a>
@@ -205,11 +184,18 @@
         <section class="admin-card">
           <div class="admin-toolbar enquiry-toolbar">
             <input id="enquiry-search" class="admin-input" type="search" placeholder="Search reference, name or phone…">
-            <select id="enquiry-filter" class="admin-input">
-              <option value="active" selected>Active Orders</option>
-              <option value="archived">Archived Orders</option>
-              <option value="all">All Orders</option>
-            </select>
+            <div class="admin-custom-select" id="enquiry-filter-wrapper">
+              <input type="hidden" id="enquiry-filter" value="active">
+              <button type="button" class="admin-input custom-select-button" id="enquiry-filter-btn" aria-expanded="false" style="min-height: 44px;">
+                <span id="enquiry-filter-label" style="pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Active Orders</span>
+                <svg class="dropdown-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none; transition: transform 0.2s;"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div class="custom-select-menu" id="enquiry-filter-menu">
+                <div class="custom-select-option" data-value="active">Active Orders</div>
+                <div class="custom-select-option" data-value="archived">Archived Orders</div>
+                <div class="custom-select-option" data-value="all">All Orders</div>
+              </div>
+            </div>
           </div>
           <div id="enquiry-list" class="enquiry-list"></div>
         </section>
@@ -310,6 +296,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="/admin.js?v=mtgchh06" type="module"></script>
+  <script src="/admin.js?v=mtgyytmo" type="module"></script>
 </body>
 </html>
