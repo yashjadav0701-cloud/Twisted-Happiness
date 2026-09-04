@@ -737,8 +737,13 @@
   }
 
   function generateAndSetMRP(manualRequest) {
-    const price = Number(document.getElementById('product-price')?.value || 0);
+    const priceInput = document.getElementById('product-price');
+    const price = Number(priceInput?.value || 0);
     if (!Number.isFinite(price) || price <= 0) return notify('Enter the selling price first.', 'error');
+    
+    // 🔥 LATCH THE SELLING PRICE: Explicitly force the input to retain its exact value
+    if (priceInput) priceInput.value = price;
+
     const mrp = generateBelievableMRP(price);
     state.suppressMRPTracking = true; 
     setValue('product-mrp', mrp); 
@@ -870,11 +875,14 @@
       const { error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id' }); 
       if (error) throw error;
       
-      // 🔥 DIRECT EDGE FUNCTION INVOKE: Notify customers on BRAND NEW product drop.
-      if (!state.editingProduct && payload.is_active) {
+      // 🔥 DIRECT EDGE FUNCTION INVOKE: Notify customers on new product drops AND updates if active
+      if (payload.is_active) {
         try {
           await supabaseClient.functions.invoke('notify_customers', {
-            body: { record: payload }
+            body: { 
+              record: payload,
+              isUpdate: Boolean(state.editingProduct) // Flags whether this was an edit or a new item
+            }
           });
         } catch (pushErr) {
           console.warn('Customer push notification skipped:', pushErr);
@@ -1715,6 +1723,19 @@
     } 
     state.enquiries = data || []; 
     renderEnquiries(); 
+
+    // 🔥 DEEP-LINK AUTO-OPEN: Check URL hash for an order ID and open it automatically
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+    const openId = hashParams.get('open');
+    if (openId) {
+      setTimeout(() => {
+        const card = document.querySelector(`[data-enquiry-id="${openId}"]`);
+        if (card) {
+          card.setAttribute('open', 'true');
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
   }
   
   function renderEnquiries() { 
