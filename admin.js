@@ -947,6 +947,17 @@
       const { error } = await supabaseClient.from('products').upsert(payload, { onConflict: 'id' }); 
       if (error) throw error;
       
+      // 🔥 DIRECT EDGE FUNCTION INVOKE: Notify customers on BRAND NEW product drop.
+      if (!state.editingProduct && payload.is_active) {
+        try {
+          await supabaseClient.functions.invoke('notify_customers', {
+            body: { record: payload }
+          });
+        } catch (pushErr) {
+          console.warn('Customer push notification skipped:', pushErr);
+        }
+      }
+
       await removeOrphanedImages(originalImages.filter((url) => !uploadedImages.includes(url)), productId);
       notify(state.editingProduct ? 'Product updated successfully.' : 'Product saved successfully.', 'success'); 
       resetProductForm(); 
@@ -1082,7 +1093,7 @@
           const permission = await Notification.requestPermission();
           if (permission !== 'granted') throw new Error('Permission was denied. You must allow notifications in your browser settings.');
           
-          const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
+          const publicVapidKey = 'BL2uIFAMN_xauba2uLWtbsdhLGqTWjFS8MYosUszCjxQldf8dExcJQ1k8R5YPBjOKM2FAJkJ5rvGWwR-zFf7Ung'; 
           const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
           
           const subscription = await registration.pushManager.subscribe({
