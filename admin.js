@@ -1738,6 +1738,22 @@
     }
   }
   
+  function cleanPhoneNumber(phone) {
+    let cleaned = String(phone || '').replace(/\D/g, '');
+    
+    // If it starts with a leading zero (e.g. 09876543210), strip the zero
+    if (cleaned.startsWith('0')) {
+      cleaned = cleaned.slice(1);
+    }
+    
+    // If it's a standard 10-digit Indian mobile number, automatically prepend '91'
+    if (cleaned.length === 10) {
+      cleaned = '91' + cleaned;
+    }
+    
+    return cleaned;
+  }
+
   function renderEnquiries() { 
     const host = document.getElementById('enquiry-list'); if (!host) return; 
     
@@ -1776,7 +1792,7 @@
       // Dynamic Action Buttons
       const isArchived = ['completed', 'rejected', 'cancelled', 'archived', 'shipped'].includes(enquiry.status);
       const isConfirmed = enquiry.status === 'confirmed';
-      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+      const phoneClean = cleanPhoneNumber(enquiry.customer_phone);
       const waLink = `https://wa.me/${phoneClean}?text=${encodeURIComponent(`Hello ${enquiry.customer_name}, regarding your Twisted Happiness enquiry ${enquiry.reference}:`)}`;
 
       const callSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
@@ -1909,7 +1925,7 @@
     if (!enquiry) return;
 
     const action = btn.dataset.enquiryAction;
-      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+      const phoneClean = cleanPhoneNumber(enquiry.customer_phone);
 
       // FIX: Force updated_at to be mathematically greater than created_at to bypass the 23514 check constraint error
       const safeUpdatedAt = new Date(Math.max(Date.now(), new Date(enquiry.created_at).getTime() + 1000)).toISOString();
@@ -2294,7 +2310,7 @@
       renderEnquiries();
 
       // Open professional WhatsApp Shipping confirmation
-      const phoneClean = String(enquiry.customer_phone || '').replace(/\D/g, '');
+      const phoneClean = cleanPhoneNumber(enquiry.customer_phone);
       const itemsList = (enquiry.items || []).map(item => `- ${item.quantity}x ${item.title}`).join('\n');
       const text = `*Twisted Happiness Studio*\n\nHello *${enquiry.customer_name}*,\nExciting news! Your order is securely packed and ready to ship.\n\n*ORDER REFERENCE:* #${enquiry.reference}\n\n*ITEMS DISPATCHED:*\n${itemsList}\n\n>> We have handed your package over to our trusted delivery partner. You will receive an SMS and email with your tracking link very shortly.\n\nThank you for supporting our small handmade studio. We hope you love your creations!`;
       window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
