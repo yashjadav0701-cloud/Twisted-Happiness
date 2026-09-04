@@ -125,9 +125,8 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || '/' }
   };
 
-  // 🔥 CRITICAL FIX: Only attach the image if it is a valid string. 
-  // Passing 'null' here causes Android to instantly crash and hide the notification.
-  if (data.image && typeof data.image === 'string' && data.image.trim() !== '') {
+  // 🔥 CRITICAL FIX: Ensure image is absolutely pathed to prevent Android crash
+  if (data.image && typeof data.image === 'string' && data.image.startsWith('http')) {
     options.image = data.image;
   }
 

@@ -1113,9 +1113,10 @@
             }
             
           } catch (err) {
+            console.error("🔥 Push Setup Error:", err);
             await Utils.choice({ 
               title: 'Action Failed', 
-              message: err.message || 'An unexpected error occurred.', 
+              message: err.message || 'An unexpected error occurred. Check browser console.', 
               icon: '⚠️', 
               hideSecondary: true, 
               primaryLabel: 'Okay' 
@@ -1126,26 +1127,23 @@
           }
         });
 
-    // Test Notification Button
+    // Strict Test Notification Button
     document.getElementById('test-notification')?.addEventListener('click', async (e) => {
       try {
-        if (Notification.permission !== 'granted') {
-          throw new Error('Notifications are not enabled yet. Please click "Enable Alerts" first.');
+        const btn = document.getElementById('enable-notifications');
+        if (!btn || btn.dataset.action !== 'disable') {
+          throw new Error('Please click "Enable Alerts" first. The system must be actively connected to the database to test.');
         }
+
         const registration = await navigator.serviceWorker.ready;
         await registration.showNotification('✨ Test Alert Successful!', {
-          body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
-          icon: '/assets/th_logo.svg',
+          body: 'Your device is perfectly configured and actively connected to the Twisted Happiness database.',
+          icon: '/assets/icon-192.png',
+          badge: '/assets/th_logo.svg',
           vibrate: [200, 100, 200]
         });
       } catch (err) {
-        await Utils.choice({ 
-          title: 'Test Failed', 
-          message: err.message, 
-          icon: '⚠️', 
-          hideSecondary: true, 
-          primaryLabel: 'Okay' 
-        });
+        await Utils.choice({ title: 'Test Failed', message: err.message, icon: '⚠️', hideSecondary: true, primaryLabel: 'Okay' });
       }
     });
   }
