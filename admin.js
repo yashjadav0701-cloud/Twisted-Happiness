@@ -1015,6 +1015,148 @@
     await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews()]); 
     resetCouponForm(); 
     resetReviewForm();
+    await checkNotificationStatus(); // Automatically check state when opening settings
+  }
+
+  async function checkNotificationStatus() {
+    const btn = document.getElementById('enable-notifications');
+    if (!btn) return;
+    
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          btn.textContent = 'Disable Alerts';
+          btn.dataset.action = 'disable';
+        } else {
+          btn.textContent = 'Enable Alerts';
+          btn.dataset.action = 'enable';
+        }
+      } catch (e) {
+        console.warn('Could not check push subscription:', e);
+      }
+    }
+  }
+
+  function bindSettingsEvents() {
+    document.getElementById('settings-form')?.addEventListener('submit', saveSettings);
+    document.getElementById('canvas-size-list')?.addEventListener('input', updateStructuredCanvasState);
+    document.getElementById('canvas-size-list')?.addEventListener('change', updateStructuredCanvasState);
+    document.getElementById('canvas-size-list')?.addEventListener('click', handleCanvasSizeAction);
+    document.getElementById('save-canvas-sizes')?.addEventListener('click', saveCanvasSizes);
+    document.getElementById('add-vip-tier')?.addEventListener('click', () => { state.vipTiers.push({ minimumQuantity: Math.max(2, (state.vipTiers.at(-1)?.minimumQuantity || 1) + 1), percent: 5 }); renderVipTiers(); });
+    document.getElementById('vip-tier-list')?.addEventListener('input', updateVipState);
+    document.getElementById('vip-tier-list')?.addEventListener('click', handleVipAction);
+    document.getElementById('save-vip-tiers')?.addEventListener('click', saveVipTiers);
+    document.getElementById('coupon-form')?.addEventListener('submit', saveCoupon);
+    document.getElementById('coupon-type')?.addEventListener('change', updateCouponTypeUI);
+    document.getElementById('reset-coupon')?.addEventListener('click', resetCouponForm);
+    document.getElementById('coupon-list')?.addEventListener('click', handleCouponAction);
+    document.getElementById('review-form')?.addEventListener('submit', saveReview);
+    document.getElementById('reset-review')?.addEventListener('click', resetReviewForm);
+    document.getElementById('review-list')?.addEventListener('click', handleReviewAction);
+
+    // --- Intelligent Enable / Disable Toggle ---
+    document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const action = btn.dataset.action || 'enable';
+      setLoading(btn, true, action === 'enable' ? 'Enabling...' : 'Disabling...');
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        
+        if (action === 'enable') {
+          if (!('PushManager' in window)) throw new Error('Push notifications are not supported by your current browser or device.');
+          
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') throw new Error('Permission was denied. You must allow notifications in your browser settings.');
+          
+          const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
+          const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
+          
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey
+          });
+          
+          const subJSON = subscription.toJSON();
+          const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
+            subscription: subJSON
+          }]);
+          
+          if (error && error.code !== '23505') throw error; 
+          
+          btn.textContent = 'Disable Alerts';
+          btn.dataset.action = 'disable';
+          
+          await Utils.choice({ 
+            title: 'Alerts Enabled!', 
+            message: 'This device is now registered to receive instant push notifications for new orders.', 
+            icon: '🌸', 
+            hideSecondary: true, 
+            primaryLabel: 'Awesome' 
+          });
+
+        } else {
+          // DISABLE ACTION
+          const subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            const endpoint = subscription.endpoint;
+            await subscription.unsubscribe();
+            // Remove from Supabase database
+            await supabaseClient.from('admin_push_subscriptions').delete().filter('subscription->>endpoint', 'eq', endpoint);
+          }
+
+          btn.textContent = 'Enable Alerts';
+          btn.dataset.action = 'enable';
+
+          await Utils.choice({ 
+            title: 'Alerts Disabled', 
+            message: 'This device will no longer receive order push notifications.', 
+            icon: '🔕', 
+            hideSecondary: true, 
+            primaryLabel: 'Okay' 
+          });
+        }
+        
+      } catch (err) {
+        await Utils.choice({ 
+          title: 'Action Failed', 
+          message: err.message || 'An unexpected error occurred.', 
+          icon: '⚠️', 
+          hideSecondary: true, 
+          primaryLabel: 'Okay' 
+        });
+      } finally {
+        setLoading(btn, false);
+        await checkNotificationStatus();
+      }
+    });
+
+    // Test Notification Button
+    document.getElementById('test-notification')?.addEventListener('click', async (e) => {
+      try {
+        if (Notification.permission !== 'granted') {
+          throw new Error('Notifications are not enabled yet. Please click "Enable Alerts" first.');
+        }
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('✨ Test Alert Successful!', {
+          body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
+          icon: '/assets/th_logo.svg',
+          badge: '/assets/th_logo.svg',
+          vibrate: [200, 100, 200]
+        });
+      } catch (err) {
+        await Utils.choice({ 
+          title: 'Test Failed', 
+          message: err.message, 
+          icon: '⚠️', 
+          hideSecondary: true, 
+          primaryLabel: 'Okay' 
+        });
+      }
+    });
   }
 
   function bindSettingsEvents() {
