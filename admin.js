@@ -352,60 +352,6 @@
       }
     });
   }
-      const btn = e.currentTarget;
-      setLoading(btn, true, 'Enabling...');
-      try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Push not supported by this browser.');
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') throw new Error('Notification permission denied.');
-        
-        const registration = await navigator.serviceWorker.ready;
-        // REPLACE THE STRING BELOW WITH YOUR GENERATED PUBLIC KEY
-        const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
-        const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
-        
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey
-        });
-        
-        const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
-          subscription: subscription.toJSON()
-        }]);
-        
-        if (error) throw error;
-        notify('Push notifications enabled for this device!', 'success');
-      } catch (err) {
-        notify(err.message, 'error');
-      } finally {
-        setLoading(btn, false);
-      }
-    });
-
-    document.getElementById('admin-logout')?.addEventListener('click', async () => {
-      await supabaseClient.auth.signOut(); 
-      state.session = null; 
-      showLogin('You have signed out safely.');
-    });
-    document.querySelector('[data-admin-menu]')?.addEventListener('click', () => {
-      document.querySelector('.admin-sidebar')?.classList.toggle('is-open');
-    });
-    document.addEventListener('click', (event) => {
-      const sidebar = document.querySelector('.admin-sidebar');
-      if (sidebar?.classList.contains('is-open') && !event.target.closest('.admin-sidebar') && !event.target.closest('[data-admin-menu]')) {
-        sidebar.classList.remove('is-open');
-      }
-    });
-    
-    // Enable Ctrl + Shift + K to instantly focus search boxes globally
-    document.addEventListener('keydown', (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'k' || event.key === 'K')) {
-        event.preventDefault();
-        const searchBox = document.getElementById('enquiry-search') || document.getElementById('product-search');
-        if (searchBox) searchBox.focus();
-      }
-    });
-  }
 
   function showLogin(message = '') {
     document.getElementById('admin-workspace')?.classList.add('hidden');

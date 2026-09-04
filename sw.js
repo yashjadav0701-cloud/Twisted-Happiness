@@ -116,12 +116,12 @@ self.addEventListener('push', (event) => {
 
   const title =
     data.title ||
-    '🌸 New Order Received!';
+    '🌸 Twisted Happiness';
 
   const options = {
     body:
       data.body ||
-      'A new customer just placed an order on your store.',
+      'Something new just happened!',
 
     icon:
       '/assets/th_logo.svg',
@@ -134,7 +134,7 @@ self.addEventListener('push', (event) => {
 
     data: {
       url:
-        '/admin.html#enquiries'
+        data.url || '/'
     }
   };
 
@@ -149,11 +149,13 @@ self.addEventListener('push', (event) => {
 
 /*
  * When you tap the notification on your phone/PC lock screen,
- * open the admin panel.
+ * intelligently route to the correct URL.
  */
 self.addEventListener('notificationclick', (event) => {
 
   event.notification.close();
+  
+  const urlToOpen = event.notification.data.url || '/';
 
   event.waitUntil(
 
@@ -174,16 +176,17 @@ self.addEventListener('notificationclick', (event) => {
           clientList[i];
 
         if (
-          client.url.includes('/admin/') &&
+          client.url.includes(self.location.origin) &&
           'focus' in client
         ) {
+          client.navigate(urlToOpen);
           return client.focus();
         }
       }
 
       if (clients.openWindow) {
         return clients.openWindow(
-          '/admin.html#enquiries'
+          urlToOpen
         );
       }
 
