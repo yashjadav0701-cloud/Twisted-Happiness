@@ -39,7 +39,9 @@
       cart: 'twisted_happiness_cart_v4', 
       coupon: 'twisted_happiness_coupon_v2', 
       customer: 'twisted_happiness_customer_v2', 
-      announcement: 'twisted_happiness_announcement_dismissed' 
+      announcement: 'twisted_happiness_announcement_dismissed',
+      deviceId: 'twisted_happiness_device_id',
+      pushPrompted: 'twisted_happiness_push_prompted'
     }),
     MAX_CART_LINES: 15,
     MAX_ITEM_QUANTITY: 20,
@@ -322,6 +324,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       renderCart();
 
       handleRoute(new URL(window.location.href));
+      
+      // Delay push prompt by 5 seconds so it doesn't interrupt their first impression
+      setTimeout(initCustomerPushNotifications, 5000);
+      
+      // Wait 5 seconds so it doesn't interrupt their initial shopping experience
+      setTimeout(initCustomerPushNotifications, 5000); 
     } catch (error) {
       console.error('Critical initialization error:', error);
       document.getElementById('catalog-loading')?.classList.add('hidden');
@@ -369,7 +377,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtmfotd4'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtmh8ihr'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -432,6 +440,121 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }));
   }
 
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  // --- CUSTOMER PUSH ENGINE ---
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  function getOrCreateDeviceId() {
+    let deviceId = readStorage(APP_CONFIG.STORAGE_KEYS.deviceId, null);
+    if (!deviceId) {
+      deviceId = 'th_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+      writeStorage(APP_CONFIG.STORAGE_KEYS.deviceId, deviceId);
+    }
+    return deviceId;
+  }
+
+  async function initCustomerPushNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      const subscription = await registration.pushManager.getSubscription();
+
+      // If already subscribed, just update their heartbeat in the database
+      if (subscription) {
+         await supabaseClient.from('customer_push_subscriptions').upsert({
+           device_id: getOrCreateDeviceId(),
+           endpoint: subscription.endpoint,
+           auth: subscription.toJSON().keys.auth,
+           p256dh: subscription.toJSON().keys.p256dh,
+           updated_at: new Date().toISOString()
+         }, { onConflict: 'device_id' });
+         return; 
+      }
+
+      // If not subscribed and haven't permanently dismissed it, show the beautiful custom prompt
+      const hasPrompted = readStorage(APP_CONFIG.STORAGE_KEYS.pushPrompted, false);
+      if (!hasPrompted && Notification.permission !== 'denied') {
+        const overlay = document.getElementById('push-optin-overlay');
+        const card = document.getElementById('push-optin-card');
+        if (overlay && card) {
+          overlay.classList.remove('hidden');
+          requestAnimationFrame(() => card.classList.add('is-visible'));
+        }
+      }
+    } catch (e) {
+      console.warn('Push init failed:', e);
+    }
+  }
+
+  async function subscribeCustomerToPush() {
+    const btn = document.getElementById('push-optin-yes');
+    if (btn) { btn.textContent = 'Enabling...'; btn.disabled = true; }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') throw new Error('Permission denied');
+
+      const registration = await navigator.serviceWorker.ready;
+      // ⚠️ CRITICAL: PASTE YOUR 87-CHARACTER PUBLIC KEY HERE!
+      const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
+      const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
+      
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey
+      });
+
+      const subJSON = subscription.toJSON();
+      
+      await supabaseClient.from('customer_push_subscriptions').upsert({
+        device_id: getOrCreateDeviceId(),
+        endpoint: subJSON.endpoint,
+        auth: subJSON.keys.auth,
+        p256dh: subJSON.keys.p256dh,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'device_id' });
+
+      writeStorage(APP_CONFIG.STORAGE_KEYS.pushPrompted, true);
+      
+      document.getElementById('push-optin-overlay')?.classList.add('hidden');
+      Utils.toast('Secret drops unlocked! 🌸', 'success');
+
+    } catch (err) {
+      console.warn('Subscription failed:', err);
+      document.getElementById('push-optin-overlay')?.classList.add('hidden');
+    }
+  }
+
+  async function trackProductView(productId) {
+    if (!supabaseClient || !('serviceWorker' in navigator)) return;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        // Silently update their last viewed product so we can retarget them later
+        await supabaseClient.from('customer_push_subscriptions').update({
+          last_viewed_product_id: productId,
+          updated_at: new Date().toISOString()
+        }).eq('device_id', getOrCreateDeviceId());
+      }
+    } catch(e) {}
+  }
+
   function applyStoreConfiguration() {
     const announcement = document.getElementById('announcement-bar');
     const text = document.getElementById('announcement-text');
@@ -458,6 +581,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function bindGlobalEvents() {
+    document.getElementById('push-optin-yes')?.addEventListener('click', subscribeCustomerToPush);
+    document.getElementById('push-optin-no')?.addEventListener('click', () => {
+      writeStorage(APP_CONFIG.STORAGE_KEYS.pushPrompted, true);
+      document.getElementById('push-optin-overlay')?.classList.add('hidden');
+    });
+
     document.addEventListener('click', (event) => {
       if (event.target.closest('[data-open-cart]')) openCart();
     });
@@ -632,7 +761,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtmfotd4')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtmh8ihr')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1522,7 +1651,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtmfotd4')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtmh8ihr')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1590,6 +1719,9 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       productEventsBound = true;
     }
     fetchProductReviews(product.id);
+    
+    // Silently track this specific product view anonymously
+    trackProductView(product.id);
   }
 
   function renderProduct(product) {
@@ -1600,7 +1732,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtmfotd4`;
+      `${window.location.origin}/assets/share-icon.png?v=mtmh8ihr`;
 
     const shareDescription =
       String(
@@ -1721,7 +1853,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtmfotd4'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtmh8ihr'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2201,7 +2333,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtmfotd4',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtmh8ihr',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2280,7 +2412,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtmfotd4')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtmh8ihr')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -2536,7 +2668,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtmfotd4')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtmh8ihr')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2695,7 +2827,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtmfotd4')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtmh8ihr')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}

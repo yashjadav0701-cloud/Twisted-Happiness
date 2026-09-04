@@ -1027,4 +1027,16 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
 .bag-cheering { 
   animation: thBagTada 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) !important; 
   color: var(--pink-deep) !important; 
-}..
+}
+
+/* Premium Customer Push Opt-In Modal */
+.push-optin-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-end; justify-content: center; padding: 16px; background: rgba(74, 59, 66, 0.2); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); transition: opacity 0.4s ease; }
+.push-optin-card { width: 100%; max-width: 420px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(197, 139, 158, 0.3); border-radius: 24px; padding: 24px; box-shadow: 0 24px 48px rgba(74, 59, 66, 0.15), 0 8px 16px rgba(197, 139, 158, 0.1); transform: translateY(120%); transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); margin-bottom: calc(env(safe-area-inset-bottom) + 68px); }
+.push-optin-card.is-visible { transform: translateY(0); }
+.push-optin-icon { width: 48px; height: 48px; display: grid; place-items: center; background: linear-gradient(135deg, var(--beige) 0%, var(--pink) 100%); color: var(--pink-deep); border-radius: 14px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(197, 139, 158, 0.2); }
+.push-optin-card h3 { margin: 0 0 8px; font-family: 'Lora', serif; font-size: 1.3rem; color: var(--charcoal); letter-spacing: -0.01em; }
+.push-optin-card p { margin: 0 0 20px; font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+.push-optin-actions { display: flex; flex-direction: column; gap: 8px; }
+.push-optin-btn-yes { background: linear-gradient(180deg, var(--pink-deep) 0%, #B3758A 100%); color: #fff; border: none; border-radius: 99px; min-height: 44px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 12px rgba(197, 139, 158, 0.25); }
+.push-optin-btn-no { background: transparent; color: var(--muted); border: none; min-height: 36px; font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 720px) { .push-optin-card { margin-bottom: 24px; } }

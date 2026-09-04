@@ -248,7 +248,110 @@
   }
 
   function bindGlobalAdminEvents() {
+    // Enable Notifications with Custom Modal Error Handling
     document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      setLoading(btn, true, 'Enabling...');
+      try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+          throw new Error('Push notifications are not supported by your current browser or device.');
+        }
+        
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          throw new Error('Permission was denied. You must allow notifications in your browser settings to receive alerts.');
+        }
+        
+        const registration = await navigator.serviceWorker.ready;
+        
+        // ⚠️ CRITICAL: Replace the string below with your 87-character Public VAPID Key.
+        // Make sure there are NO spaces before or after the key inside the quotes.
+        const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
+        const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
+        
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+        
+        const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
+          subscription: subscription.toJSON()
+        }]);
+        
+        // Ignore duplicate error if device is already registered
+        if (error && error.code !== '23505') throw error; 
+        
+        await Utils.choice({ 
+          title: 'Alerts Enabled!', 
+          message: 'This device is now registered to receive instant push notifications for new orders.', 
+          icon: '🌸', 
+          hideSecondary: true, 
+          primaryLabel: 'Awesome' 
+        });
+        
+      } catch (err) {
+        await Utils.choice({ 
+          title: 'Setup Failed', 
+          message: err.message || 'An unexpected error occurred.', 
+          icon: '⚠️', 
+          hideSecondary: true, 
+          primaryLabel: 'Okay' 
+        });
+      } finally {
+        setLoading(btn, false);
+      }
+    });
+
+    // Test Notification Button
+    document.getElementById('test-notification')?.addEventListener('click', async (e) => {
+      try {
+        if (Notification.permission !== 'granted') {
+          throw new Error('Notifications are not enabled yet. Please click "Enable Alerts" first.');
+        }
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('✨ Test Alert Successful!', {
+          body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
+          icon: '/assets/th_logo.svg',
+          badge: '/assets/th_logo.svg',
+          vibrate: [200, 100, 200]
+        });
+      } catch (err) {
+        await Utils.choice({ 
+          title: 'Test Failed', 
+          message: err.message, 
+          icon: '⚠️', 
+          hideSecondary: true, 
+          primaryLabel: 'Okay' 
+        });
+      }
+    });
+
+    document.getElementById('admin-logout')?.addEventListener('click', async () => {
+      await supabaseClient.auth.signOut(); 
+      state.session = null; 
+      showLogin('You have signed out safely.');
+    });
+    
+    document.querySelector('[data-admin-menu]')?.addEventListener('click', () => {
+      document.querySelector('.admin-sidebar')?.classList.toggle('is-open');
+    });
+    
+    document.addEventListener('click', (event) => {
+      const sidebar = document.querySelector('.admin-sidebar');
+      if (sidebar?.classList.contains('is-open') && !event.target.closest('.admin-sidebar') && !event.target.closest('[data-admin-menu]')) {
+        sidebar.classList.remove('is-open');
+      }
+    });
+    
+    // Enable Ctrl + Shift + K to instantly focus search boxes globally
+    document.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'k' || event.key === 'K')) {
+        event.preventDefault();
+        const searchBox = document.getElementById('enquiry-search') || document.getElementById('product-search');
+        if (searchBox) searchBox.focus();
+      }
+    });
+  }
       const btn = e.currentTarget;
       setLoading(btn, true, 'Enabling...');
       try {
@@ -258,7 +361,7 @@
         
         const registration = await navigator.serviceWorker.ready;
         // REPLACE THE STRING BELOW WITH YOUR GENERATED PUBLIC KEY
-        const publicVapidKey = 'PASTE_YOUR_PUBLIC_KEY_HERE'; 
+        const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
         const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
         
         const subscription = await registration.pushManager.subscribe({
