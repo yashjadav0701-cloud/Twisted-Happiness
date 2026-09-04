@@ -248,83 +248,6 @@
   }
 
   function bindGlobalAdminEvents() {
-    // Enable Notifications with Custom Modal Error Handling
-    document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
-      setLoading(btn, true, 'Enabling...');
-      try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-          throw new Error('Push notifications are not supported by your current browser or device.');
-        }
-        
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          throw new Error('Permission was denied. You must allow notifications in your browser settings to receive alerts.');
-        }
-        
-        const registration = await navigator.serviceWorker.ready;
-        
-        // ⚠️ CRITICAL: Replace the string below with your 87-character Public VAPID Key.
-        // Make sure there are NO spaces before or after the key inside the quotes.
-        const publicVapidKey = 'BL2uIFAMN_xauba2uLWtbsdhLGqTWjFS8MYosUszCjxQldf8dExcJQ1k8R5YPBjOKM2FAJkJ5rvGWwR-zFf7Ung'; 
-        const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
-        
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey
-        });
-        
-        const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
-          subscription: subscription.toJSON()
-        }]);
-        
-        // Ignore duplicate error if device is already registered
-        if (error && error.code !== '23505') throw error; 
-        
-        await Utils.choice({ 
-          title: 'Alerts Enabled!', 
-          message: 'This device is now registered to receive instant push notifications for new orders.', 
-          icon: '🌸', 
-          hideSecondary: true, 
-          primaryLabel: 'Awesome' 
-        });
-        
-      } catch (err) {
-        await Utils.choice({ 
-          title: 'Setup Failed', 
-          message: err.message || 'An unexpected error occurred.', 
-          icon: '⚠️', 
-          hideSecondary: true, 
-          primaryLabel: 'Okay' 
-        });
-      } finally {
-        setLoading(btn, false);
-      }
-    });
-
-    // Test Notification Button
-    document.getElementById('test-notification')?.addEventListener('click', async (e) => {
-      try {
-        if (Notification.permission !== 'granted') {
-          throw new Error('Notifications are not enabled yet. Please click "Enable Alerts" first.');
-        }
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification('✨ Test Alert Successful!', {
-          body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
-          icon: '/assets/th_logo.svg',
-          vibrate: [200, 100, 200]
-        });
-      } catch (err) {
-        await Utils.choice({ 
-          title: 'Test Failed', 
-          message: err.message, 
-          icon: '⚠️', 
-          hideSecondary: true, 
-          primaryLabel: 'Okay' 
-        });
-      }
-    });
-
     document.getElementById('admin-logout')?.addEventListener('click', async () => {
       await supabaseClient.auth.signOut(); 
       state.session = null; 
@@ -1036,6 +959,24 @@
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+          // 🔥 TWO-WAY SYNC: Check if this exact device token actually exists in the database
+          const { data, error } = await supabaseClient
+            .from('admin_push_subscriptions')
+            .select('id')
+            .eq('subscription->>endpoint', subscription.endpoint)
+            .maybeSingle();
+
+          // If the database is empty or the row was deleted manually, self-heal the browser
+          if (!data) {
+            console.warn('Orphaned push token found in browser. Syncing with empty database...');
+            await subscription.unsubscribe();
+            updateAlertButtonUI(btn, false);
+            return;
+          }
+        }
+        
         updateAlertButtonUI(btn, Boolean(subscription));
       } catch (e) {
         console.warn('Could not check push subscription:', e);
@@ -1079,96 +1020,103 @@
     document.getElementById('review-list')?.addEventListener('click', handleReviewAction);
 
     // --- Distinct Enable / Disable Toggle Handler ---
-    document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
-      const action = btn.dataset.action || 'enable';
-      setLoading(btn, true, action === 'enable' ? 'Enabling...' : 'Disabling...');
+        document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
+          const btn = e.currentTarget;
+          const action = btn.dataset.action || 'enable';
+          setLoading(btn, true, action === 'enable' ? 'Enabling...' : 'Disabling...');
 
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        
-        if (action === 'enable') {
-          if (!('PushManager' in window)) throw new Error('Push notifications are not supported by your current browser or device.');
-          
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') throw new Error('Permission was denied. You must allow notifications in your browser settings.');
-          
-          const publicVapidKey = 'BL2uIFAMN_xauba2uLWtbsdhLGqTWjFS8MYosUszCjxQldf8dExcJQ1k8R5YPBjOKM2FAJkJ5rvGWwR-zFf7Ung'; 
-          const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
-          
-          // 🔥 SELF-HEALING ENGINE: Forcibly delete any stuck/broken subscriptions tied to old keys
-          const oldSub = await registration.pushManager.getSubscription();
-          if (oldSub) await oldSub.unsubscribe();
-          
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey
-          });
-          
-          const subJSON = subscription.toJSON();
-          const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
-            subscription: subJSON
-          }]);
-          
-          if (error && error.code !== '23505') throw error; 
-          
-          // Switch UI to Enabled State
-          updateAlertButtonUI(btn, true);
-          
-          // Show Distinct "Enabled" Modal Box
-          await Utils.choice({ 
-            title: 'Alerts Enabled!', 
-            message: 'This device is now registered to receive instant push notifications for new orders.', 
-            icon: '🔔', 
-            hideSecondary: true, 
-            primaryLabel: 'Awesome' 
-          });
-
-        } else {
-          // DISABLE ACTION
-          const subscription = await registration.pushManager.getSubscription();
-          if (subscription) {
-            const endpoint = subscription.endpoint;
-            await subscription.unsubscribe();
+          try {
+            const registration = await navigator.serviceWorker.ready;
             
-            // Remove from Supabase database using strict JSONB targeting
-            const { error: deleteError } = await supabaseClient
-              .from('admin_push_subscriptions')
-              .delete()
-              .eq('subscription->>endpoint', endpoint);
+            if (action === 'enable') {
+              if (!('PushManager' in window)) throw new Error('Push notifications are not supported by your current browser or device.');
               
-            if (deleteError) {
-              console.error('Failed to delete subscription from DB:', deleteError);
-              throw new Error('Could not remove the device from the database.');
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') throw new Error('Permission was denied. You must allow notifications in your browser settings.');
+              
+              const publicVapidKey = 'BO9h93qFJqXDs_3P6cpTp_XWDS27ulk0sL-n_gvPKW_3Nr6DTPnH5cBe2X_H_RawfxyKJIH5TF1wJx05_xlC17w'; 
+              const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
+              
+              // 🔥 EXTREME SELF-HEALING: Catch OS-level crashes so it doesn't break the new subscription
+              try {
+                const oldSub = await registration.pushManager.getSubscription();
+                if (oldSub) await oldSub.unsubscribe();
+              } catch (unsubErr) {
+                console.warn('Failed to unsubscribe old token:', unsubErr);
+              }
+              
+              const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey
+              });
+              
+              const subJSON = subscription.toJSON();
+
+              // 🔥 PREVENT DUPLICATES: Destroy any existing row with this exact endpoint BEFORE inserting
+              await supabaseClient.from('admin_push_subscriptions').delete().eq('subscription->>endpoint', subJSON.endpoint);
+              
+              const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
+                subscription: subJSON
+              }]);
+              
+              if (error && error.code !== '23505') throw error; 
+              
+              // Switch UI to Enabled State
+              updateAlertButtonUI(btn, true);
+              
+              await Utils.choice({ 
+                title: 'Alerts Enabled!', 
+                message: 'This device is now registered to receive instant push notifications for new orders.', 
+                icon: '🔔', 
+                hideSecondary: true, 
+                primaryLabel: 'Awesome' 
+              });
+
+            } else {
+              // DISABLE ACTION
+              const subscription = await registration.pushManager.getSubscription();
+              if (subscription) {
+                const endpoint = subscription.endpoint;
+                try {
+                  await subscription.unsubscribe();
+                } catch (unsubErr) {
+                  console.warn('Unsubscribe failed:', unsubErr);
+                }
+                
+                // Remove from Supabase database using strict JSONB targeting
+                const { error: deleteError } = await supabaseClient
+                  .from('admin_push_subscriptions')
+                  .delete()
+                  .eq('subscription->>endpoint', endpoint);
+                  
+                if (deleteError) throw new Error('Could not remove the device from the database.');
+              }
+
+              // Switch UI to Disabled State
+              updateAlertButtonUI(btn, false);
+
+              await Utils.choice({ 
+                title: 'Alerts Disabled', 
+                message: 'This device has been unregistered and will no longer receive order push notifications.', 
+                icon: '🔕', 
+                hideSecondary: true, 
+                primaryLabel: 'Got it' 
+              });
             }
+            
+          } catch (err) {
+            await Utils.choice({ 
+              title: 'Action Failed', 
+              message: err.message || 'An unexpected error occurred.', 
+              icon: '⚠️', 
+              hideSecondary: true, 
+              primaryLabel: 'Okay' 
+            });
+          } finally {
+            setLoading(btn, false);
+            await checkNotificationStatus();
           }
-
-          // Switch UI to Disabled State
-          updateAlertButtonUI(btn, false);
-
-          // Show Distinct "Disabled" Modal Box
-          await Utils.choice({ 
-            title: 'Alerts Disabled', 
-            message: 'This device has been unregistered and will no longer receive order push notifications.', 
-            icon: '🔕', 
-            hideSecondary: true, 
-            primaryLabel: 'Got it' 
-          });
-        }
-        
-      } catch (err) {
-        await Utils.choice({ 
-          title: 'Action Failed', 
-          message: err.message || 'An unexpected error occurred.', 
-          icon: '⚠️', 
-          hideSecondary: true, 
-          primaryLabel: 'Okay' 
         });
-      } finally {
-        setLoading(btn, false);
-        await checkNotificationStatus();
-      }
-    });
 
     // Test Notification Button
     document.getElementById('test-notification')?.addEventListener('click', async (e) => {
