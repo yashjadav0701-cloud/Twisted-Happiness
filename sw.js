@@ -6,9 +6,6 @@ const TH_PWA_ASSETS = [
   '/assets/icon-192.png?v=2.2'
 ];
 
-/*
- * Install & Cache PWA Assets
- */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(TH_PWA_CACHE)
@@ -18,16 +15,10 @@ self.addEventListener('install', (event) => {
   );
 });
 
-/*
- * Activate
- */
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-/*
- * Serve the PWA launch assets from cache
- */
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
@@ -51,9 +42,6 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-/*
- * Premium Rich Push Notifications
- */
 self.addEventListener('push', (event) => {
   let data = {};
   try {
@@ -72,7 +60,7 @@ self.addEventListener('push', (event) => {
     data: { url: data.url || '/' }
   };
 
-  // 🔥 FATAL FIX: Ensure image is absolutely pathed to prevent Android Chrome crash
+  // 🔥 CRITICAL FIX: Ensure image is absolutely pathed to prevent Android Chrome crash
   if (data.image && typeof data.image === 'string' && data.image.startsWith('http')) {
     options.image = data.image;
   }
@@ -80,9 +68,6 @@ self.addEventListener('push', (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-/*
- * Intelligently route deep-links
- */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const urlToOpen = event.notification.data?.url || '/';

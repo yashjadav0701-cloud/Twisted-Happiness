@@ -1034,7 +1034,9 @@
       setLoading(btn, true, action === 'enable' ? 'Enabling...' : 'Disabling...');
 
       try {
-        const registration = await navigator.serviceWorker.ready;
+        // Explicitly register and wait for active controller state on mobile
+        let registration = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
         
         if (action === 'enable') {
           if (!('PushManager' in window)) throw new Error('Push notifications are not supported by your current browser.');
@@ -1042,7 +1044,7 @@
           const permission = await Notification.requestPermission();
           if (permission !== 'granted') throw new Error('Permission denied. Please allow notifications in browser settings.');
           
-          const publicVapidKey = 'BO9h93qFJqXDs_3P6cpTp_XWDS27ulk0sL-n_gvPKW_3Nr6DTPnH5cBe2X_H_RawfxyKJIH5TF1wJx05_xlC17w'; 
+          const publicVapidKey = 'BJ6SjbC7FtweHxs9qz2VaUcJCpn_3I8rG8kgFDu5YO7pZjRr_glDRjrrcG04xtmbnDPeZAC9MvwCre_MenpoVgM'; 
           const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
           
           try {
@@ -1050,13 +1052,26 @@
             if (oldSub) await oldSub.unsubscribe();
           } catch (unsubErr) {}
           
-          // 🔥 Chrome Race-Condition Fix: Wait for teardown before subscribing
           await new Promise(r => setTimeout(r, 300));
           
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey
-          });
+          let subscription;
+          try {
+             subscription = await registration.pushManager.subscribe({
+               userVisibleOnly: true,
+               applicationServerKey
+             });
+          } catch (subErr) {
+             console.warn("Android Push Error detected. Forcing clean re-registration...");
+             const registrations = await navigator.serviceWorker.getRegistrations();
+             for (let reg of registrations) { await reg.unregister(); }
+             registration = await navigator.serviceWorker.register('/sw.js');
+             await navigator.serviceWorker.ready;
+             await new Promise(r => setTimeout(r, 600));
+             subscription = await registration.pushManager.subscribe({
+               userVisibleOnly: true,
+               applicationServerKey
+             });
+          }
           
           const subJSON = subscription.toJSON();
           await supabaseClient.from('admin_push_subscriptions').delete().eq('subscription->>endpoint', subJSON.endpoint);
@@ -1066,6 +1081,16 @@
           
           updateAlertButtonUI(btn, true);
           await Utils.choice({ title: 'Alerts Enabled!', message: 'This device is now registered to receive instant push notifications.', icon: '🔔', hideSecondary: true, primaryLabel: 'Awesome' });
+
+          try {
+            await registration.showNotification('✨ Studio Alerts Active', {
+              body: 'This device is now securely linked to your database. You will receive instant alerts whenever a customer places a new order.',
+              icon: '/assets/icon-192.png',
+              badge: '/assets/th_logo.svg',
+              vibrate: [200, 100, 200],
+              data: { url: '/admin.html#enquiries' }
+            });
+          } catch (pushErr) {}
 
         } else {
           const subscription = await registration.pushManager.getSubscription();
@@ -1079,7 +1104,11 @@
         }
       } catch (err) {
         console.error("🔥 Push Setup Error:", err);
-        await Utils.choice({ title: 'Action Failed', message: err.message, icon: '⚠️', hideSecondary: true, primaryLabel: 'Okay' });
+        let msg = err.message || 'An unexpected error occurred. Check browser console.';
+        if (msg.includes('push service error')) {
+           msg = 'Your mobile browser push service is locked. Please go to Android Settings -> Apps -> Chrome -> Storage -> Clear Cache, then refresh.';
+        }
+        await Utils.choice({ title: 'Action Failed', message: msg, icon: '⚠️', hideSecondary: true, primaryLabel: 'Okay' });
       } finally {
         setLoading(btn, false);
         await checkNotificationStatus();

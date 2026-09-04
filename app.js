@@ -325,7 +325,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
       handleRoute(new URL(window.location.href));
       
-      // Delay push prompt by 5 seconds so it doesn't interrupt their first impression
+      // Delay push prompt by 0.8 seconds so it doesn't interrupt their first impression
       setTimeout(initCustomerPushNotifications, 800);
     } catch (error) {
       console.error('Critical initialization error:', error);
@@ -374,7 +374,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtn0yv4v'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mtn31l6a'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -493,6 +493,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
   }
 
+  // --- Distinct Enable / Disable Toggle Handler ---
   async function subscribeCustomerToPush(isSilent = false) {
     const btn = document.getElementById('push-optin-yes');
     if (btn && !isSilent) { btn.textContent = 'Enabling...'; btn.disabled = true; }
@@ -503,27 +504,42 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
          if (permission !== 'granted') throw new Error('Permission denied');
       }
 
-      const registration = await navigator.serviceWorker.ready;
-      const publicVapidKey = 'BO9h93qFJqXDs_3P6cpTp_XWDS27ulk0sL-n_gvPKW_3Nr6DTPnH5cBe2X_H_RawfxyKJIH5TF1wJx05_xlC17w'; 
+      let registration = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      
+      const publicVapidKey = 'BJ6SjbC7FtweHxs9qz2VaUcJCpn_3I8rG8kgFDu5YO7pZjRr_glDRjrrcG04xtmbnDPeZAC9MvwCre_MenpoVgM'; 
       const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
       
       try {
         const oldSub = await registration.pushManager.getSubscription();
         if (oldSub) await oldSub.unsubscribe();
-      } catch (unsubErr) {
-        console.warn('Silent unsub failed:', unsubErr);
-      }
+      } catch (unsubErr) {}
       
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey
-      });
+      await new Promise(r => setTimeout(r, 300));
+      
+      let subscription;
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      } catch (subErr) {
+        console.warn("Android Push Error detected. Resetting service worker scope...");
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registrations) { await reg.unregister(); }
+        registration = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        await new Promise(r => setTimeout(r, 600));
+        
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      }
 
       const subJSON = subscription.toJSON();
       
-      // PREVENT DUPLICATES: Delete existing records for this endpoint before inserting
       await supabaseClient.from('customer_push_subscriptions').delete().eq('endpoint', subJSON.endpoint);
-
       await supabaseClient.from('customer_push_subscriptions').upsert({
         device_id: getOrCreateDeviceId(),
         endpoint: subJSON.endpoint,
@@ -533,15 +549,64 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       }, { onConflict: 'device_id' });
       
       document.getElementById('push-optin-overlay')?.classList.add('hidden');
-      if (!isSilent) Utils.toast('Secret drops unlocked! 🌸', 'success');
+      
+      if (!isSilent) {
+        Utils.toast('Secret drops unlocked! 🌸', 'success');
+        
+        try {
+          await registration.showNotification('✨ Welcome to the VIP List!', {
+            body: "You'll now be the first to know about new handcrafted drops, exclusive discounts, and studio updates. 🌸",
+            icon: '/assets/icon-192.png',
+            badge: '/assets/th_logo.svg',
+            vibrate: [200, 100, 200],
+            data: { url: '/' }
+          });
+        } catch (pushErr) {
+          console.warn('Welcome push failed to render locally:', pushErr);
+        }
+      }
 
     } catch (err) {
       console.warn('Subscription failed:', err);
       document.getElementById('push-optin-overlay')?.classList.add('hidden');
+      
+      let msg = err.message || 'Failed to enable notifications.';
+      if (msg.includes('push service error')) {
+         msg = 'Your mobile browser push cache is locked by Android. Please go to Android Settings -> Apps -> Chrome -> Storage -> Clear Cache, then refresh.';
+         Utils.choice({ title: 'Browser Blocked', message: msg, icon: '⚠️', hideSecondary: true, primaryLabel: 'Okay' });
+      } else if (!isSilent) {
+         Utils.toast('Could not enable notifications.', 'error');
+      }
     } finally {
       if (btn && !isSilent) { btn.textContent = 'Yes, notify me'; btn.disabled = false; }
     }
-  }
+  };
+
+    // Strict Test Notification Button
+    document.getElementById('test-notification')?.addEventListener('click', async (e) => {
+      try {
+        const btn = document.getElementById('enable-notifications');
+        if (!btn || btn.dataset.action !== 'disable') {
+          throw new Error('Please click "Enable Alerts" first. The system must be actively connected to the database to test.');
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('✨ Test Alert Successful!', {
+          body: 'Your device is perfectly configured and actively connected to the Twisted Happiness database.',
+          icon: '/assets/icon-192.png',
+          badge: '/assets/th_logo.svg',
+          vibrate: [200, 100, 200]
+        });
+      } catch (err) {
+        await Utils.choice({ 
+          title: 'Test Failed', 
+          message: err.message, 
+          icon: '⚠️', 
+          hideSecondary: true, 
+          primaryLabel: 'Okay' 
+        });
+      }
+    });
 
   async function trackProductView(productId) {
     if (!supabaseClient || !('serviceWorker' in navigator)) return;
@@ -769,7 +834,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtn0yv4v')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mtn31l6a')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1659,7 +1724,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const revealedClass = revealedProducts.has(String(product.id)) ? 'is-revealed' : '';
     return `<article class="product-card ${revealedClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtn0yv4v')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtn31l6a')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
         ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
       </a>
       <div class="product-card__body">
@@ -1740,7 +1805,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mtn0yv4v`;
+      `${window.location.origin}/assets/share-icon.png?v=mtn31l6a`;
 
     const shareDescription =
       String(
@@ -1861,7 +1926,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtn0yv4v'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mtn31l6a'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2341,7 +2406,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mtn0yv4v',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mtn31l6a',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2420,7 +2485,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtn0yv4v')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtn31l6a')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -2676,7 +2741,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtn0yv4v')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mtn31l6a')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2835,7 +2900,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtn0yv4v')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mtn31l6a')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
