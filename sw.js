@@ -105,23 +105,31 @@ self.addEventListener('fetch', (event) => {
 
 /*
  * Listen for push signals sent from the server/database
- * when you are offline.
  */
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+  let data = {};
+  try {
+    // Safely parse the JSON payload
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    console.error("Push payload was not valid JSON");
+  }
+
   const title = data.title || '🌸 Twisted Happiness';
 
   const options = {
     body: data.body || 'Something new just happened!',
-    
-    // 🔥 RICH MEDIA: McDonald's style left logo & Amazon style big image
     icon: data.icon || '/assets/icon-192.png',
-    image: data.image || null,
-    badge: '/assets/th_logo.svg', // Tiny monochrome icon for Android status bar
-    
+    badge: '/assets/th_logo.svg',
     vibrate: [200, 100, 200],
     data: { url: data.url || '/' }
   };
+
+  // 🔥 CRITICAL FIX: Only attach the image if it is a valid string. 
+  // Passing 'null' here causes Android to instantly crash and hide the notification.
+  if (data.image && typeof data.image === 'string' && data.image.trim() !== '') {
+    options.image = data.image;
+  }
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
