@@ -266,7 +266,7 @@
         
         // ⚠️ CRITICAL: Replace the string below with your 87-character Public VAPID Key.
         // Make sure there are NO spaces before or after the key inside the quotes.
-        const publicVapidKey = 'BDSLU_bkW1CzAngKt3WWp-ys8t0UDvgbhwhSaSVtfgYv-vFxTkt1JCv3geMoXQhWZ1m8NG0EMVb06iaZGa5x6CM'; 
+        const publicVapidKey = 'BL2uIFAMN_xauba2uLWtbsdhLGqTWjFS8MYosUszCjxQldf8dExcJQ1k8R5YPBjOKM2FAJkJ5rvGWwR-zFf7Ung'; 
         const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
         
         const subscription = await registration.pushManager.subscribe({
