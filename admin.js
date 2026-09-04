@@ -1096,6 +1096,10 @@
           const publicVapidKey = 'BL2uIFAMN_xauba2uLWtbsdhLGqTWjFS8MYosUszCjxQldf8dExcJQ1k8R5YPBjOKM2FAJkJ5rvGWwR-zFf7Ung'; 
           const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
           
+          // 🔥 SELF-HEALING ENGINE: Forcibly delete any stuck/broken subscriptions tied to old keys
+          const oldSub = await registration.pushManager.getSubscription();
+          if (oldSub) await oldSub.unsubscribe();
+          
           const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey
@@ -1126,8 +1130,17 @@
           if (subscription) {
             const endpoint = subscription.endpoint;
             await subscription.unsubscribe();
-            // Remove from Supabase database
-            await supabaseClient.from('admin_push_subscriptions').delete().filter('subscription->>endpoint', 'eq', endpoint);
+            
+            // Remove from Supabase database using strict JSONB targeting
+            const { error: deleteError } = await supabaseClient
+              .from('admin_push_subscriptions')
+              .delete()
+              .eq('subscription->>endpoint', endpoint);
+              
+            if (deleteError) {
+              console.error('Failed to delete subscription from DB:', deleteError);
+              throw new Error('Could not remove the device from the database.');
+            }
           }
 
           // Switch UI to Disabled State
