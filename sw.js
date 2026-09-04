@@ -108,39 +108,22 @@ self.addEventListener('fetch', (event) => {
  * when you are offline.
  */
 self.addEventListener('push', (event) => {
-
-  const data =
-    event.data
-      ? event.data.json()
-      : {};
-
-  const title =
-    data.title ||
-    '🌸 Twisted Happiness';
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || '🌸 Twisted Happiness';
 
   const options = {
-    body:
-      data.body ||
-      'Something new just happened!',
-
-    icon:
-      '/assets/th_logo.svg', // Displays your colorful logo correctly
-
-    vibrate:
-      [200, 100, 200],
-
-    data: {
-      url:
-        data.url || '/'
-    }
+    body: data.body || 'Something new just happened!',
+    
+    // 🔥 RICH MEDIA: McDonald's style left logo & Amazon style big image
+    icon: data.icon || '/assets/icon-192.png',
+    image: data.image || null,
+    badge: '/assets/th_logo.svg', // Tiny monochrome icon for Android status bar
+    
+    vibrate: [200, 100, 200],
+    data: { url: data.url || '/' }
   };
 
-  event.waitUntil(
-    self.registration.showNotification(
-      title,
-      options
-    )
-  );
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 

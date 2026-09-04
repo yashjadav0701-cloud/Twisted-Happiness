@@ -1724,7 +1724,7 @@
     state.enquiries = data || []; 
     renderEnquiries(); 
 
-    // 🔥 DEEP-LINK AUTO-OPEN: Check URL hash for an order ID and open it automatically
+    // 🔥 DEEP-LINK AUTO-OPEN: Check URL hash for an order ID, open it, and highlight it
     const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
     const openId = hashParams.get('open');
     if (openId) {
@@ -1732,9 +1732,14 @@
         const card = document.querySelector(`[data-enquiry-id="${openId}"]`);
         if (card) {
           card.setAttribute('open', 'true');
-          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Flash a premium pink highlight so you know exactly which order opened
+          card.style.transition = 'box-shadow 0.4s ease';
+          card.style.boxShadow = '0 0 0 3px var(--pink-deep)';
+          setTimeout(() => card.style.boxShadow = '', 2500);
         }
-      }, 300);
+      }, 400); // Slight delay ensures DOM is fully painted before scrolling
     }
   }
   
