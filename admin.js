@@ -190,6 +190,15 @@
   }
 
   async function initialiseApp() {
+    // Register Service Worker for PWA and Push Notifications cleanly
+    if ('serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('/sw.js');
+      } catch (err) {
+        console.error('Service Worker registration failed:', err);
+      }
+    }
+
     bindGlobalAdminEvents();
     bindAdminRouter();
     
@@ -229,7 +238,47 @@
     return !error && data?.role === 'admin';
   }
 
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
   function bindGlobalAdminEvents() {
+    document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      setLoading(btn, true, 'Enabling...');
+      try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Push not supported by this browser.');
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') throw new Error('Notification permission denied.');
+        
+        const registration = await navigator.serviceWorker.ready;
+        // REPLACE THE STRING BELOW WITH YOUR GENERATED PUBLIC KEY
+        const publicVapidKey = 'PASTE_YOUR_PUBLIC_KEY_HERE'; 
+        const applicationServerKey = urlBase64ToUint8Array(publicVapidKey);
+        
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+        
+        const { error } = await supabaseClient.from('admin_push_subscriptions').insert([{
+          subscription: subscription.toJSON()
+        }]);
+        
+        if (error) throw error;
+        notify('Push notifications enabled for this device!', 'success');
+      } catch (err) {
+        notify(err.message, 'error');
+      } finally {
+        setLoading(btn, false);
+      }
+    });
+
     document.getElementById('admin-logout')?.addEventListener('click', async () => {
       await supabaseClient.auth.signOut(); 
       state.session = null; 
