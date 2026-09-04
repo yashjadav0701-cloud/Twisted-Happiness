@@ -346,6 +346,20 @@ textarea:focus-visible {
   box-shadow: var(--shadow-xs);
 }
 
+/* Active / Enabled State for Push Notification Button */
+.admin-button.is-alert-enabled {
+  background: linear-gradient(180deg, #ffffff 0%, var(--beige) 100%) !important;
+  color: var(--pink-deep) !important;
+  border-color: rgba(197, 139, 158, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.15) !important;
+}
+.admin-button.is-alert-enabled:hover {
+  background: #fff0f2 !important;
+  color: var(--red) !important;
+  border-color: var(--red) !important;
+  box-shadow: 0 6px 16px rgba(186, 102, 119, 0.2) !important;
+}
+
 .admin-button--soft:hover {
   background: var(--beige);
   border-color: var(--charcoal);

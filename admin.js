@@ -312,7 +312,6 @@
         await registration.showNotification('✨ Test Alert Successful!', {
           body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
           icon: '/assets/th_logo.svg',
-          badge: '/assets/th_logo.svg',
           vibrate: [200, 100, 200]
         });
       } catch (err) {
@@ -1026,16 +1025,27 @@
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
-        if (subscription) {
-          btn.textContent = 'Disable Alerts';
-          btn.dataset.action = 'disable';
-        } else {
-          btn.textContent = 'Enable Alerts';
-          btn.dataset.action = 'enable';
-        }
+        updateAlertButtonUI(btn, Boolean(subscription));
       } catch (e) {
         console.warn('Could not check push subscription:', e);
       }
+    }
+  }
+
+  function updateAlertButtonUI(btn, isSubscribed) {
+    if (!btn) return;
+    if (isSubscribed) {
+      btn.textContent = 'Disable Alerts';
+      btn.dataset.action = 'disable';
+      btn.classList.add('is-alert-enabled');
+      btn.classList.remove('admin-button--dark');
+      btn.classList.add('admin-button--soft');
+    } else {
+      btn.textContent = 'Enable Alerts';
+      btn.dataset.action = 'enable';
+      btn.classList.remove('is-alert-enabled');
+      btn.classList.remove('admin-button--soft');
+      btn.classList.add('admin-button--dark');
     }
   }
 
@@ -1057,7 +1067,7 @@
     document.getElementById('reset-review')?.addEventListener('click', resetReviewForm);
     document.getElementById('review-list')?.addEventListener('click', handleReviewAction);
 
-    // --- Intelligent Enable / Disable Toggle ---
+    // --- Distinct Enable / Disable Toggle Handler ---
     document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const action = btn.dataset.action || 'enable';
@@ -1087,13 +1097,14 @@
           
           if (error && error.code !== '23505') throw error; 
           
-          btn.textContent = 'Disable Alerts';
-          btn.dataset.action = 'disable';
+          // Switch UI to Enabled State
+          updateAlertButtonUI(btn, true);
           
+          // Show Distinct "Enabled" Modal Box
           await Utils.choice({ 
             title: 'Alerts Enabled!', 
             message: 'This device is now registered to receive instant push notifications for new orders.', 
-            icon: '🌸', 
+            icon: '🔔', 
             hideSecondary: true, 
             primaryLabel: 'Awesome' 
           });
@@ -1108,15 +1119,16 @@
             await supabaseClient.from('admin_push_subscriptions').delete().filter('subscription->>endpoint', 'eq', endpoint);
           }
 
-          btn.textContent = 'Enable Alerts';
-          btn.dataset.action = 'enable';
+          // Switch UI to Disabled State
+          updateAlertButtonUI(btn, false);
 
+          // Show Distinct "Disabled" Modal Box
           await Utils.choice({ 
             title: 'Alerts Disabled', 
-            message: 'This device will no longer receive order push notifications.', 
+            message: 'This device has been unregistered and will no longer receive order push notifications.', 
             icon: '🔕', 
             hideSecondary: true, 
-            primaryLabel: 'Okay' 
+            primaryLabel: 'Got it' 
           });
         }
         
@@ -1144,7 +1156,6 @@
         await registration.showNotification('✨ Test Alert Successful!', {
           body: 'Your device is perfectly configured to receive Twisted Happiness order alerts.',
           icon: '/assets/th_logo.svg',
-          badge: '/assets/th_logo.svg',
           vibrate: [200, 100, 200]
         });
       } catch (err) {
@@ -1157,25 +1168,6 @@
         });
       }
     });
-  }
-
-  function bindSettingsEvents() {
-    document.getElementById('settings-form')?.addEventListener('submit', saveSettings);
-    document.getElementById('canvas-size-list')?.addEventListener('input', updateStructuredCanvasState);
-    document.getElementById('canvas-size-list')?.addEventListener('change', updateStructuredCanvasState);
-    document.getElementById('canvas-size-list')?.addEventListener('click', handleCanvasSizeAction);
-    document.getElementById('save-canvas-sizes')?.addEventListener('click', saveCanvasSizes);
-    document.getElementById('add-vip-tier')?.addEventListener('click', () => { state.vipTiers.push({ minimumQuantity: Math.max(2, (state.vipTiers.at(-1)?.minimumQuantity || 1) + 1), percent: 5 }); renderVipTiers(); });
-    document.getElementById('vip-tier-list')?.addEventListener('input', updateVipState);
-    document.getElementById('vip-tier-list')?.addEventListener('click', handleVipAction);
-    document.getElementById('save-vip-tiers')?.addEventListener('click', saveVipTiers);
-    document.getElementById('coupon-form')?.addEventListener('submit', saveCoupon);
-    document.getElementById('coupon-type')?.addEventListener('change', updateCouponTypeUI);
-    document.getElementById('reset-coupon')?.addEventListener('click', resetCouponForm);
-    document.getElementById('coupon-list')?.addEventListener('click', handleCouponAction);
-    document.getElementById('review-form')?.addEventListener('submit', saveReview);
-    document.getElementById('reset-review')?.addEventListener('click', resetReviewForm);
-    document.getElementById('review-list')?.addEventListener('click', handleReviewAction);
   }
 
   async function loadSettings() {

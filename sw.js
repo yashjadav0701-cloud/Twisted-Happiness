@@ -124,10 +124,7 @@ self.addEventListener('push', (event) => {
       'Something new just happened!',
 
     icon:
-      '/assets/th_logo.svg',
-
-    badge:
-      '/assets/th_logo.svg',
+      '/assets/th_logo.svg', // Displays your colorful logo correctly
 
     vibrate:
       [200, 100, 200],
