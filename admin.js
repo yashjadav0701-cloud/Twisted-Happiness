@@ -1747,7 +1747,10 @@
       await loadBroadcasts();
     }
     
-    if (action === 'edit' || action === 'repush') {
+    if (action === 'edit') {
+      // Lock the ID into the form memory so it overwrites on submit
+      document.getElementById('broadcast-form').dataset.editId = id;
+      
       document.getElementById('broadcast-title').value = broadcast.title || '';
       document.getElementById('broadcast-body').value = broadcast.body || '';
       
@@ -1757,8 +1760,59 @@
         radio.dispatchEvent(new Event('change')); // Opens correct dropdown
       }
       
+      // Update Button UI to show it's an Edit
+      document.getElementById('send-broadcast').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Update & Blast Now';
+      
       document.getElementById('marketing-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      notify('Form loaded with previous data. Verify target and hit Blast!', 'success');
+      notify('Form loaded. Changes will overwrite the existing record.', 'success');
+    }
+
+    if (action === 'repush') {
+      const choice = await Utils.choice({ 
+        title: 'Re-push this notification?', 
+        message: `This will instantly send "${broadcast.title}" to all subscribed customers again without duplicating history.`, 
+        icon: '🚀', 
+        primaryLabel: 'Yes, Blast Now', 
+        secondaryLabel: 'Cancel' 
+      });
+      
+      if (choice !== 'primary') return;
+
+      button.disabled = true;
+      button.style.opacity = '0.5';
+      notify('Blasting to customers...');
+
+      try {
+        const payload = {
+           title: broadcast.title,
+           body: broadcast.body,
+           target_type: broadcast.target_type,
+           target_url: broadcast.target_url,
+           image_url: broadcast.image_url
+        };
+
+        // 1. Update the timestamp so it jumps to the top WITHOUT duplicating the row
+        const { error: updateError } = await supabaseClient.from('marketing_broadcasts')
+            .update({ created_at: new Date().toISOString() })
+            .eq('id', id);
+            
+        if (updateError) throw new Error(`Database Error: ${updateError.message}`);
+
+        // 2. Blast via Edge Function
+        const { data: edgeData, error: edgeErr } = await supabaseClient.functions.invoke('notify_customers', {
+          body: { record: payload, isManualBroadcast: true }
+        });
+
+        if (edgeErr) throw edgeErr;
+
+        notify(`Success! Blasted to ${edgeData?.notified || 0} devices.`, 'success');
+        await loadBroadcasts(); // Refreshes history to show the bumped timestamp
+      } catch (err) {
+        notify(err.message || 'Failed to send broadcast.', 'error');
+      } finally {
+        button.disabled = false;
+        button.style.opacity = '1';
+      }
     }
   }
 
@@ -1797,6 +1851,9 @@
          imageUrl = data.publicUrl;
       }
 
+      const form = document.getElementById('broadcast-form');
+      const editId = form.dataset.editId;
+
       const payload = {
          title,
          body,
@@ -1806,10 +1863,13 @@
          created_at: new Date().toISOString()
       };
 
-      // 1. Save to History (With Strict Error Catching)
-      const { error: insertError } = await supabaseClient.from('marketing_broadcasts').insert(payload);
-      if (insertError) {
-        throw new Error(`Database Error: ${insertError.message}`);
+      // 1. Save to History (Update if editing, Insert if new)
+      if (editId) {
+        const { error: dbError } = await supabaseClient.from('marketing_broadcasts').update(payload).eq('id', editId);
+        if (dbError) throw new Error(`Database Error: ${dbError.message}`);
+      } else {
+        const { error: dbError } = await supabaseClient.from('marketing_broadcasts').insert(payload);
+        if (dbError) throw new Error(`Database Error: ${dbError.message}`);
       }
 
       // 2. Blast via Edge Function
@@ -1824,8 +1884,11 @@
 
       notify(`Success! Blasted to ${edgeData.notified || 0} devices.`, 'success');
       
-      // Clean up form
-      document.getElementById('broadcast-form').reset();
+      // Clean up form and reset button state
+      form.reset();
+      delete form.dataset.editId;
+      document.getElementById('send-broadcast').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Blast Notification Now';
+      
       document.getElementById('broadcast-target-category-wrap').classList.add('hidden');
       document.getElementById('broadcast-target-product-wrap').classList.add('hidden');
       document.getElementById('broadcast-file-name').textContent = 'Leave blank to auto-use product/category image';
