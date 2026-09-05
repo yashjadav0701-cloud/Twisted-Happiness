@@ -1079,6 +1079,7 @@
     });
 
     document.getElementById('broadcast-form')?.addEventListener('submit', sendMarketingBroadcast);
+    document.getElementById('broadcast-list')?.addEventListener('click', handleBroadcastAction);
 
     // --- Distinct Enable / Disable Toggle Handler ---
     document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
@@ -1696,19 +1697,69 @@
       if (error.code === '42P01') list.innerHTML = '<div class="admin-empty">Create the "marketing_broadcasts" table in Supabase.</div>';
       return;
     }
-    if (!data || !data.length) {
+
+    state.broadcasts = data || [];
+    
+    if (!state.broadcasts.length) {
       list.innerHTML = '<div class="admin-empty">No broadcasts sent yet.</div>';
       return;
     }
-    list.innerHTML = data.map(b => `
-      <div class="broadcast-row">
+    list.innerHTML = state.broadcasts.map(b => `
+      <div class="broadcast-row" data-broadcast-id="${Utils.escapeHTML(b.id)}">
         <img src="${Utils.escapeHTML(b.image_url || '/assets/th_logo.svg')}" alt="">
         <div class="broadcast-info">
           <h3>${Utils.escapeHTML(b.title)}</h3>
           <p>Sent: ${Utils.escapeHTML(new Date(b.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</p>
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+            <button type="button" data-broadcast-action="repush" class="admin-button admin-button--soft pop-click" style="width: 28px; height: 28px; min-height: 28px; padding: 0; border-radius: 8px;" title="Recycle & Re-Push">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+            <button type="button" data-broadcast-action="edit" class="admin-button admin-button--soft pop-click" style="width: 28px; height: 28px; min-height: 28px; padding: 0; border-radius: 8px;" title="Edit details">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button type="button" data-broadcast-action="delete" class="admin-button admin-button--soft is-danger pop-click" style="width: 28px; height: 28px; min-height: 28px; padding: 0; color: var(--red); border-color: rgba(186,102,119,0.3); border-radius: 8px;" title="Delete record">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     `).join('');
+  }
+
+  async function handleBroadcastAction(event) {
+    const button = event.target.closest('[data-broadcast-action]');
+    if (!button) return;
+    
+    const id = button.closest('[data-broadcast-id]').dataset.broadcastId;
+    const broadcast = state.broadcasts?.find(b => String(b.id) === String(id));
+    if (!broadcast) return;
+
+    const action = button.dataset.broadcastAction;
+
+    if (action === 'delete') {
+      const choice = await Utils.choice({ title: 'Delete Broadcast Record?', message: 'This removes the history log, but it cannot pull back notifications already delivered to phones.', icon: '🗑️', primaryLabel: 'Delete record' });
+      if (choice !== 'primary') return;
+      
+      const { error } = await supabaseClient.from('marketing_broadcasts').delete().eq('id', id);
+      if (error) { notify(error.message, 'error'); return; }
+      
+      notify('Record deleted.', 'success');
+      await loadBroadcasts();
+    }
+    
+    if (action === 'edit' || action === 'repush') {
+      document.getElementById('broadcast-title').value = broadcast.title || '';
+      document.getElementById('broadcast-body').value = broadcast.body || '';
+      
+      const radio = document.querySelector(`input[name="broadcast-target"][value="${broadcast.target_type || 'storefront'}"]`);
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change')); // Opens correct dropdown
+      }
+      
+      document.getElementById('marketing-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      notify('Form loaded with previous data. Verify target and hit Blast!', 'success');
+    }
   }
 
   async function sendMarketingBroadcast(event) {
@@ -1755,8 +1806,11 @@
          created_at: new Date().toISOString()
       };
 
-      // 1. Save to History (Ignore if table doesn't exist yet)
-      await supabaseClient.from('marketing_broadcasts').insert(payload);
+      // 1. Save to History (With Strict Error Catching)
+      const { error: insertError } = await supabaseClient.from('marketing_broadcasts').insert(payload);
+      if (insertError) {
+        throw new Error(`Database Error: ${insertError.message}`);
+      }
 
       // 2. Blast via Edge Function
       const { data: edgeData, error: edgeErr } = await supabaseClient.functions.invoke('notify_customers', {
