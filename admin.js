@@ -953,7 +953,7 @@
   let settingsBound = false;
   async function initialiseSettings() {
     if (!settingsBound) { bindSettingsEvents(); settingsBound = true; }
-    await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews()]); 
+    await Promise.all([loadProducts(), loadSettings(), loadCoupons(), loadReviews(), loadBroadcasts()]); 
     resetCouponForm(); 
     resetReviewForm();
     await checkNotificationStatus(); // Automatically check state when opening settings
@@ -1026,6 +1026,59 @@
     document.getElementById('review-form')?.addEventListener('submit', saveReview);
     document.getElementById('reset-review')?.addEventListener('click', resetReviewForm);
     document.getElementById('review-list')?.addEventListener('click', handleReviewAction);
+
+    // --- Marketing Broadcast Events ---
+    document.querySelectorAll('input[name="broadcast-target"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        document.getElementById('broadcast-target-category-wrap').classList.toggle('hidden', e.target.value !== 'category');
+        document.getElementById('broadcast-target-product-wrap').classList.toggle('hidden', e.target.value !== 'product');
+      });
+    });
+
+    const bcastProductInput = document.getElementById('broadcast-product-input');
+    const bcastProductId = document.getElementById('broadcast-product-id');
+    const bcastSuggestions = document.getElementById('broadcast-product-suggestions');
+    
+    bcastProductInput?.addEventListener('input', () => {
+      const query = bcastProductInput.value.trim().toLowerCase();
+      bcastProductId.value = '';
+      if (!query) { bcastSuggestions.classList.remove('is-open'); return; }
+      const matches = state.products.filter(p => (p.title || '').toLowerCase().includes(query)).slice(0, 8);
+      if (!matches.length) {
+        bcastSuggestions.innerHTML = '<div style="padding:10px 14px;color:var(--muted);font-size:0.68rem;">No creations found</div>';
+        bcastSuggestions.classList.add('is-open');
+        return;
+      }
+      bcastSuggestions.innerHTML = matches.map(p => `
+        <div data-bcast-pid="${Utils.escapeHTML(p.id)}" data-bcast-ptitle="${Utils.escapeHTML(p.title)}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--line);font-size:0.7rem;">
+          <img src="${Utils.escapeHTML(p.images?.[0] || '/assets/th_logo.svg')}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+          <div>
+            <strong>${Utils.escapeHTML(p.title)}</strong>
+            <div style="color:var(--muted);font-size:0.58rem;">${Utils.escapeHTML(p.main_category || 'Handcrafted')}</div>
+          </div>
+        </div>
+      `).join('');
+      bcastSuggestions.classList.add('is-open');
+    });
+
+    bcastSuggestions?.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-bcast-pid]');
+      if (!item) return;
+      bcastProductId.value = item.dataset.bcastPid;
+      bcastProductInput.value = item.dataset.bcastPtitle;
+      bcastSuggestions.classList.remove('is-open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#broadcast-target-product-wrap')) bcastSuggestions?.classList.remove('is-open');
+    });
+
+    document.getElementById('broadcast-image')?.addEventListener('change', (e) => {
+      const name = e.target.files[0]?.name || 'Leave blank to auto-use product/category image';
+      document.getElementById('broadcast-file-name').textContent = name;
+    });
+
+    document.getElementById('broadcast-form')?.addEventListener('submit', sendMarketingBroadcast);
 
     // --- Distinct Enable / Disable Toggle Handler ---
     document.getElementById('enable-notifications')?.addEventListener('click', async (e) => {
@@ -1631,6 +1684,106 @@
     const { error } = await supabaseClient.from('reviews').delete().eq('id', review.id); 
     if (error) notify(error.message, 'error'); 
     else { notify('Review deleted.', 'success'); await loadReviews(); } 
+  }
+
+  /* ---------------- Marketing Broadcast Center ---------------- */
+  async function loadBroadcasts() {
+    const list = document.getElementById('broadcast-list');
+    if (!list) return;
+    const { data, error } = await supabaseClient.from('marketing_broadcasts').select('*').order('created_at', { ascending: false }).limit(10);
+    
+    if (error) {
+      if (error.code === '42P01') list.innerHTML = '<div class="admin-empty">Create the "marketing_broadcasts" table in Supabase.</div>';
+      return;
+    }
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="admin-empty">No broadcasts sent yet.</div>';
+      return;
+    }
+    list.innerHTML = data.map(b => `
+      <div class="broadcast-row">
+        <img src="${Utils.escapeHTML(b.image_url || '/assets/th_logo.svg')}" alt="">
+        <div class="broadcast-info">
+          <h3>${Utils.escapeHTML(b.title)}</h3>
+          <p>Sent: ${Utils.escapeHTML(new Date(b.created_at).toLocaleString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}))}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function sendMarketingBroadcast(event) {
+    event.preventDefault();
+    const btn = document.getElementById('send-broadcast');
+    setLoading(btn, true, 'Blasting to customers...');
+
+    try {
+      const title = document.getElementById('broadcast-title').value.trim();
+      const body = document.getElementById('broadcast-body').value.trim();
+      const targetType = document.querySelector('input[name="broadcast-target"]:checked').value;
+      let targetUrl = '/';
+      let refImage = null;
+
+      // Determine Target URL and Auto-Image
+      if (targetType === 'product') {
+        const pid = document.getElementById('broadcast-product-id').value;
+        if (!pid) throw new Error('Please search and select a specific product.');
+        targetUrl = `/product/${pid}`;
+        const prod = state.products.find(p => String(p.id) === String(pid));
+        if (prod && prod.images.length) refImage = prod.images[0];
+      }
+
+      // Handle custom image upload
+      const fileInput = document.getElementById('broadcast-image');
+      let imageUrl = refImage;
+      
+      if (fileInput.files && fileInput.files[0]) {
+         const file = fileInput.files[0];
+         const compressed = await Utils.compressImage(file);
+         const path = `broadcasts/${crypto.randomUUID()}.webp`;
+         const { error: uploadError } = await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).upload(path, compressed, { cacheControl: '31536000', upsert: false, contentType: 'image/webp' });
+         if (uploadError) throw uploadError;
+         const { data } = supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).getPublicUrl(path); 
+         imageUrl = data.publicUrl;
+      }
+
+      const payload = {
+         title,
+         body,
+         target_type: targetType,
+         target_url: targetUrl,
+         image_url: imageUrl,
+         created_at: new Date().toISOString()
+      };
+
+      // 1. Save to History (Ignore if table doesn't exist yet)
+      await supabaseClient.from('marketing_broadcasts').insert(payload);
+
+      // 2. Blast via Edge Function
+      const { data: edgeData, error: edgeErr } = await supabaseClient.functions.invoke('notify_customers', {
+        body: { 
+          record: payload,
+          isManualBroadcast: true 
+        }
+      });
+
+      if (edgeErr) throw edgeErr;
+
+      notify(`Success! Blasted to ${edgeData.notified || 0} devices.`, 'success');
+      
+      // Clean up form
+      document.getElementById('broadcast-form').reset();
+      document.getElementById('broadcast-target-category-wrap').classList.add('hidden');
+      document.getElementById('broadcast-target-product-wrap').classList.add('hidden');
+      document.getElementById('broadcast-file-name').textContent = 'Leave blank to auto-use product/category image';
+      document.getElementById('broadcast-product-id').value = '';
+      
+      await loadBroadcasts();
+
+    } catch (err) {
+      notify(err.message || 'Failed to send broadcast.', 'error');
+    } finally {
+      setLoading(btn, false);
+    }
   }
 
   /* ---------------- Enquiries & Shiprocket ---------------- */
