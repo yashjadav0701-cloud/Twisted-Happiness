@@ -819,6 +819,10 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
   .product-page { padding-block: 8px 80px; }
   .product-skeleton, .product-layout { grid-template-columns: 1fr; gap: 16px; }
   .product-skeleton .skeleton { min-height: 360px; }
+  
+  /* 🔥 FIX: Turns off sticky positioning on mobile so the image scrolls normally and doesn't overlap text */
+  .product-gallery { position: relative !important; top: auto !important; z-index: 1; }
+  
   .product-meta-row { gap: 12px; margin-bottom: 8px; flex-wrap: nowrap; }
   .product-panel h1.product-title { font-size: 1.65rem; margin: 0 0 8px; line-height: 1.2; letter-spacing: -0.01em; }
   .main-gallery-slide img { width: 100%; height: min(360px, 50vh); min-height: 260px; max-height: 360px; aspect-ratio: auto; object-fit: contain; object-position: center; background: transparent; border-radius: 0; }
