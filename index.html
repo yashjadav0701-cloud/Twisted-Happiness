@@ -14,9 +14,9 @@
   <meta property="og:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtodyike">
+  <meta property="og:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtq109o2">
   <meta property="og:image:type" content="image/png">
-  <meta property="og:image:secure_url" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtodyike">
+  <meta property="og:image:secure_url" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtq109o2">
 
   <!-- Twitter / Telegram / Discord -->
   <meta name="twitter:card" content="summary_large_image">
@@ -25,17 +25,17 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <meta name="twitter:description" content="Where creativity comes to life, one handmade piece at a time. ✨
 From delicate pipe-cleaner art and heartfelt canvas paintings to charming clay creations, every piece is lovingly crafted by hand.
 Made with imagination. Created with love. Made to make you smile. 💜">
-  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtodyike">
+  <meta name="twitter:image" content="https://twistedhappiness.vercel.app/assets/share-icon.png?v=mtq109o2">
 
   <link rel="canonical" href="https://twistedhappiness.vercel.app/">
-  <link rel="icon" href="/assets/th_logo.svg?v=mtodyike" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/assets/icon-192.png?v=mtodyike">
-  <link rel="shortcut icon" href="/assets/icon-192.png?v=mtodyike">
+  <link rel="icon" href="/assets/th_logo.svg?v=mtq109o2" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png?v=mtq109o2">
+  <link rel="shortcut icon" href="/assets/icon-192.png?v=mtq109o2">
   <title>Twisted Happiness | Handcrafted Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=mtodyike">
+  <link rel="stylesheet" href="/styles.css?v=mtq109o2">
 </head>
 <body data-page="catalog">
 
@@ -47,7 +47,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
   <header class="site-header">
     <div class="site-shell header-main">
       <a class="brand" href="/" aria-label="Twisted Happiness home" style="display: flex; align-items: center;">
-        <img src="/assets/th_logo_with_heading.svg?v=mtodyike" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
+        <img src="/assets/th_logo_with_heading.svg?v=mtq109o2" alt="Twisted Happiness" class="brand-logo-wide" style="height: clamp(38px, 6vw, 48px); width: auto; object-fit: contain;">
       </a>
       
       <div class="header-actions">
@@ -201,9 +201,13 @@ Made with imagination. Created with love. Made to make you smile. 💜">
           <div class="gallery-main-layout">
             <div id="gallery-thumbnails" class="thumbnail-row no-scrollbar"></div>
             <div id="main-gallery" class="main-gallery">
-              <button id="gallery-prev" class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Previous image">‹</button>
+              <button id="gallery-prev" class="gallery-arrow gallery-arrow--prev" type="button" aria-label="Previous image">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
               <div id="gallery-viewport" class="gallery-viewport"><div id="gallery-track" class="gallery-track"></div></div>
-              <button id="gallery-next" class="gallery-arrow gallery-arrow--next" type="button" aria-label="Next image">›</button>
+              <button id="gallery-next" class="gallery-arrow gallery-arrow--next" type="button" aria-label="Next image">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
               <div id="gallery-dots" class="gallery-dots"></div>
             </div>
           </div>
@@ -221,10 +225,22 @@ Made with imagination. Created with love. Made to make you smile. 💜">
           </div>
           <h1 id="product-title" class="product-title">Product</h1>
           
-          <div class="price-line">
-            <strong id="product-price" class="product-price">₹0</strong>
-            <del id="product-mrp" class="product-mrp hidden">₹0</del>
-            <span id="product-discount" class="discount-pill hidden">0% off</span>
+          <div class="purchase-meta-row">
+            <div class="price-stack">
+              <strong id="product-price" class="product-price">₹0</strong>
+              <div class="mrp-discount-wrap">
+                <del id="product-mrp" class="product-mrp hidden">₹0</del>
+                <span id="product-discount" class="discount-pill hidden">0% off</span>
+              </div>
+            </div>
+            
+            <div class="quantity-control-wrapper">
+              <div class="quantity-control">
+                <button id="product-qty-minus" class="pop-click" type="button" aria-label="Decrease quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button>
+                <input id="product-qty" type="number" min="1" max="20" value="1" inputmode="numeric" aria-label="Quantity">
+                <button id="product-qty-plus" class="pop-click" type="button" aria-label="Increase quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+              </div>
+            </div>
           </div>
           
           <p class="product-tax-note hidden">Price updates for the selected canvas size. Final availability and delivery are confirmed on WhatsApp.</p>
@@ -237,8 +253,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
             <label id="orientation-wrap" class="orientation-field hidden"><span>Orientation</span><select id="canvas-orientation" class="simple-input"><option value="Portrait">Portrait</option><option value="Landscape">Landscape</option></select></label>
             <small id="canvas-price-note">Pricing is calculated from the stored base size and exact area.</small>
           </section>
-
-          <div class="product-quantity-row"><span class="field-label">Quantity</span><div class="quantity-control"><button id="product-qty-minus" class="pop-click" type="button" aria-label="Decrease quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></button><input id="product-qty" type="number" min="1" max="20" value="1" inputmode="numeric" aria-label="Quantity"><button id="product-qty-plus" class="pop-click" type="button" aria-label="Increase quantity"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></div></div>
           <label class="field-block"><span>Custom note <small>(optional)</small></span><textarea id="product-note" maxlength="180" rows="3" placeholder="Colour preference, name, gift message or another detail…"></textarea></label>
 
           <div class="product-actions" style="margin-top: 24px;">
@@ -259,9 +273,7 @@ Made with imagination. Created with love. Made to make you smile. 💜">
       <section id="related-section" class="related-section hidden">
         <p class="eyebrow">Complete the gift</p>
         <h2>More from this collection</h2>
-        <div class="related-scroll-area">
-          <div id="related-grid" class="related-grid"></div>
-        </div>
+        <div id="related-grid" class="product-grid"></div>
       </section>
     </div>
 
@@ -668,6 +680,6 @@ Made with imagination. Created with love. Made to make you smile. 💜">
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/app.js?v=mtodyike" type="module"></script>
+  <script src="/app.js?v=mtq109o2" type="module"></script>
 </body>
 </html>
