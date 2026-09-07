@@ -348,17 +348,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .compact-select, .simple-input { min-height: 40px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--paper); padding: 8px 12px; font-family: 'Inter', sans-serif; font-size: 0.8rem; color: var(--charcoal); transition: border-color var(--ease-fast); }
 
 /* ============================================================
-   PREMIUM EDITORIAL BENTO GRID (MASONRY)
+   PREMIUM DYNAMIC COMPONENT SCALING ENGINE (BENTO)
    ============================================================ */
 .product-grid, .skeleton-grid { 
   display: grid; 
   grid-template-columns: repeat(2, minmax(0, 1fr)); 
   gap: 24px 12px; 
-  align-items: stretch; /* 🔥 THE MAGIC FIX: Forces all items to lock into rigid row heights */
+  align-items: stretch; 
   grid-auto-flow: dense; 
 }
-
-/* Base Card Styling */
+/* ============================================================
+   PREMIUM DYNAMIC COMPONENT SCALING ENGINE (BENTO)
+   ============================================================ */
+/* Container Query Root: Makes every card self-aware of its physical dimensions */
 .product-card { 
   min-width: 0; border: none; background: transparent; box-shadow: none; border-radius: 0; 
   opacity: 0; transform: translateY(40px) scale(0.96); 
@@ -366,231 +368,158 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   will-change: opacity, transform;
   display: flex; flex-direction: column;
   text-decoration: none !important; color: inherit;
-  height: 100%; /* Ensures the card always spans the entire grid cell */
+  height: 100%; 
+  container-type: inline-size; /* 🔥 THE MAGIC KEY */
+  container-name: pcard;
 }
 .product-card.is-revealed { opacity: 1; transform: translateY(0) scale(1); }
 .product-card:hover { opacity: 0.9; }
 
-/* STANDARD 5:6 IMAGE (Small Cards) */
-.product-card__image-container {
-  position: relative;
-  width: 100%;
-  margin-bottom: 12px;
-}
-.product-card__image { 
-  position: relative; display: block; overflow: hidden; 
-  width: 100%; 
-  aspect-ratio: 5 / 6 !important; 
-  background: var(--beige); border-radius: var(--radius-md); margin-bottom: 0 !important; 
-  flex-shrink: 0; 
-}
-.quick-add-btn {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(197, 139, 158, 0.25);
-  color: var(--pink-deep);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(74, 59, 66, 0.08);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 10;
-  outline: none;
-}
-.quick-add-btn svg { width: 15px; height: 15px; stroke-width: 2.2; transition: transform 0.2s; }
-@media (hover: hover) {
-  .quick-add-btn:hover { 
-    background: var(--pink-deep); 
-    color: #ffffff; 
-    transform: scale(1.1); 
-    box-shadow: 0 6px 16px rgba(197, 139, 158, 0.3); 
-  }
-  .quick-add-btn:hover svg { transform: rotate(8deg); }
-}
-.quick-add-btn:active { transform: scale(0.92); }
-.quick-add-btn.is-added-success { 
-  width: auto !important; 
-  border-radius: 99px !important; 
-  padding: 0 12px !important; 
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  background: var(--green) !important; 
-  color: #ffffff !important; 
-  border-color: transparent !important; 
-  transform: scale(1.05) !important;
-}
+/* IMAGE CONTAINER */
+.product-card__image-container { position: relative; width: 100%; margin-bottom: clamp(6px, 4cqi, 12px); }
+.product-card__image { position: relative; display: block; overflow: hidden; width: 100%; aspect-ratio: 5 / 6 !important; background: var(--beige); border-radius: var(--radius-md); margin-bottom: 0 !important; flex-shrink: 0; }
 .product-card__image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--ease-base); }
 .product-card:hover .product-card__image img { transform: scale(1.03); }
 
-/* Card Text */
-.product-card__badge { position: absolute; left: 0; top: 0; margin: 0; padding: 5px 12px; border-radius: 0 0 14px 0; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.9); border-bottom: 1px solid rgba(255, 255, 255, 0.9); color: #1a1114; font-family: 'Inter', sans-serif; font-size: 0.55rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 3px 3px 16px rgba(0, 0, 0, 0.08); text-shadow: 0 1px 4px #fff, 0 0 10px rgba(255, 255, 255, 0.9); z-index: 2; }
+/* 🔥 SELF-SCALING QUICK ADD BUTTON */
+.quick-add-btn {
+  position: absolute;
+  bottom: clamp(6px, 4cqi, 14px); right: clamp(6px, 4cqi, 14px);
+  width: clamp(26px, 18cqi, 48px); height: clamp(26px, 18cqi, 48px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(197, 139, 158, 0.25); color: var(--pink-deep);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(74, 59, 66, 0.08); transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 10; outline: none;
+}
+.quick-add-btn svg { width: clamp(13px, 9cqi, 24px); height: clamp(13px, 9cqi, 24px); stroke-width: 2.2; transition: transform 0.2s; }
+@media (hover: hover) {
+  .quick-add-btn:hover { background: var(--pink-deep); color: #ffffff; transform: scale(1.1); box-shadow: 0 6px 16px rgba(197, 139, 158, 0.3); }
+  .quick-add-btn:hover svg { transform: rotate(8deg); }
+}
+.quick-add-btn:active { transform: scale(0.92); }
+.quick-add-btn.is-added-success { width: auto !important; height: clamp(26px, 18cqi, 48px) !important; border-radius: 99px !important; padding: 0 clamp(8px, 6cqi, 16px) !important; font-family: 'Inter', sans-serif; font-size: clamp(0.5rem, 5cqi, 0.8rem); font-weight: 700; background: var(--green) !important; color: #ffffff !important; border-color: transparent !important; transform: scale(1.05) !important; }
+
+/* 🔥 TRUE DYNAMIC FIT ENGINE FOR CATEGORY BADGE */
+.product-card__badge { 
+  position: absolute; left: 0; top: 0; margin: 0; 
+  
+  /* Let width embrace the text organically, bounded only by the card's width */
+  width: max-content; 
+  max-width: 90cqi; 
+  min-width: clamp(55px, 35cqi, 100px); 
+  
+  /* Let height breathe naturally with the content */
+  height: auto;
+  min-height: clamp(20px, 12cqi, 34px); 
+  
+  /* Flexbox delivers absolute perfect 2D centering, even if text wraps */
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  text-align: center; 
+  
+  /* Dynamic padding so text never touches the edges */
+  padding: clamp(4px, 2.5cqi, 8px) clamp(8px, 5cqi, 16px); 
+  
+  border-radius: 0 0 clamp(10px, 8cqi, 20px) 0; 
+  background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+  border-right: 1px solid rgba(255, 255, 255, 0.9); border-bottom: 1px solid rgba(255, 255, 255, 0.9); 
+  color: #1a1114; font-family: 'Inter', sans-serif; 
+  
+  /* Font scales strictly relative to the card's physical width */
+  font-size: clamp(0.42rem, 4.2cqi, 0.75rem); 
+  font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; 
+  line-height: 1.15; 
+  
+  /* 🔥 NO MORE CUTTING: Text fits exactly, or stacks neatly if it hits max-width */
+  white-space: normal; 
+  word-wrap: break-word; 
+  
+  box-shadow: 3px 3px 16px rgba(0, 0, 0, 0.08); text-shadow: 0 1px 4px #fff, 0 0 10px rgba(255, 255, 255, 0.9); z-index: 2; 
+}
+
+/* 🔥 SELF-SCALING CARD TEXT BODY */
 .product-card__body { padding: 0; display: flex; flex-direction: column; flex: 1; }
-.product-card h3 { margin: 0 0 4px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; line-height: 1.3; color: var(--charcoal); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-.product-card__price { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; margin-top: 4px; font-family: 'Inter', sans-serif; }
-.product-card__price strong { grid-column: 1; grid-row: 1; font-size: 0.85rem; font-weight: 600; color: var(--charcoal); margin: 0; line-height: 1; }
-.product-card__price del { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 0.7rem; margin: 0; line-height: 1; }
-.product-card__discount { grid-column: 2; grid-row: 1 / span 2; justify-self: start; align-self: center; color: var(--green); font-size: 0.65rem; font-weight: 600; background: rgba(89, 122, 104, 0.08); padding: 2px 6px; border-radius: 4px; margin: 0; }
+.product-card h3 { margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: clamp(0.75rem, 6cqi, 1.4rem); font-weight: 500; line-height: 1.3; color: var(--charcoal); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.product-card__price { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: clamp(4px, 3cqi, 8px); row-gap: 2px; align-items: center; margin-top: 2px; font-family: 'Inter', sans-serif; }
+.product-card__price strong { grid-column: 1; grid-row: 1; font-size: clamp(0.8rem, 6.5cqi, 1.35rem); font-weight: 600; color: var(--charcoal); margin: 0; line-height: 1; }
+.product-card__price del { grid-column: 1; grid-row: 2; color: var(--muted); font-size: clamp(0.65rem, 4cqi, 0.9rem); margin: 0; line-height: 1; }
+.product-card__discount { grid-column: 2; grid-row: 1 / span 2; justify-self: start; align-self: center; color: var(--green); font-size: clamp(0.55rem, 4cqi, 0.85rem); font-weight: 600; background: rgba(89, 122, 104, 0.08); padding: clamp(2px, 1.5cqi, 4px) clamp(4px, 3cqi, 8px); border-radius: 4px; margin: 0; }
 
 /* --------------------------------------
    GRID LAYOUT: MOBILE (2 Columns) 
 -------------------------------------- */
 .product-grid > .product-card, .skeleton-grid > .skeleton { grid-column: span 1; grid-row: span 1; padding: 0; width: 100%; }
-.product-grid > .product-card h3 { font-size: 0.85rem; margin-top: 0; }
-.product-grid > .product-card .product-card__price strong { font-size: 0.85rem; }
-
-.product-grid > .product-card:nth-child(3n), .skeleton-grid > .skeleton:nth-child(3n) { 
-  grid-column: span 2; 
-  padding: 0 10%; 
-  width: 100%;
-}
-.product-grid > .product-card:nth-child(3n) h3 { font-size: 1.15rem; margin-top: 4px; }
-.product-grid > .product-card:nth-child(3n) .product-card__price strong { font-size: 1.1rem; }
+.product-grid > .product-card:nth-child(3n), .skeleton-grid > .skeleton:nth-child(3n) { grid-column: span 2; padding: 0 10%; width: 100%; }
 
 /* --------------------------------------
-   GRID LAYOUT: TABLET (3 Columns)
+   PREMIUM BENTO GRID: TABLET (4 Columns / 10-Item Cycle)
 -------------------------------------- */
 @media (min-width: 768px) {
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 24px; }
+  .product-grid, .skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 12px; }
   
   .product-grid > .product-card:nth-child(n), .skeleton-grid > .skeleton:nth-child(n) { padding: 0; grid-column: span 1; grid-row: span 1; width: 100%; }
-  .product-grid > .product-card:nth-child(n) h3 { font-size: 0.85rem; margin-top: 0; }
-  .product-grid > .product-card:nth-child(n) .product-card__price strong { font-size: 0.85rem; }
 
-  /* Left Hero */
-  .product-grid > .product-card:nth-child(6n + 1), .skeleton-grid > .skeleton:nth-child(6n + 1) { grid-column: 1 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(6n + 1) h3 { font-size: 1.25rem; margin-bottom: 6px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(6n + 1) .product-card__price strong { font-size: 1.2rem; }
+  /* Chessboard alternating large blocks */
+  .product-grid > .product-card:nth-child(10n + 1), .skeleton-grid > .skeleton:nth-child(10n + 1),
+  .product-grid > .product-card:nth-child(10n + 8), .skeleton-grid > .skeleton:nth-child(10n + 8) { 
+    grid-column: span 2; grid-row: span 2; 
+  }
 
-  /* Right Hero */
-  .product-grid > .product-card:nth-child(6n + 4), .skeleton-grid > .skeleton:nth-child(6n + 4) { grid-column: 2 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(6n + 4) h3 { font-size: 1.25rem; margin-bottom: 6px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(6n + 4) .product-card__price strong { font-size: 1.2rem; }
-
-  /* 🔥 THE BENTO FLUSH ALIGNMENT: Shifted to target the NEW image container */
-  .product-grid > .product-card:nth-child(6n + 1) .product-card__image-container,
-  .product-grid > .product-card:nth-child(6n + 4) .product-card__image-container { 
-    flex-grow: 1; 
-    height: 0; 
-    display: flex; 
-    flex-direction: column;
+  /* 🔥 FLUSH IMAGE ALIGNMENT FOR TABLET LARGE CARDS */
+  .product-grid > .product-card:nth-child(10n + 1) .product-card__image-container,
+  .product-grid > .product-card:nth-child(10n + 8) .product-card__image-container { 
+    flex-grow: 1; height: 0; display: flex; flex-direction: column;
   }
-  .product-grid > .product-card:nth-child(6n + 1) .product-card__image,
-  .product-grid > .product-card:nth-child(6n + 4) .product-card__image { 
-    aspect-ratio: auto !important; 
-    flex-grow: 1;
-    height: 100%;
+  .product-grid > .product-card:nth-child(10n + 1) .product-card__image,
+  .product-grid > .product-card:nth-child(10n + 8) .product-card__image { 
+    aspect-ratio: auto !important; flex-grow: 1; height: 100%;
   }
-  .product-grid > .product-card:nth-child(6n + 1) .product-card__body,
-  .product-grid > .product-card:nth-child(6n + 4) .product-card__body { 
-    flex: none; 
-  }
-  .skeleton-grid > .skeleton:nth-child(6n + 1),
-  .skeleton-grid > .skeleton:nth-child(6n + 4) { 
-    aspect-ratio: auto !important; 
-    height: 100%; 
-  }
+  .product-grid > .product-card:nth-child(10n + 1) .product-card__body,
+  .product-grid > .product-card:nth-child(10n + 8) .product-card__body { flex: none; }
+  .skeleton-grid > .skeleton:nth-child(10n + 1),
+  .skeleton-grid > .skeleton:nth-child(10n + 8) { aspect-ratio: auto !important; height: 100%; }
 }
 
 /* --------------------------------------
-   GRID LAYOUT: DESKTOP (5 Columns)
+   PREMIUM BENTO GRID: DESKTOP (8 Columns / 20-Item Cycle)
 -------------------------------------- */
 @media (min-width: 1024px) {
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 40px 20px; }
+  .product-grid, .skeleton-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 32px 16px; }
 
-  /* Reset Tablet Modifiers */
   .product-grid > .product-card:nth-child(n), .skeleton-grid > .skeleton:nth-child(n) { grid-column: span 1; grid-row: span 1; }
-  .product-grid > .product-card:nth-child(n) h3 { font-size: 0.85rem; margin-top: 0; margin-bottom: 4px; }
-  .product-grid > .product-card:nth-child(n) .product-card__price strong { font-size: 0.85rem; }
+
+  /* The 20-Item Chessboard Pattern (1, 4, 13, 16) */
+  .product-grid > .product-card:nth-child(20n + 1), .skeleton-grid > .skeleton:nth-child(20n + 1),
+  .product-grid > .product-card:nth-child(20n + 4), .skeleton-grid > .skeleton:nth-child(20n + 4),
+  .product-grid > .product-card:nth-child(20n + 13), .skeleton-grid > .skeleton:nth-child(20n + 13),
+  .product-grid > .product-card:nth-child(20n + 16), .skeleton-grid > .skeleton:nth-child(20n + 16) { 
+    grid-column: span 2; grid-row: span 2; 
+  }
+
+  /* 🔥 FLUSH IMAGE ALIGNMENT FOR PC LARGE CARDS */
+  .product-grid > .product-card:nth-child(20n + 1) .product-card__image-container,
+  .product-grid > .product-card:nth-child(20n + 4) .product-card__image-container,
+  .product-grid > .product-card:nth-child(20n + 13) .product-card__image-container,
+  .product-grid > .product-card:nth-child(20n + 16) .product-card__image-container { 
+    flex-grow: 1; height: 0; display: flex; flex-direction: column;
+  }
+  .product-grid > .product-card:nth-child(20n + 1) .product-card__image,
+  .product-grid > .product-card:nth-child(20n + 4) .product-card__image,
+  .product-grid > .product-card:nth-child(20n + 13) .product-card__image,
+  .product-grid > .product-card:nth-child(20n + 16) .product-card__image { 
+    aspect-ratio: auto !important; flex-grow: 1; height: 100%; 
+  }
+  .product-grid > .product-card:nth-child(20n + 1) .product-card__body,
+  .product-grid > .product-card:nth-child(20n + 4) .product-card__body,
+  .product-grid > .product-card:nth-child(20n + 13) .product-card__body,
+  .product-grid > .product-card:nth-child(20n + 16) .product-card__body { flex: none; }
   
-  /* Reset the container wrapper instead of just the image */
-  .product-grid > .product-card:nth-child(n) .product-card__image-container { flex-grow: 0; height: auto; display: block; }
-  .product-grid > .product-card:nth-child(n) .product-card__image { aspect-ratio: 5 / 6 !important; height: auto; flex-grow: 0; }
-  
-  .product-grid > .product-card:nth-child(n) .product-card__body { flex: 1; }
-
-  /* Left Hero (Spans Cols 1-2) */
-  .product-grid > .product-card:nth-child(14n + 1), .skeleton-grid > .skeleton:nth-child(14n + 1) { grid-column: 1 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(14n + 1) h3 { font-size: 1.3rem; margin-bottom: 8px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__price strong { font-size: 1.25rem; }
-
-  /* Right Hero (Spans Cols 4-5) */
-  .product-grid > .product-card:nth-child(14n + 8), .skeleton-grid > .skeleton:nth-child(14n + 8) { grid-column: 4 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(14n + 8) h3 { font-size: 1.3rem; margin-bottom: 8px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__price strong { font-size: 1.25rem; }
-
-  /* 🔥 THE BENTO FLUSH ALIGNMENT */
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__image-container,
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__image-container { 
-    flex-grow: 1; 
-    height: 0; 
-    display: flex;
-    flex-direction: column;
-  }
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__image,
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__image { 
-    aspect-ratio: auto !important; 
-    flex-grow: 1;
-    height: 100%; 
-  }
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__body,
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__body { 
-    flex: none; 
-  }
-  .skeleton-grid > .skeleton:nth-child(14n + 1),
-  .skeleton-grid > .skeleton:nth-child(14n + 8) { 
-    aspect-ratio: auto !important; 
-    height: 100%; 
-  }
-}
-
-/* --------------------------------------
-   GRID LAYOUT: DESKTOP (5 Columns)
--------------------------------------- */
-@media (min-width: 1024px) {
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 40px 20px; }
-
-  /* Reset Tablet Modifiers */
-  .product-grid > .product-card:nth-child(n), .skeleton-grid > .skeleton:nth-child(n) { grid-column: span 1; grid-row: span 1; }
-  .product-grid > .product-card:nth-child(n) h3 { font-size: 0.85rem; margin-top: 0; margin-bottom: 4px; }
-  .product-grid > .product-card:nth-child(n) .product-card__price strong { font-size: 0.85rem; }
-  .product-grid > .product-card:nth-child(n) .product-card__image { aspect-ratio: 5 / 6 !important; flex-grow: 0; height: auto; }
-  .product-grid > .product-card:nth-child(n) .product-card__body { flex: 1; }
-
-  /* Left Hero (Spans Cols 1-2) */
-  .product-grid > .product-card:nth-child(14n + 1), .skeleton-grid > .skeleton:nth-child(14n + 1) { grid-column: 1 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(14n + 1) h3 { font-size: 1.3rem; margin-bottom: 8px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__price strong { font-size: 1.25rem; }
-
-  /* Right Hero (Spans Cols 4-5) */
-  .product-grid > .product-card:nth-child(14n + 8), .skeleton-grid > .skeleton:nth-child(14n + 8) { grid-column: 4 / span 2; grid-row: span 2; }
-  .product-grid > .product-card:nth-child(14n + 8) h3 { font-size: 1.3rem; margin-bottom: 8px; margin-top: 4px; }
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__price strong { font-size: 1.25rem; }
-
-  /* 🔥 THE BENTO FLUSH ALIGNMENT */
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__image,
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__image { 
-    aspect-ratio: auto !important; 
-    flex-grow: 1; 
-    height: 0; 
-  }
-  .product-grid > .product-card:nth-child(14n + 1) .product-card__body,
-  .product-grid > .product-card:nth-child(14n + 8) .product-card__body { 
-    flex: none; 
-  }
-  .skeleton-grid > .skeleton:nth-child(14n + 1),
-  .skeleton-grid > .skeleton:nth-child(14n + 8) { 
-    aspect-ratio: auto !important; 
-    height: 100%; 
-  }
+  .skeleton-grid > .skeleton:nth-child(20n + 1),
+  .skeleton-grid > .skeleton:nth-child(20n + 4),
+  .skeleton-grid > .skeleton:nth-child(20n + 13),
+  .skeleton-grid > .skeleton:nth-child(20n + 16) { aspect-ratio: auto !important; height: 100%; }
 }
 
 /* SKELETON ANIMATIONS */
