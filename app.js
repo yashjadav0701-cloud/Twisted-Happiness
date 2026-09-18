@@ -425,7 +425,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mu6m216a'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mu6p0nfa'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -671,7 +671,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
 
     // Apply Dynamic Care Guide Images
-    const defaultImg = '/assets/th_logo.svg?v=mu6m216a';
+    const defaultImg = '/assets/th_logo.svg?v=mu6p0nfa';
     
     const heroImg = document.getElementById('care-img-hero');
     if (heroImg) heroImg.src = state.store.care_hero_image || defaultImg;
@@ -857,7 +857,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
       searchClose?.addEventListener('click', () => closeSearch(false));
 
-      // Premium Scroll Event: Auto-Hide Header and Mobile Nav dynamically
+      // Premium Scroll Event: Auto-Hide Mobile Nav dynamically (Header stays sticky)
       let lastScrollY = window.scrollY;
       let isScrolling;
       
@@ -869,25 +869,21 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           closeSearch(false);
         }
 
-        // 2. Bulletproof Swipe Behavior for both Header and Mobile Nav
+        // 2. Bulletproof Swipe Behavior for Mobile Nav
         const mobileNav = document.querySelector('.mobile-nav');
-        const header = document.querySelector('.site-header');
         
         // Hide when scrolling DOWN past 80px
         if (currentScroll > lastScrollY && currentScroll > 80) {
           if (mobileNav && state.page !== 'product') mobileNav.classList.add('is-hidden');
-          if (header) header.classList.add('is-hidden');
         } 
         // Show instantly when scrolling UP
         else if (currentScroll < lastScrollY) {
           if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
-          if (header) header.classList.remove('is-hidden');
         }
         
         // Failsafe: Always show everything if they hit the absolute top of the page
         if (currentScroll <= 10) {
           if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
-          if (header) header.classList.remove('is-hidden');
         }
         
         lastScrollY = currentScroll;
@@ -896,7 +892,6 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         window.clearTimeout(isScrolling);
         isScrolling = setTimeout(() => {
           if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
-          if (header) header.classList.remove('is-hidden');
         }, 1500);
         
       }, { passive: true });
@@ -959,7 +954,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mu6p0nfa')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1700,7 +1695,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       // Extract up to 6 random products that have images to build the multi-image collage groups
       const collageProducts = [...catProducts].filter(p => p.images && p.images.length > 0).sort(() => 0.5 - Math.random()).slice(0, 6);
       
-      // Pick 12 random products for a deep "Highlights" scrollable mini-storefront
+      // Pick 10 random products for a perfect 5-column PC grid & deep mobile scroll
       const highlightProducts = [...catProducts].sort(() => 0.5 - Math.random()).slice(0, 15); 
 
       const lore = CATEGORY_LORE[cat] || { story: "Handcrafted creations made with love and patience.", tags: ["Handmade", "Art", "Unique"] };
@@ -1708,7 +1703,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       // Build Visual Sub-category cards (Restricted to 6 for the perfect 3x2 grid)
       const subCatHtml = subCategories.slice(0, 6).map(sub => {
         const subProduct = catProducts.find(p => p.sub_category === sub && p.images && p.images.length > 0);
-        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mu6m216a';
+        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mu6p0nfa';
         return `
           <div class="heavy-subcat-card pop-click" data-set-search="${Utils.escapeHTML(sub)}">
             <img src="${Utils.escapeHTML(thumb)}" alt="" loading="lazy">
@@ -1723,14 +1718,14 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       // Build the horizontal scrollable collage tracks
       const collageHtml = collageProducts.map(p => {
          const img1 = p.images[0];
-         const img2 = p.images[1] || p.images[0]; // Fallback to main image if fewer than 3
+         const img2 = p.images[1] || p.images[0]; 
          const img3 = p.images[2] || p.images[0];
          return `
            <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
-             <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy"></div>
+             <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy" decoding="async"></div>
              <div class="hc-img-side">
-               <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy">
-               <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy">
+               <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy" decoding="async">
+               <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy" decoding="async">
              </div>
            </a>
          `;
@@ -1985,7 +1980,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     return `<article class="product-card ${revealedClass} ${layoutClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <div class="product-card__image-container">
         <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6p0nfa')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
           ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
         </a>
         <button type="button" class="quick-add-btn pop-click" data-card-action="${isCanvas ? 'choose' : 'add'}" aria-label="${isCanvas ? 'Choose size' : 'Quick add'}">
@@ -2066,7 +2061,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mu6m216a`;
+      `${window.location.origin}/assets/share-icon.png?v=mu6p0nfa`;
 
     const shareDescription =
       String(
@@ -2187,7 +2182,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mu6m216a'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mu6p0nfa'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2667,7 +2662,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mu6m216a',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mu6p0nfa',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2746,7 +2741,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6m216a')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6p0nfa')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -3002,7 +2997,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6p0nfa')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -3161,7 +3156,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6m216a')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6p0nfa')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
