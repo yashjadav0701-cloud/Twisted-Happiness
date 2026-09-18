@@ -2435,3 +2435,75 @@ details[open] .enquiry-chevron {
   box-shadow: 0 4px 12px rgba(74, 59, 66, 0.05);
   border-bottom: 1px solid var(--line-strong);
 }
+
+/* 4-Grid Care Images (Strict Compact Layout) */
+.care-images-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .care-images-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.care-zone {
+  grid-column: span 1 !important; 
+  padding: 10px; 
+  min-height: 0; /* Remove rigid minimum height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.care-zone img {
+  max-width: 100%; 
+  max-height: 70px; /* Restrict max height but allow proportional shrinking */
+  width: auto; /* Let intrinsic aspect ratio dictate width */
+  height: auto; /* Let intrinsic aspect ratio dictate height */
+  object-fit: contain; /* Fit the whole image perfectly without cropping */
+  border-radius: 4px; 
+  margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(197, 139, 158, 0.2);
+}
+.care-zone span {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.care-zone span strong { font-size: 0.7rem; line-height: 1.2; margin: 0; }
+.care-zone span small { font-size: 0.55rem; color: var(--muted); line-height: 1.2; margin: 0; }
+
+/* Image Archive Modal Grid */
+.archive-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px; max-height: 380px; overflow-y: auto; margin: 16px 0; padding-right: 4px;
+}
+.archive-grid::-webkit-scrollbar { width: 6px; }
+.archive-grid::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+
+.archive-card {
+  position: relative; border-radius: var(--radius-md); overflow: hidden;
+  border: 1px solid var(--line); background: var(--paper);
+  box-shadow: var(--shadow-xs); transition: transform 0.2s ease;
+}
+.archive-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.archive-card img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+}
+.archive-badge {
+  position: absolute; top: 6px; left: 6px;
+  background: rgba(255,255,255,0.95); color: var(--pink-deep);
+  font-size: 0.55rem; font-weight: 800; padding: 2px 6px;
+  border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.archive-actions {
+  display: flex; border-top: 1px solid var(--line);
+}
+.archive-actions button {
+  flex: 1; border: none; background: var(--paper);
+  font-size: 0.65rem; font-weight: 700; padding: 8px 0;
+  cursor: pointer; color: var(--charcoal); transition: all 0.2s ease;
+}
+.archive-actions button:hover { background: var(--beige); color: var(--pink-deep); }
+.archive-actions button.is-danger:hover { color: var(--red); }
+.archive-actions button:first-child { border-right: 1px solid var(--line); }

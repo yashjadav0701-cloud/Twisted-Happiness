@@ -114,6 +114,7 @@
     settings: null,
     canvasSizes: [],
     vipTiers: [],
+    newCareImages: { hero: null, whimsical: null, painted: null, clay: null },
     editingProduct: null,
     productImages: [],
     originalPrice: null,
@@ -1011,6 +1012,27 @@
 
   function bindSettingsEvents() {
     document.getElementById('settings-form')?.addEventListener('submit', saveSettings);
+    
+    // Bind all 4 care image upload zones
+    ['hero', 'whimsical', 'painted', 'clay'].forEach(type => {
+      document.getElementById(`setting-care-img-${type}`)?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const compressed = await Utils.compressImage(file);
+          state.newCareImages[type] = compressed;
+          const previewUrl = URL.createObjectURL(compressed);
+          const imgPreview = document.getElementById(`care-preview-${type}`);
+          imgPreview.src = previewUrl;
+          imgPreview.style.display = 'block';
+        } catch (error) {
+          notify('Could not compress image.', 'error');
+        }
+      });
+    });
+
+    document.getElementById('btn-view-care-history')?.addEventListener('click', openCareHistoryModal);
+
     document.getElementById('canvas-size-list')?.addEventListener('input', updateStructuredCanvasState);
     document.getElementById('canvas-size-list')?.addEventListener('change', updateStructuredCanvasState);
     document.getElementById('canvas-size-list')?.addEventListener('click', handleCanvasSizeAction);
@@ -1204,6 +1226,19 @@
     document.getElementById('setting-announcement-active').checked = Boolean(state.settings.announcement_banner_active); 
     document.getElementById('setting-vacation').checked = Boolean(state.settings.vacation_mode);
     
+    ['hero', 'whimsical', 'painted', 'clay'].forEach(type => {
+      const preview = document.getElementById(`care-preview-${type}`);
+      const url = state.settings[`care_${type}_image`];
+      if (preview) {
+        if (url) {
+          preview.src = url;
+          preview.style.display = 'block';
+        } else {
+          preview.style.display = 'none';
+        }
+      }
+    });
+
     state.canvasSizes = Utils.normaliseCanvasSizes(state.settings.global_canvas_sizes, APP_CONFIG.DEFAULTS.canvasSizes); 
     state.vipTiers = Utils.normaliseVipTiers(state.settings.vip_tiers, APP_CONFIG.DEFAULTS.vipTiers); 
     renderCanvasSizes(); 
@@ -1218,23 +1253,160 @@
     const whatsapp = document.getElementById('setting-whatsapp').value.replace(/\D/g, '');
     if (whatsapp.length < 10) { notify('Enter a WhatsApp number with country code.', 'error'); setLoading(button, false); return; }
     
-    const payload = { 
-      id: 1, 
-      store_name: document.getElementById('setting-store-name').value.trim() || APP_CONFIG.DEFAULTS.storeName, 
-      admin_whatsapp: whatsapp, 
-      support_whatsapp: whatsapp, 
-      standard_delivery_fee: Number(document.getElementById('setting-delivery-fee').value || 0), 
-      free_shipping_threshold: Number(document.getElementById('setting-free-delivery').value || 0), 
-      announcement_banner_text: document.getElementById('setting-announcement').value.trim(), 
-      announcement_banner_active: document.getElementById('setting-announcement-active').checked, 
-      vacation_mode: document.getElementById('setting-vacation').checked, 
-      updated_at: new Date().toISOString() 
-    };
+    try {
+      let history = Array.isArray(state.settings.care_image_history) ? [...state.settings.care_image_history] : [];
+      const types = ['hero', 'whimsical', 'painted', 'clay'];
+      
+      for (const t of types) {
+        if (state.newCareImages[t]) {
+          const path = `settings/care_${t}_${crypto.randomUUID()}.webp`;
+          const { error: uploadError } = await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).upload(path, state.newCareImages[t], { cacheControl: '31536000', upsert: false, contentType: 'image/webp' });
+          if (uploadError) throw uploadError;
+          
+          const { data } = supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).getPublicUrl(path);
+          
+          const oldUrl = state.settings[`care_${t}_image`];
+          if (oldUrl) {
+            history.push({ id: crypto.randomUUID(), url: oldUrl, type: t, archived_at: new Date().toISOString() });
+          }
+          
+          state.settings[`care_${t}_image`] = data.publicUrl;
+          state.newCareImages[t] = null; // Clear queue
+        }
+      }
+
+      const payload = { 
+        id: 1, 
+        store_name: document.getElementById('setting-store-name').value.trim() || APP_CONFIG.DEFAULTS.storeName, 
+        admin_whatsapp: whatsapp, 
+        support_whatsapp: whatsapp, 
+        standard_delivery_fee: Number(document.getElementById('setting-delivery-fee').value || 0), 
+        free_shipping_threshold: Number(document.getElementById('setting-free-delivery').value || 0), 
+        announcement_banner_text: document.getElementById('setting-announcement').value.trim(), 
+        announcement_banner_active: document.getElementById('setting-announcement-active').checked, 
+        vacation_mode: document.getElementById('setting-vacation').checked, 
+        care_hero_image: state.settings.care_hero_image || null,
+        care_whimsical_image: state.settings.care_whimsical_image || null,
+        care_painted_image: state.settings.care_painted_image || null,
+        care_clay_image: state.settings.care_clay_image || null,
+        care_image_history: history,
+        updated_at: new Date().toISOString() 
+      };
+      
+      const { error } = await supabaseClient.from('store_settings').upsert(payload, { onConflict: 'id' });
+      if (error) throw error;
+      
+      state.settings.care_image_history = history;
+      notify('Store essentials saved.', 'success'); 
+    } catch (err) {
+      notify(err.message || 'Settings could not be saved.', 'error');
+    } finally {
+      setLoading(button, false);
+    }
+  }
+
+  // --- Care Image Archive Modal Logic ---
+  async function openCareHistoryModal() {
+    document.getElementById('admin-modal-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'admin-modal-overlay';
+    overlay.className = 'admin-modal-overlay';
     
-    const { error } = await supabaseClient.from('store_settings').upsert(payload, { onConflict: 'id' });
-    if (error) notify(error.message, 'error'); 
-    else notify('Store essentials saved.', 'success'); 
-    setLoading(button, false);
+    const history = Array.isArray(state.settings?.care_image_history) ? state.settings.care_image_history : [];
+    
+    let gridHtml = history.length === 0 
+      ? '<div class="admin-empty" style="margin:24px 0;">No archived images found.</div>' 
+      : `<div class="archive-grid">` + history.sort((a,b) => new Date(b.archived_at) - new Date(a.archived_at)).map(item => `
+          <div class="archive-card" data-archive-id="${item.id}">
+            <div class="archive-badge">${Utils.escapeHTML(item.type)}</div>
+            <img src="${Utils.escapeHTML(item.url)}" alt="" loading="lazy">
+            <div class="archive-actions">
+              <button type="button" data-action="restore">Restore</button>
+              <button type="button" class="is-danger" data-action="delete">Delete</button>
+            </div>
+          </div>
+        `).join('') + `</div>`;
+
+    overlay.innerHTML = `
+      <section class="admin-modal-card" style="max-width: 680px; width: 95%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <h2 class="admin-modal-title" style="margin:0; text-align:left;">Image Archive</h2>
+          <button type="button" class="structured-card__remove" id="close-archive" style="border:none; box-shadow:none; font-size:1.4rem;">×</button>
+        </div>
+        <p class="admin-help" style="margin-bottom: 8px;">Previously used care guide images. Restore an image to make it live again, or delete it permanently to free up storage.</p>
+        ${gridHtml}
+      </section>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-visible'));
+
+    document.getElementById('close-archive').onclick = () => {
+      overlay.classList.remove('is-visible');
+      setTimeout(() => overlay.remove(), 200);
+    };
+
+    overlay.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const card = btn.closest('[data-archive-id]');
+      const id = card.dataset.archiveId;
+      const item = history.find(x => x.id === id);
+      if (!item) return;
+
+      if (btn.dataset.action === 'restore') {
+        const choice = await Utils.choice({ title: 'Restore Image?', message: `This will instantly set this image as the live ${item.type} image. The current live image will be archived.`, primaryLabel: 'Restore' });
+        if (choice === 'primary') {
+          // Push current to history
+          const currentUrl = state.settings[`care_${item.type}_image`];
+          if (currentUrl) {
+            history.push({ id: crypto.randomUUID(), url: currentUrl, type: item.type, archived_at: new Date().toISOString() });
+          }
+          // Set restored
+          state.settings[`care_${item.type}_image`] = item.url;
+          // Remove restored from history
+          state.settings.care_image_history = history.filter(x => x.id !== id);
+          
+          // Save instantly
+          const { error } = await supabaseClient.from('store_settings').update({
+            [`care_${item.type}_image`]: item.url,
+            care_image_history: state.settings.care_image_history,
+            updated_at: new Date().toISOString()
+          }).eq('id', 1);
+          
+          if (error) { notify(error.message, 'error'); return; }
+          notify(`${item.type} image restored successfully.`, 'success');
+          
+          // Update previews on the main form
+          const preview = document.getElementById(`care-preview-${item.type}`);
+          if (preview) { preview.src = item.url; preview.style.display = 'block'; }
+          
+          // Re-render modal silently
+          overlay.classList.remove('is-visible');
+          setTimeout(() => { overlay.remove(); openCareHistoryModal(); }, 200);
+        }
+      }
+
+      if (btn.dataset.action === 'delete') {
+        const choice = await Utils.choice({ title: 'Delete Permanently?', message: 'This image will be erased from Supabase storage forever.', icon: '🗑️', primaryLabel: 'Delete' });
+        if (choice === 'primary') {
+          // Remove from storage
+          const path = storagePath(item.url);
+          if (path) await supabaseClient.storage.from(APP_CONFIG.STORAGE_BUCKET).remove([path]);
+          
+          // Update DB
+          state.settings.care_image_history = history.filter(x => x.id !== id);
+          await supabaseClient.from('store_settings').update({
+            care_image_history: state.settings.care_image_history
+          }).eq('id', 1);
+          
+          notify('Archived image deleted.', 'success');
+          
+          // Re-render modal silently
+          overlay.classList.remove('is-visible');
+          setTimeout(() => { overlay.remove(); openCareHistoryModal(); }, 200);
+        }
+      }
+    });
   }
 
   function renderCanvasSizes() {

@@ -164,8 +164,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     activeMRP: 0,
     gallery: { images: [], virtualIndex: 0, logicalIndex: 0, transitioning: false, startX: 0, deltaX: 0 },
     searchSuggestionIndex: -1,
-    categoryImages: {}
+    categoryImages: {},
+    searchHistory: readStorage('th_search_history', [])
   };
+
+  function saveSearchHistory(query) {
+    const term = String(query || '').trim().toLowerCase();
+    if (!term || term.length < 2) return;
+    let history = state.searchHistory.filter(t => t !== term);
+    history.unshift(term);
+    history = history.slice(0, 5); // Keep last 5 searches
+    state.searchHistory = history;
+    writeStorage('th_search_history', history);
+  }
 
   function bindRouter() {
     window.addEventListener('popstate', () => {
@@ -264,6 +275,36 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       document.getElementById('view-policy').style.display = 'block';
       document.body.dataset.page = 'policy';
       document.title = 'No-Return Policy | Twisted Happiness';
+    } else if (path.startsWith('/results') || view === 'results') {
+      state.page = 'results';
+      document.getElementById('view-results').style.display = 'block';
+      document.body.dataset.page = 'results';
+      
+      const q = url.searchParams.get('q');
+      const cat = url.searchParams.get('category');
+      
+      if (q) {
+        state.search = q;
+        state.category = 'All';
+        document.title = `Search: ${q} | Twisted Happiness`;
+      } else if (cat) {
+        state.category = cat;
+        state.search = '';
+        document.title = `${cat} | Twisted Happiness`;
+      }
+      
+      state.visibleCount = APP_CONFIG.PRODUCT_PAGE_SIZE;
+      applyCatalogFilters();
+    } else if (path.startsWith('/categories') || view === 'categories') {
+      state.page = 'categories';
+      document.getElementById('view-categories').style.display = 'block';
+      document.body.dataset.page = 'categories';
+      document.title = 'Collections | Twisted Happiness';
+    } else if (path.startsWith('/care') || view === 'care') {
+      state.page = 'care';
+      document.getElementById('view-care').style.display = 'block';
+      document.body.dataset.page = 'care';
+      document.title = 'Care Guide | Twisted Happiness';
     } else if (path !== '/' && path !== '/index.html' && path !== '/index' && !view) {
       state.page = '404';
       document.getElementById('view-404').style.display = 'block';
@@ -278,7 +319,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
 
     requestAnimationFrame(() => {
-      document.querySelector('.spa-view[style*="block"]')?.classList.add('active');
+      document.querySelectorAll('.spa-view').forEach(v => { if (v.style.display === 'block') v.classList.add('active'); });
     });
   }
 
@@ -300,6 +341,15 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       } else if (initPath.startsWith('/return-policy') || initView === 'policy') {
         document.getElementById('view-policy').style.display = 'block';
         document.body.dataset.page = 'policy';
+      } else if (initPath.startsWith('/categories') || initView === 'categories') {
+        document.getElementById('view-categories').style.display = 'block';
+        document.body.dataset.page = 'categories';
+      } else if (initPath.startsWith('/results') || initView === 'results') {
+        document.getElementById('view-results').style.display = 'block';
+        document.body.dataset.page = 'results';
+      } else if (initPath.startsWith('/care') || initView === 'care') {
+        document.getElementById('view-care').style.display = 'block';
+        document.body.dataset.page = 'care';
       } else if (initPath !== '/' && initPath !== '/index.html' && initPath !== '/index' && !initView && !initPath.startsWith('/khushiified')) {
         document.getElementById('view-404').style.display = 'block';
         document.body.dataset.page = '404';
@@ -308,7 +358,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         document.body.dataset.page = 'catalog';
       }
       
-      document.querySelector('.spa-view[style*="block"]')?.classList.add('active');
+      document.querySelectorAll('.spa-view').forEach(v => { if (v.style.display === 'block') v.classList.add('active'); });
 
       // 2. Proceed with normal initialization
       injectSharedCart();
@@ -322,6 +372,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       
       await fetchProducts();
       renderCart();
+      renderHeavyCategories();
 
       handleRoute(new URL(window.location.href));
       
@@ -374,7 +425,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mu3qaocd'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mu6m216a'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -397,13 +448,22 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   async function fetchStoreConfiguration() {
     if (!supabaseClient) return;
-    const { data, error } = await supabaseClient.rpc(APP_CONFIG.RPC.storefrontSettings);
-    if (error || !data) {
-      console.warn('Store settings fallback used:', error?.message || 'No data');
-      return;
+    
+    let row = null;
+    
+    // 1. Attempt direct fetch to guarantee we grab all newly added image columns
+    const { data: directData, error: directError } = await supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle();
+    
+    if (!directError && directData) {
+      row = directData;
+    } else {
+      // 2. Fallback to the original RPC if direct access is restricted by Supabase RLS
+      const { data: rpcData, error: rpcError } = await supabaseClient.rpc(APP_CONFIG.RPC.storefrontSettings);
+      if (!rpcError && rpcData) row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
     }
-    const row = Array.isArray(data) ? data[0] : data;
-    if (!row) return;
+    
+    if (!row) return console.warn('Store settings fallback used: No data');
+    
     state.store = {
       ...state.store,
       ...row,
@@ -609,6 +669,21 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       const link = document.getElementById(id);
       if (link) { link.href = helpURL; link.target = '_blank'; link.rel = 'noopener noreferrer'; }
     });
+
+    // Apply Dynamic Care Guide Images
+    const defaultImg = '/assets/th_logo.svg?v=mu6m216a';
+    
+    const heroImg = document.getElementById('care-img-hero');
+    if (heroImg) heroImg.src = state.store.care_hero_image || defaultImg;
+    
+    const whimImg = document.getElementById('care-img-whimsical');
+    if (whimImg) whimImg.src = state.store.care_whimsical_image || defaultImg;
+    
+    const paintImg = document.getElementById('care-img-painted');
+    if (paintImg) paintImg.src = state.store.care_painted_image || defaultImg;
+    
+    const clayImg = document.getElementById('care-img-clay');
+    if (clayImg) clayImg.src = state.store.care_clay_image || defaultImg;
   }
 
   function bindGlobalEvents() {
@@ -625,6 +700,18 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     document.addEventListener('click', (event) => {
       if (event.target.closest('[data-open-cart]')) openCart();
+      
+      const catBtn = event.target.closest('[data-set-category]');
+      if (catBtn) {
+        executeRouteTransition(`/?view=results&category=${encodeURIComponent(catBtn.dataset.setCategory)}`);
+      }
+      
+      const searchBtn = event.target.closest('[data-set-search]');
+      if (searchBtn) {
+        const searchInput = document.getElementById('catalog-search');
+        if (searchInput) searchInput.value = searchBtn.dataset.setSearch;
+        executeRouteTransition(`/?view=results&q=${encodeURIComponent(searchBtn.dataset.setSearch)}`);
+      }
     });
 
     // Secret Admin Keyboard Shortcut Trigger
@@ -711,18 +798,22 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       });
       document.getElementById('reset-catalog')?.addEventListener('click', resetCatalog);
       document.getElementById('product-grid')?.addEventListener('click', handleProductGridClick);
+      document.getElementById('results-grid')?.addEventListener('click', handleProductGridClick);
+      document.getElementById('heavy-category-root')?.addEventListener('click', handleProductGridClick);
       document.getElementById('search-suggestions')?.addEventListener('click', handleSearchSuggestionClick);
       
       // 🔥 PREMIUM INFINITE SCROLL OBSERVER
-      const sentinel = document.getElementById('catalog-sentinel');
-      if (sentinel && window.IntersectionObserver) {
+      const sentinels = document.querySelectorAll('.infinite-scroll-sentinel');
+      if (sentinels.length > 0 && window.IntersectionObserver) {
         const observer = new IntersectionObserver((entries) => {
-          if (entries[0].isIntersecting && state.visibleCount < state.filteredProducts.length) {
-            state.visibleCount += APP_CONFIG.PRODUCT_PAGE_SIZE;
-            renderCatalogProducts();
-          }
+          entries.forEach(entry => {
+            if (entry.isIntersecting && state.visibleCount < state.filteredProducts.length) {
+              state.visibleCount += APP_CONFIG.PRODUCT_PAGE_SIZE;
+              renderCatalogProducts();
+            }
+          });
         }, { rootMargin: '0px 0px 800px 0px' }); // Silently fetches before hitting bottom
-        observer.observe(sentinel);
+        sentinels.forEach(s => observer.observe(s));
       }
       
       const searchToggle = document.getElementById('header-search-toggle');
@@ -748,6 +839,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       searchToggle?.addEventListener('click', () => {
         if (!searchOverlay) return;
         
+        // Clear previous search when opening to show history
+        if (search) search.value = '';
+        state.search = '';
+        document.getElementById('catalog-search-clear')?.classList.add('hidden');
+        renderSearchSuggestions();
+        
         // Push a dummy history state so the mobile hardware back button has something to pop
         if (!history.state || history.state.overlay !== 'search') {
           history.pushState({ ...history.state, overlay: 'search' }, '', window.location.href);
@@ -759,6 +856,50 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       });
 
       searchClose?.addEventListener('click', () => closeSearch(false));
+
+      // Premium Scroll Event: Auto-Hide Header and Mobile Nav dynamically
+      let lastScrollY = window.scrollY;
+      let isScrolling;
+      
+      window.addEventListener('scroll', () => {
+        const currentScroll = Math.max(0, window.scrollY);
+        
+        // 1. Hide search overlay if user scrolls the background
+        if (searchOverlay?.classList.contains('is-active') && Math.abs(currentScroll - lastScrollY) > 20) {
+          closeSearch(false);
+        }
+
+        // 2. Bulletproof Swipe Behavior for both Header and Mobile Nav
+        const mobileNav = document.querySelector('.mobile-nav');
+        const header = document.querySelector('.site-header');
+        
+        // Hide when scrolling DOWN past 80px
+        if (currentScroll > lastScrollY && currentScroll > 80) {
+          if (mobileNav && state.page !== 'product') mobileNav.classList.add('is-hidden');
+          if (header) header.classList.add('is-hidden');
+        } 
+        // Show instantly when scrolling UP
+        else if (currentScroll < lastScrollY) {
+          if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
+          if (header) header.classList.remove('is-hidden');
+        }
+        
+        // Failsafe: Always show everything if they hit the absolute top of the page
+        if (currentScroll <= 10) {
+          if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
+          if (header) header.classList.remove('is-hidden');
+        }
+        
+        lastScrollY = currentScroll;
+        
+        // Failsafe 2: If they stop scrolling completely, bring the UI back after 1.5s
+        window.clearTimeout(isScrolling);
+        isScrolling = setTimeout(() => {
+          if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
+          if (header) header.classList.remove('is-hidden');
+        }, 1500);
+        
+      }, { passive: true });
 
       document.addEventListener('click', (event) => { 
         if (event.target.matches('.search-overlay__backdrop') || event.target.closest('[data-close-search]')) {
@@ -794,7 +935,17 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const query = state.search.trim();
 
     if (!query) {
-      hideSearchSuggestions();
+      if (state.searchHistory && state.searchHistory.length > 0) {
+        host.innerHTML = '<div style="padding: 12px 16px 8px; font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Recent Searches</div>' +
+          state.searchHistory.map(term => `
+          <div class="search-history-item pop-click" data-history-term="${Utils.escapeHTML(term)}">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <span>${Utils.escapeHTML(term)}</span>
+          </div>`).join('');
+        host.classList.remove('hidden');
+      } else {
+        hideSearchSuggestions();
+      }
       return;
     }
 
@@ -808,7 +959,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mu3qaocd')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -832,12 +983,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     if (!results.length && event.key === 'Enter') {
         event.preventDefault();
         if (state.search.trim() !== '') {
+            saveSearchHistory(state.search);
             const overlay = document.getElementById('search-overlay');
             if (overlay) { overlay.classList.remove('is-active'); overlay.setAttribute('aria-hidden', 'true'); }
             hideSearchSuggestions();
-            state.visibleCount = APP_CONFIG.PRODUCT_PAGE_SIZE;
-            applyCatalogFilters();
-            document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            executeRouteTransition(`/results?q=${encodeURIComponent(state.search.trim())}`);
         }
         return;
     }
@@ -867,17 +1017,31 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           executeRouteTransition(productURL(result.product));
         }
       } else if (state.search.trim() !== '') {
+        saveSearchHistory(state.search);
         const overlay = document.getElementById('search-overlay');
         if (overlay) { overlay.classList.remove('is-active'); overlay.setAttribute('aria-hidden', 'true'); }
         hideSearchSuggestions();
-        state.visibleCount = APP_CONFIG.PRODUCT_PAGE_SIZE;
-        applyCatalogFilters();
-        document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        executeRouteTransition(`/?view=results&q=${encodeURIComponent(state.search.trim())}`);
       }
     }
   }
 
   function handleSearchSuggestionClick(event) {
+    const historyItem = event.target.closest('[data-history-term]');
+    if (historyItem) {
+      const term = historyItem.dataset.historyTerm;
+      const searchInput = document.getElementById('catalog-search');
+      if (searchInput) searchInput.value = term;
+      state.search = term;
+      if (event.target.closest('[data-search-all]')) {
+      saveSearchHistory(state.search);
+      const overlay = document.getElementById('search-overlay');
+      if (overlay) { overlay.classList.remove('is-active'); overlay.setAttribute('aria-hidden', 'true'); }
+      hideSearchSuggestions();
+      executeRouteTransition(`/?view=results&q=${encodeURIComponent(state.search.trim())}`);
+    }
+    }
+
     const productButton = event.target.closest('[data-search-product]');
 
     if (productButton) {
@@ -886,6 +1050,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       );
 
       if (product) {
+        saveSearchHistory(state.search);
         const overlay = document.getElementById('search-overlay');
         if (overlay) { overlay.classList.remove('is-active'); overlay.setAttribute('aria-hidden', 'true'); }
         executeRouteTransition(productURL(product));
@@ -895,12 +1060,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
 
     if (event.target.closest('[data-search-all]')) {
+      saveSearchHistory(state.search);
       const overlay = document.getElementById('search-overlay');
       if (overlay) { overlay.classList.remove('is-active'); overlay.setAttribute('aria-hidden', 'true'); }
       hideSearchSuggestions();
-      state.visibleCount = APP_CONFIG.PRODUCT_PAGE_SIZE;
-      applyCatalogFilters();
-      document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      executeRouteTransition(`/results?q=${encodeURIComponent(state.search.trim())}`);
     }
   }
 
@@ -1506,6 +1670,109 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }));
   }
 
+  const CATEGORY_LORE = {
+    "Whimsical Art": {
+      story: "Step into a world where everyday materials transform into everlasting blooms. Every pipe-cleaner creation is meticulously twisted and styled by hand to bring a permanent touch of spring to your space.",
+      tags: ["Floral", "Vibrant", "Everlasting", "Giftable"]
+    },
+    "Painted Whispers": {
+      story: "Every canvas holds a feeling. From bold textured strokes to delicate portraits, these painted pieces are crafted to inspire, comfort, and elevate your personal sanctuary.",
+      tags: ["Textured", "Expressive", "Gallery", "Custom"]
+    },
+    "Clay Stories": {
+      story: "Tiny but full of personality. These hand-sculpted clay pieces are designed to travel with you—adding a spark of joy to your keys, bags, and daily adventures.",
+      tags: ["Kawaii", "Sculpted", "Charm", "Detail"]
+    }
+  };
+
+  function renderHeavyCategories() {
+    const root = document.getElementById('heavy-category-root');
+    if (!root || !state.products.length) return;
+
+    // Find all unique main categories from the live database
+    const mainCategories = [...new Set(state.products.map(p => p.main_category).filter(Boolean))];
+    let html = '';
+
+    mainCategories.forEach(cat => {
+      const catProducts = state.products.filter(p => p.main_category === cat);
+      const subCategories = [...new Set(catProducts.map(p => p.sub_category).filter(Boolean))];
+      
+      // Extract up to 6 random products that have images to build the multi-image collage groups
+      const collageProducts = [...catProducts].filter(p => p.images && p.images.length > 0).sort(() => 0.5 - Math.random()).slice(0, 6);
+      
+      // Pick 12 random products for a deep "Highlights" scrollable mini-storefront
+      const highlightProducts = [...catProducts].sort(() => 0.5 - Math.random()).slice(0, 15); 
+
+      const lore = CATEGORY_LORE[cat] || { story: "Handcrafted creations made with love and patience.", tags: ["Handmade", "Art", "Unique"] };
+
+      // Build Visual Sub-category cards (Restricted to 6 for the perfect 3x2 grid)
+      const subCatHtml = subCategories.slice(0, 6).map(sub => {
+        const subProduct = catProducts.find(p => p.sub_category === sub && p.images && p.images.length > 0);
+        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mu6m216a';
+        return `
+          <div class="heavy-subcat-card pop-click" data-set-search="${Utils.escapeHTML(sub)}">
+            <img src="${Utils.escapeHTML(thumb)}" alt="" loading="lazy">
+            <span>${Utils.escapeHTML(sub)}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Build the highlight product cards
+      const highlightsHtml = highlightProducts.map(p => productCard(p, '')).join('');
+
+      // Build the horizontal scrollable collage tracks
+      const collageHtml = collageProducts.map(p => {
+         const img1 = p.images[0];
+         const img2 = p.images[1] || p.images[0]; // Fallback to main image if fewer than 3
+         const img3 = p.images[2] || p.images[0];
+         return `
+           <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
+             <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy"></div>
+             <div class="hc-img-side">
+               <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy">
+               <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy">
+             </div>
+           </a>
+         `;
+      }).join('');
+
+      html += `
+        <article class="heavy-category-block">
+          <div class="hc-layout">
+            <div class="hc-collage-track no-scrollbar">
+              ${collageHtml}
+            </div>
+            <div class="hc-content">
+              <div class="hc-tags">${lore.tags.map(t => `<span>${Utils.escapeHTML(t)}</span>`).join('')}</div>
+              <h2>${Utils.escapeHTML(cat)}</h2>
+              <p>${Utils.escapeHTML(lore.story)}</p>
+              
+              ${subCatHtml ? `
+                <h3 class="hc-micro-title">Explore by style</h3>
+                <div class="hc-subcats no-scrollbar">${subCatHtml}</div>
+              ` : ''}
+              
+              <button class="app-button app-button--dark hc-explore-btn" type="button" data-set-category="${Utils.escapeHTML(cat)}">Explore Full Collection</button>
+            </div>
+          </div>
+          
+          <div class="hc-highlights">
+            <div class="hc-highlights-head">
+              <h3>Featured in ${Utils.escapeHTML(cat)}</h3>
+              <button class="hc-view-all pop-click" type="button" data-set-category="${Utils.escapeHTML(cat)}">View all</button>
+            </div>
+            <div class="hc-product-grid">
+              ${highlightsHtml}
+            </div>
+          </div>
+        </article>
+      `;
+    });
+
+    root.innerHTML = html;
+    requestAnimationFrame(() => observeReveal(root));
+  }
+
   function resetCatalog() {
     state.category = 'All'; state.search = ''; state.sort = 'featured'; state.visibleCount = APP_CONFIG.PRODUCT_PAGE_SIZE;
     const search = document.getElementById('catalog-search'); if (search) search.value = '';
@@ -1597,51 +1864,59 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderCatalogProducts() {
-    const loading = document.getElementById('catalog-loading');
-    const grid = document.getElementById('product-grid');
-    const empty = document.getElementById('catalog-empty');
+    const isResults = state.page === 'results';
+    const prefix = isResults ? 'results' : 'catalog';
+    const gridId = isResults ? 'results-grid' : 'product-grid';
+    
+    const loading = document.getElementById(`${prefix}-loading`);
+    const grid = document.getElementById(gridId);
+    const empty = document.getElementById(`${prefix}-empty`);
     const loadWrap = document.getElementById('load-more-wrap');
     
     // Custom heading handling
-    const title = document.getElementById('collection-title');
-    const label = document.getElementById('search-results-label');
+    const title = document.getElementById(isResults ? 'results-title' : 'collection-title');
+    const label = document.getElementById(isResults ? 'results-label' : 'search-results-label');
 
     if (!grid) return;
     
     if (title) {
       if (state.search.trim() !== '') {
-        title.textContent = 'Search Results';
+        title.textContent = isResults ? `Results for "${state.search}"` : 'Search Results';
         if (label) {
-          label.textContent = `Showing ${state.filteredProducts.length} creation${state.filteredProducts.length === 1 ? '' : 's'} for "${state.search}"`;
+          label.textContent = `${state.filteredProducts.length} creation${state.filteredProducts.length === 1 ? '' : 's'} found`;
           label.classList.remove('hidden');
         }
       } else if (state.category !== 'All') {
         title.textContent = state.category;
-        if (label) label.classList.add('hidden');
+        if (label) {
+          label.textContent = isResults ? `${state.filteredProducts.length} creation${state.filteredProducts.length === 1 ? '' : 's'}` : '';
+          isResults ? label.classList.remove('hidden') : label.classList.add('hidden');
+        }
       } else {
-        title.textContent = 'Shop the collection';
+        title.textContent = isResults ? 'All Creations' : 'Shop the collection';
         if (label) label.classList.add('hidden');
       }
     }
 
     loading?.classList.add('hidden');
-    const sentinel = document.getElementById('catalog-sentinel');
+    const sentinel = document.getElementById(`${prefix}-sentinel`);
     
     if (!state.filteredProducts.length) { 
       grid.classList.add('hidden'); empty?.classList.remove('hidden'); 
       if (sentinel) sentinel.style.display = 'none';
-      const loadWrap = document.getElementById('load-more-wrap');
       if (loadWrap) loadWrap.classList.add('hidden');
       return; 
     }
     empty?.classList.add('hidden'); grid.classList.remove('hidden');
+    if (sentinel) sentinel.style.display = 'flex';
     
     const visible = state.filteredProducts.slice(0, state.visibleCount);
     
     // 🔥 PURE NATIVE CSS BENTO RHYTHM
     grid.innerHTML = visible.map((product) => productCard(product, '')).join('');
     
-    loadWrap?.classList.toggle('hidden', visible.length >= state.filteredProducts.length);
+    if (loadWrap) loadWrap.classList.toggle('hidden', visible.length >= state.filteredProducts.length);
+    if (sentinel) sentinel.style.display = visible.length >= state.filteredProducts.length ? 'none' : 'flex';
     
     requestAnimationFrame(() => observeReveal(grid));
   }
@@ -1710,7 +1985,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     return `<article class="product-card ${revealedClass} ${layoutClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <div class="product-card__image-container">
         <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu3qaocd')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
           ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
         </a>
         <button type="button" class="quick-add-btn pop-click" data-card-action="${isCanvas ? 'choose' : 'add'}" aria-label="${isCanvas ? 'Choose size' : 'Quick add'}">
@@ -1791,7 +2066,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mu3qaocd`;
+      `${window.location.origin}/assets/share-icon.png?v=mu6m216a`;
 
     const shareDescription =
       String(
@@ -1912,7 +2187,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mu3qaocd'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mu6m216a'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2392,7 +2667,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mu3qaocd',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mu6m216a',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2471,7 +2746,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu3qaocd')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6m216a')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -2727,7 +3002,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu3qaocd')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu6m216a')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -2886,7 +3161,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu3qaocd')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu6m216a')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}

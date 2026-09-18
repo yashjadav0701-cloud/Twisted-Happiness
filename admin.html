@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#fcf7f8">
-  <link rel="icon" href="/assets/th_logo.svg?v=mu3qaocd" type="image/svg+xml">
+  <link rel="icon" href="/assets/th_logo.svg?v=mu6m216a" type="image/svg+xml">
   <title>Admin Command Center | Twisted Happiness</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="/admin.css?v=mu3qaocd">
+  <link rel="stylesheet" href="/admin.css?v=mu6m216a">
 </head>
 
 <body data-admin-page="dashboard">
@@ -26,7 +26,7 @@
     <aside class="admin-sidebar">
       <div>
         <a class="admin-brand" href="#dashboard" aria-label="Admin Home">
-          <img src="/assets/th_logo_with_heading.svg?v=mu3qaocd" alt="Twisted Happiness" class="admin-brand-logo-wide">
+          <img src="/assets/th_logo_with_heading.svg?v=mu6m216a" alt="Twisted Happiness" class="admin-brand-logo-wide">
         </a>
         <nav class="admin-nav">
           <a data-admin-nav-link="dashboard" class="is-active" href="#dashboard">Overview</a>
@@ -221,6 +221,40 @@
                 <label class="admin-field is-wide"><span>Announcement text</span><input id="setting-announcement" class="admin-input" type="text" maxlength="220"></label>
                 <label class="switch-field"><input id="setting-announcement-active" type="checkbox"><span><strong>Show announcement</strong><small>Displays above the header.</small></span></label>
                 <label class="switch-field"><input id="setting-vacation" type="checkbox"><span><strong>Vacation / waitlist mode</strong><small>Checkout becomes a waitlist enquiry.</small></span></label>
+                
+                <div class="admin-field is-wide" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div>
+                      <span style="font-size:0.9rem; color:var(--pink-deep);">Care Guide Imagery</span>
+                      <small style="display:block; margin:2px 0 0 0;">Upload distinct images for the top banner and the 3 material cards.</small>
+                    </div>
+                    <button type="button" id="btn-view-care-history" class="admin-button admin-button--soft admin-button--small">View Image Archive</button>
+                  </div>
+                  
+                  <div class="care-images-grid">
+                    <label class="upload-zone care-zone">
+                      <input id="setting-care-img-hero" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+                      <img id="care-preview-hero" src="" alt="" style="display:none;">
+                      <span><strong>Hero Image</strong><small>Top banner</small></span>
+                    </label>
+                    <label class="upload-zone care-zone">
+                      <input id="setting-care-img-whimsical" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+                      <img id="care-preview-whimsical" src="" alt="" style="display:none;">
+                      <span><strong>Whimsical Art</strong><small>Pipe-cleaner craft</small></span>
+                    </label>
+                    <label class="upload-zone care-zone">
+                      <input id="setting-care-img-painted" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+                      <img id="care-preview-painted" src="" alt="" style="display:none;">
+                      <span><strong>Painted Whispers</strong><small>Canvas art</small></span>
+                    </label>
+                    <label class="upload-zone care-zone">
+                      <input id="setting-care-img-clay" class="hidden" type="file" accept="image/jpeg,image/png,image/webp">
+                      <img id="care-preview-clay" src="" alt="" style="display:none;">
+                      <span><strong>Clay Stories</strong><small>Sculpted clay</small></span>
+                    </label>
+                  </div>
+                </div>
+
                 <div class="admin-form-actions is-wide"><button id="save-settings" class="admin-button admin-button--dark" type="submit">Save essentials</button></div>
               </form>
             </div>
@@ -399,6 +433,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="/admin.js?v=mu3qaocd" type="module"></script>
+  <script src="/admin.js?v=mu6m216a" type="module"></script>
 </body>
 </html>
