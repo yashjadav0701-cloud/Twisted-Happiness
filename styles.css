@@ -361,18 +361,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* ============================================================
    PREMIUM DYNAMIC COMPONENT SCALING ENGINE (BENTO)
    ============================================================ */
-/* Container Query Root: Makes every card self-aware of its physical dimensions */
+/* Container Query Root & Continuous Springy Bi-directional Animation */
 .product-card { 
   min-width: 0; border: none; background: transparent; box-shadow: none; border-radius: 0; 
-  opacity: 0; transform: translateY(40px) scale(0.96); 
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  opacity: 0; transform: translateY(24px) scale(0.95); 
+  /* Fast fade, bouncy transform for physics momentum */
+  transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: opacity, transform;
   display: flex; flex-direction: column;
   text-decoration: none !important; color: inherit;
   height: 100%; 
-  container-type: inline-size; /* 🔥 THE MAGIC KEY */
+  container-type: inline-size; 
   container-name: pcard;
 }
+/* Re-triggers seamlessly on bidirectional scroll */
 .product-card.is-revealed { opacity: 1; transform: translateY(0) scale(1); }
 .product-card:hover { opacity: 0.9; }
 
@@ -452,79 +454,73 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .product-card__price del { grid-column: 1; grid-row: 2; color: var(--muted); font-size: clamp(0.65rem, 4cqi, 0.9rem); margin: 0; line-height: 1; }
 .product-card__discount { grid-column: 2; grid-row: 1 / span 2; justify-self: start; align-self: center; color: var(--green); font-size: clamp(0.55rem, 4cqi, 0.85rem); font-weight: 600; background: rgba(89, 122, 104, 0.08); padding: clamp(2px, 1.5cqi, 4px) clamp(4px, 3cqi, 8px); border-radius: 4px; margin: 0; }
 
-/* --------------------------------------
-   GRID LAYOUT: MOBILE (2 Columns) 
--------------------------------------- */
-.product-grid > .product-card, .skeleton-grid > .skeleton { grid-column: span 1; grid-row: span 1; padding: 0; width: 100%; }
-.product-grid > .product-card:nth-child(3n), .skeleton-grid > .skeleton:nth-child(3n) { grid-column: span 2; padding: 0 10%; width: 100%; }
-
-/* --------------------------------------
-   PREMIUM BENTO GRID: TABLET (4 Columns / 10-Item Cycle)
--------------------------------------- */
-@media (min-width: 768px) {
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px 12px; }
-  
-  .product-grid > .product-card:nth-child(n), .skeleton-grid > .skeleton:nth-child(n) { padding: 0; grid-column: span 1; grid-row: span 1; width: 100%; }
-
-  /* Chessboard alternating large blocks */
-  .product-grid > .product-card:nth-child(10n + 1), .skeleton-grid > .skeleton:nth-child(10n + 1),
-  .product-grid > .product-card:nth-child(10n + 8), .skeleton-grid > .skeleton:nth-child(10n + 8) { 
-    grid-column: span 2; grid-row: span 2; 
-  }
-
-  /* 🔥 FLUSH IMAGE ALIGNMENT FOR TABLET LARGE CARDS */
-  .product-grid > .product-card:nth-child(10n + 1) .product-card__image-container,
-  .product-grid > .product-card:nth-child(10n + 8) .product-card__image-container { 
-    flex-grow: 1; height: 0; display: flex; flex-direction: column;
-  }
-  .product-grid > .product-card:nth-child(10n + 1) .product-card__image,
-  .product-grid > .product-card:nth-child(10n + 8) .product-card__image { 
-    aspect-ratio: auto !important; flex-grow: 1; height: 100%;
-  }
-  .product-grid > .product-card:nth-child(10n + 1) .product-card__body,
-  .product-grid > .product-card:nth-child(10n + 8) .product-card__body { flex: none; }
-  .skeleton-grid > .skeleton:nth-child(10n + 1),
-  .skeleton-grid > .skeleton:nth-child(10n + 8) { aspect-ratio: auto !important; height: 100%; }
+/* ============================================================
+   FLAWLESS HONEYCOMB ENGINE (FLEXBOX MATH)
+   ============================================================ */
+.product-grid { 
+  display: flex; 
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 12px; /* row gap, column gap */
 }
 
-/* --------------------------------------
-   PREMIUM BENTO GRID: DESKTOP (8 Columns / 20-Item Cycle)
--------------------------------------- */
-@media (min-width: 1024px) {
-  .product-grid, .skeleton-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 32px 16px; }
+/* Base Mobile: 2 Columns */
+.product-grid > .product-card, 
+.product-grid > .skeleton {
+  --gap: 12px;
+  --cols: 2;
+  /* Exactly calculate width to fit perfectly, guaranteeing identical sizes */
+  width: calc((100% - ((var(--cols) - 1) * var(--gap))) / var(--cols)) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+}
 
-  .product-grid > .product-card:nth-child(n), .skeleton-grid > .skeleton:nth-child(n) { grid-column: span 1; grid-row: span 1; }
+/* Center the 3rd item in a 2-1-2-1 cycle */
+.product-grid > .product-card:nth-child(3n),
+.product-grid > .skeleton:nth-child(3n) {
+  /* Pushes item over by exactly half a card width + half a gap */
+  margin-left: calc(((100% - ((var(--cols) - 1) * var(--gap))) / var(--cols)) / 2 + (var(--gap) / 2)) !important;
+}
 
-  /* The 20-Item Chessboard Pattern (1, 4, 13, 16) */
-  .product-grid > .product-card:nth-child(20n + 1), .skeleton-grid > .skeleton:nth-child(20n + 1),
-  .product-grid > .product-card:nth-child(20n + 4), .skeleton-grid > .skeleton:nth-child(20n + 4),
-  .product-grid > .product-card:nth-child(20n + 13), .skeleton-grid > .skeleton:nth-child(20n + 13),
-  .product-grid > .product-card:nth-child(20n + 16), .skeleton-grid > .skeleton:nth-child(20n + 16) { 
-    grid-column: span 2; grid-row: span 2; 
+/* TABLET: 4-3-4-3 Pattern */
+@media (min-width: 768px) {
+  .product-grid { gap: 32px 16px; }
+  .product-grid > .product-card, 
+  .product-grid > .skeleton {
+    --gap: 16px;
+    --cols: 4;
   }
-
-  /* 🔥 FLUSH IMAGE ALIGNMENT FOR PC LARGE CARDS */
-  .product-grid > .product-card:nth-child(20n + 1) .product-card__image-container,
-  .product-grid > .product-card:nth-child(20n + 4) .product-card__image-container,
-  .product-grid > .product-card:nth-child(20n + 13) .product-card__image-container,
-  .product-grid > .product-card:nth-child(20n + 16) .product-card__image-container { 
-    flex-grow: 1; height: 0; display: flex; flex-direction: column;
-  }
-  .product-grid > .product-card:nth-child(20n + 1) .product-card__image,
-  .product-grid > .product-card:nth-child(20n + 4) .product-card__image,
-  .product-grid > .product-card:nth-child(20n + 13) .product-card__image,
-  .product-grid > .product-card:nth-child(20n + 16) .product-card__image { 
-    aspect-ratio: auto !important; flex-grow: 1; height: 100%; 
-  }
-  .product-grid > .product-card:nth-child(20n + 1) .product-card__body,
-  .product-grid > .product-card:nth-child(20n + 4) .product-card__body,
-  .product-grid > .product-card:nth-child(20n + 13) .product-card__body,
-  .product-grid > .product-card:nth-child(20n + 16) .product-card__body { flex: none; }
   
-  .skeleton-grid > .skeleton:nth-child(20n + 1),
-  .skeleton-grid > .skeleton:nth-child(20n + 4),
-  .skeleton-grid > .skeleton:nth-child(20n + 13),
-  .skeleton-grid > .skeleton:nth-child(20n + 16) { aspect-ratio: auto !important; height: 100%; }
+  /* Reset Mobile Offsets */
+  .product-grid > .product-card:nth-child(3n),
+  .product-grid > .skeleton:nth-child(3n) { margin-left: 0 !important; }
+  
+  /* Apply Tablet Offset: Shift the 5th item in a 7-item cycle */
+  .product-grid > .product-card:nth-child(7n + 5),
+  .product-grid > .skeleton:nth-child(7n + 5) { 
+    margin-left: calc(((100% - ((var(--cols) - 1) * var(--gap))) / var(--cols)) / 2 + (var(--gap) / 2)) !important; 
+  }
+}
+
+/* DESKTOP: 6-5-6-5 Pattern */
+@media (min-width: 1024px) {
+  .product-grid { gap: 40px 16px; }
+  .product-grid > .product-card, 
+  .product-grid > .skeleton {
+    --gap: 16px;
+    --cols: 6;
+  }
+  
+  /* Reset Tablet Offsets */
+  .product-grid > .product-card:nth-child(7n + 5),
+  .product-grid > .skeleton:nth-child(7n + 5) { margin-left: 0 !important; }
+  
+  /* Apply Desktop Offset: Shift the 7th item in an 11-item cycle */
+  .product-grid > .product-card:nth-child(11n + 7),
+  .product-grid > .skeleton:nth-child(11n + 7) { 
+    margin-left: calc(((100% - ((var(--cols) - 1) * var(--gap))) / var(--cols)) / 2 + (var(--gap) / 2)) !important; 
+  }
 }
 
 /* ============================================================
@@ -544,16 +540,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .skeleton-img { width: 100%; height: 100%; aspect-ratio: 5 / 6; border-radius: var(--radius-md); }
 .skeleton-title { width: 85%; height: 16px; border-radius: 4px; margin-bottom: 6px; }
 .skeleton-price { width: 45%; height: 18px; border-radius: 4px; }
-
-/* Auto-scales to match Bento Grid logic flawlessly */
-.product-grid > .product-card:nth-child(10n + 1) .skeleton-img,
-.product-grid > .product-card:nth-child(10n + 8) .skeleton-img,
-.product-grid > .product-card:nth-child(20n + 1) .skeleton-img,
-.product-grid > .product-card:nth-child(20n + 4) .skeleton-img,
-.product-grid > .product-card:nth-child(20n + 13) .skeleton-img,
-.product-grid > .product-card:nth-child(20n + 16) .skeleton-img {
-  aspect-ratio: auto;
-}
 
 /* Product Page Structural Mirror */
 .skeleton-thumbnails { display: none; }
@@ -775,14 +761,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .related-section { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 40px; overflow: hidden; }
 .related-section h2 { font-family: 'Lora', serif; font-size: clamp(1.4rem, 2.5vw, 1.8rem); font-weight: 400; color: var(--charcoal); margin: 0 0 20px; }
 
-.related-scroll-area { margin: 0 -16px; padding: 0 16px 24px 16px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.related-scroll-area::-webkit-scrollbar { display: none; }
-.related-grid { display: flex; gap: 16px; width: max-content; }
-
-.swimlane-card { width: 80vw; max-width: 280px; scroll-snap-align: center; flex-shrink: 0; }
+#related-grid {
+  display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+  padding-bottom: 20px; margin: 0 -16px; padding-inline: 16px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  align-items: stretch; 
+}
+#related-grid::-webkit-scrollbar { display: none; }
+#related-grid > .product-card {
+  flex: 0 0 40%; /* Matches the flawless mobile peek math */
+  scroll-snap-align: start; 
+  width: auto !important; 
+  margin: 0 !important; /* Prevents the staggered offset from applying to swimlanes */
+}
 @media (min-width: 768px) {
-  .related-scroll-area { margin: 0; padding: 0 0 24px 0; }
-  .swimlane-card { width: 240px; scroll-snap-align: start; }
+  #related-grid { margin: 0 -24px; padding-inline: 24px; gap: 16px; }
+  #related-grid > .product-card { flex: 0 0 17.5%; } /* Matches the flawless PC peek math */
 }
 
 .reassurance-card { display: grid; grid-template-columns: 1fr 1fr auto; align-items: center; gap: 48px; margin-bottom: 96px; padding: 48px 0; border: none; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; box-shadow: none; }
@@ -1170,7 +1164,13 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
   align-items: stretch;
 }
 @media (min-width: 900px) {
-  .hc-layout { grid-template-columns: 1fr 1.1fr; }
+  /* Image part wider, description narrower */
+  .hc-layout { grid-template-columns: 1.35fr 1fr; }
+  
+  /* Reverses the layout perfectly for alternating blocks */
+  .heavy-category-block.is-reversed .hc-layout { grid-template-columns: 1fr 1.35fr; }
+  .heavy-category-block.is-reversed .hc-collage-track { order: 2; }
+  .heavy-category-block.is-reversed .hc-content { order: 1; }
 }
 
 /* Heavy Category Multi-Image Collage Track */
@@ -1196,7 +1196,8 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
   .hc-collage-group { flex: 0 0 45%; max-width: none; }
 }
 @media (min-width: 900px) {
-  .hc-collage-group { flex: 0 0 75%; height: 480px; } /* Flows beautifully inside the PC grid */
+  /* Remove fixed height so it perfectly stretches to match the text description's exact height */
+  .hc-collage-group { flex: 0 0 75%; height: auto; align-self: stretch; } 
 }
 
 .hc-collage-group img {
@@ -1296,59 +1297,82 @@ textarea.simple-input { resize: vertical; min-height: 120px; }
 }
 .heavy-subcat-card:hover img { transform: scale(1.08); }
 
-.hc-explore-btn { align-self: flex-start; margin-top: auto; }
-
 /* Internal Highlights Mini-Storefront */
 .hc-highlights {
-  padding: 24px; background: var(--beige); /* 🔥 Compacted PC padding */
+  padding: 32px 24px; background: var(--beige); 
   border-top: 1px solid var(--line);
+  position: relative;
 }
-@media (max-width: 720px) { .hc-highlights { padding: 20px 16px; } }
+@media (max-width: 720px) { .hc-highlights { padding: 24px 16px; } }
 
-/* 🔥 Featured Header: Forces elements into a strict single row without wrapping */
+/* 🔥 Centered Featured Header */
 .hc-highlights-head {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;
+  display: flex; justify-content: center; align-items: center; margin-bottom: 20px;
 }
 .hc-highlights-head h3 {
   font-family: 'Lora', serif; 
-  font-size: clamp(1.1rem, 3.5vw, 1.3rem); 
+  font-size: clamp(1.2rem, 4vw, 1.5rem); 
   color: var(--charcoal); margin: 0;
   line-height: 1.2;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Truncates if too long */
+  text-align: center;
 }
 
-/* 3D Highlighted "View All" Pill */
-.hc-view-all {
-  flex-shrink: 0; /* Prevents button from being crushed by long text */
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 6px 14px; margin: 0;
-  background: linear-gradient(180deg, #ffffff 0%, var(--beige) 100%);
-  color: var(--pink-deep);
-  font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  border: 1px solid rgba(197, 139, 158, 0.3);
-  border-radius: 99px;
-  box-shadow: 0 4px 10px rgba(197, 139, 158, 0.15), inset 0 -2px 0 rgba(197, 139, 158, 0.2);
-  cursor: pointer; outline: none;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Beautiful Floating Centered Pop-up Button */
+.hc-grid-wrapper {
+  position: relative;
+  /* Expanded space to guarantee it completely clears all product prices */
+  padding-bottom: 48px; 
 }
+.hc-floating-explore {
+  position: absolute;
+  /* Drops the button down so it floats perfectly in the center of the new whitespace */
+  bottom: -4px; left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  /* Asymmetric padding to perfectly hug the new circular arrow */
+  padding: 6px 6px 6px 20px;
+  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: var(--pink-deep);
+  border: 1px solid rgba(197, 139, 158, 0.3); border-radius: 99px;
+  font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  /* Premium glass shadows */
+  box-shadow: 0 8px 24px rgba(197, 139, 158, 0.15), inset 0 -2px 0 rgba(197, 139, 158, 0.1);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer; outline: none; z-index: 10;
+  /* 🔥 Forces text onto a single strict row */
+  white-space: nowrap; 
+}
+
+/* 3D Floating Action Arrow */
+.hc-floating-arrow {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--pink-deep) 0%, #B3758A 100%);
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(197, 139, 158, 0.4), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 @media (hover: hover) {
-  .hc-view-all:hover {
-    background: linear-gradient(180deg, #ffffff 0%, #faeef2 100%);
-    box-shadow: 0 6px 14px rgba(197, 139, 158, 0.25), inset 0 -2px 0 rgba(197, 139, 158, 0.25);
-    transform: translateY(-2px);
+  .hc-floating-explore:hover {
+    transform: translateX(-50%) translateY(-3px);
+    box-shadow: 0 12px 28px rgba(197, 139, 158, 0.25), inset 0 -2px 0 rgba(197, 139, 158, 0.15);
+    background: #ffffff;
+  }
+  .hc-floating-explore:hover .hc-floating-arrow {
+    transform: translateX(2px) scale(1.08);
   }
 }
-.hc-view-all:active {
-  transform: scale(0.95) translateY(1px);
-  box-shadow: inset 0 2px 6px rgba(197, 139, 158, 0.2);
-  border-color: rgba(197, 139, 158, 0.4);
+.hc-floating-explore:active {
+  transform: translateX(-50%) scale(0.96) translateY(1px);
+  box-shadow: 0 4px 12px rgba(197, 139, 158, 0.15), inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* 🔥 Lock horizontal scroll, prevent vertical trapping */
 .hc-product-grid {
   display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
-  padding-bottom: 16px; margin: 0 -16px; padding-inline: 16px;
+  padding-bottom: 20px; margin: 0 -16px; padding-inline: 16px;
   scrollbar-width: none; -webkit-overflow-scrolling: touch;
   align-items: stretch; 
 }
