@@ -220,7 +220,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       
       const url = new URL(link.href);
       if (url.origin === window.location.origin && !link.hasAttribute('download') && link.target !== '_blank') {
-        if (url.pathname === window.location.pathname && url.hash) return;
+        // Only trigger native browser scroll if the user is ALREADY perfectly on the target page view
+        if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
         e.preventDefault();
         executeRouteTransition(url.href, true);
       }
@@ -237,13 +238,36 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     }
 
     if (pushState) window.history.pushState({}, '', urlStr);
-    handleRoute(new URL(urlStr, window.location.origin));
+    const urlObj = new URL(urlStr, window.location.origin);
+    handleRoute(urlObj);
 
     if (root) {
-      window.scrollTo(0, 0);
+      // If there's a hash, don't jump to the very top first. Let the smooth scroll handle it.
+      if (!urlObj.hash) window.scrollTo(0, 0);
+      
       requestAnimationFrame(() => {
         root.style.opacity = '1';
         root.style.transform = 'none';
+        
+        // Deep link auto-scroll engine
+        if (urlObj.hash) {
+          setTimeout(() => {
+            const target = document.getElementById(urlObj.hash.substring(1));
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              
+              // Add a subtle magnetic highlight flash so the user knows exactly what to read
+              target.style.transition = 'box-shadow 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+              target.style.boxShadow = '0 0 0 4px rgba(197, 139, 158, 0.3), 0 16px 40px rgba(197, 139, 158, 0.2)';
+              target.style.transform = 'translateY(-6px)';
+              
+              setTimeout(() => {
+                target.style.boxShadow = '';
+                target.style.transform = '';
+              }, 1600);
+            }
+          }, 50); // Tiny delay lets the DOM paint the new view before calculating the scroll target
+        }
       });
     }
   }
@@ -425,7 +449,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mu8rppw9'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mucuubi0'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -671,7 +695,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
 
     // Apply Dynamic Care Guide Images
-    const defaultImg = '/assets/th_logo.svg?v=mu8rppw9';
+    const defaultImg = '/assets/th_logo.svg?v=mucuubi0';
     
     const heroImg = document.getElementById('care-img-hero');
     if (heroImg) heroImg.src = state.store.care_hero_image || defaultImg;
@@ -711,6 +735,28 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         const searchInput = document.getElementById('catalog-search');
         if (searchInput) searchInput.value = searchBtn.dataset.setSearch;
         executeRouteTransition(`/?view=results&q=${encodeURIComponent(searchBtn.dataset.setSearch)}`);
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const scrollBtn = event.target.closest('.scroll-arrow');
+      if (scrollBtn) {
+        let container;
+        let isCollage = false;
+        if (scrollBtn.classList.contains('collage-arrow')) {
+          container = scrollBtn.closest('.hc-collage-container').querySelector('.hc-collage-track');
+          isCollage = true;
+        } else {
+          const wrapper = scrollBtn.closest('.hc-highlights, .related-section');
+          container = wrapper ? wrapper.querySelector('.hc-product-grid, #related-grid') : null;
+        }
+        if (container) {
+          // If collage, scroll exactly 100% to snap perfectly to the next group.
+          const scrollAmount = isCollage ? container.clientWidth : (container.clientWidth * 0.75);
+          const direction = scrollBtn.classList.contains('scroll-arrow--left') ? -1 : 1;
+          container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+        }
+        return;
       }
     });
 
@@ -888,11 +934,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         
         lastScrollY = currentScroll;
         
-        // Failsafe 2: If they stop scrolling completely, bring the UI back after 1.5s
+        // Failsafe 2: If they stop scrolling completely, bring the UI back after 0.4s
         window.clearTimeout(isScrolling);
         isScrolling = setTimeout(() => {
           if (mobileNav && state.page !== 'product') mobileNav.classList.remove('is-hidden');
-        }, 1500);
+          if (header) header.classList.remove('is-hidden');
+        }, 700);
         
       }, { passive: true });
 
@@ -954,7 +1001,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mu8rppw9')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1681,29 +1728,42 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   };
 
   function renderHeavyCategories() {
-      const root = document.getElementById('heavy-category-root');
-      if (!root || !state.products.length) return;
+    const root = document.getElementById('heavy-category-root');
+    if (!root || !state.products.length) return;
 
-      // Find all unique main categories from the live database
-      const mainCategories = [...new Set(state.products.map(p => p.main_category).filter(Boolean))];
-      let html = '';
+    const mainCategories = [...new Set(state.products.map(p => p.main_category).filter(Boolean))];
+    let html = '';
 
-      mainCategories.forEach((cat, index) => {
+    mainCategories.forEach((cat, index) => {
       const catProducts = state.products.filter(p => p.main_category === cat);
       const subCategories = [...new Set(catProducts.map(p => p.sub_category).filter(Boolean))];
       
-      // Extract up to 6 random products that have images to build the multi-image collage groups
-      const collageProducts = [...catProducts].filter(p => p.images && p.images.length > 0).sort(() => 0.5 - Math.random()).slice(0, 6);
+      // Grab up to 12 products that actually have images to build the 3-image containers
+      const collageProducts = [...catProducts].filter(p => p.images && p.images.length > 0).sort(() => 0.5 - Math.random()).slice(0, 12);
       
-      // Pick 10 random products for a perfect 5-column PC grid & deep mobile scroll
-      const highlightProducts = [...catProducts].sort(() => 0.5 - Math.random()).slice(0, 15); 
+      const collageTrackHtml = collageProducts.map(p => {
+        const img1 = p.images[0];
+        const img2 = p.images[1] || p.images[0]; // fallback if < 3 images
+        const img3 = p.images[2] || p.images[0];
+        return `
+          <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
+            <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy"></div>
+            <div class="hc-img-side">
+              <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy">
+              <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy">
+            </div>
+          </a>
+        `;
+      }).join('');
+      
+      const shuffledProducts = [...catProducts].sort(() => 0.5 - Math.random());
+      const highlightProducts = shuffledProducts.slice(0, 12); 
 
       const lore = CATEGORY_LORE[cat] || { story: "Handcrafted creations made with love and patience.", tags: ["Handmade", "Art", "Unique"] };
 
-      // Build Visual Sub-category cards (Restricted to 6 for the perfect 3x2 grid)
       const subCatHtml = subCategories.slice(0, 6).map(sub => {
         const subProduct = catProducts.find(p => p.sub_category === sub && p.images && p.images.length > 0);
-        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mu8rppw9';
+        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mucuubi0';
         return `
           <div class="heavy-subcat-card pop-click" data-set-search="${Utils.escapeHTML(sub)}">
             <img src="${Utils.escapeHTML(thumb)}" alt="" loading="lazy">
@@ -1712,30 +1772,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         `;
       }).join('');
 
-      // Build the highlight product cards
       const highlightsHtml = highlightProducts.map(p => productCard(p, '')).join('');
-
-      // Build the horizontal scrollable collage tracks
-      const collageHtml = collageProducts.map(p => {
-         const img1 = p.images[0];
-         const img2 = p.images[1] || p.images[0]; 
-         const img3 = p.images[2] || p.images[0];
-         return `
-           <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
-             <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy" decoding="async"></div>
-             <div class="hc-img-side">
-               <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy" decoding="async">
-               <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy" decoding="async">
-             </div>
-           </a>
-         `;
-      }).join('');
 
       html += `
         <article class="heavy-category-block ${index % 2 !== 0 ? 'is-reversed' : ''}">
           <div class="hc-layout">
-            <div class="hc-collage-track no-scrollbar">
-              ${collageHtml}
+            <div class="hc-collage-container">
+              <div class="hc-collage-track no-scrollbar">
+                ${collageTrackHtml}
+              </div>
+              <div class="collage-nav-arrows">
+                <button class="scroll-arrow collage-arrow scroll-arrow--left is-hidden" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <button class="scroll-arrow collage-arrow scroll-arrow--right" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
             </div>
             <div class="hc-content">
               <div class="hc-tags">${lore.tags.map(t => `<span>${Utils.escapeHTML(t)}</span>`).join('')}</div>
@@ -1750,8 +1799,12 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
           </div>
           
           <div class="hc-highlights">
-            <div class="hc-highlights-head">
-              <h3>Featured in ${Utils.escapeHTML(cat)}</h3>
+            <div class="section-head-with-nav" style="margin-bottom: 20px;">
+              <h3 style="margin: 0; font-family: 'Lora', serif; font-size: clamp(1.4rem, 4vw, 1.8rem); color: var(--charcoal);">Featured in ${Utils.escapeHTML(cat)}</h3>
+              <div class="desktop-scroll-nav">
+                <button class="scroll-arrow scroll-arrow--left is-hidden" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+                <button class="scroll-arrow scroll-arrow--right" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+              </div>
             </div>
             <div class="hc-grid-wrapper">
               <div class="hc-product-grid">
@@ -1770,7 +1823,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
 
     root.innerHTML = html;
-    requestAnimationFrame(() => observeReveal(root));
+    requestAnimationFrame(() => {
+      observeReveal(root);
+      // Initialize arrows for all the grids AND the collage tracks
+      root.querySelectorAll('.hc-product-grid, .hc-collage-track').forEach(container => bindScrollArrows(container));
+    });
   }
 
   function resetCatalog() {
@@ -1948,6 +2005,25 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
   }
 
+  function bindScrollArrows(container) {
+    let wrapper;
+    if (container.classList.contains('hc-collage-track')) wrapper = container.closest('.hc-collage-container');
+    else wrapper = container.closest('.hc-highlights, .related-section');
+    
+    if (!wrapper) return;
+    const leftBtn = wrapper.querySelector('.scroll-arrow--left');
+    const rightBtn = wrapper.querySelector('.scroll-arrow--right');
+    if (!leftBtn || !rightBtn) return;
+
+    const updateArrows = () => {
+      leftBtn.classList.toggle('is-hidden', container.scrollLeft <= 10);
+      rightBtn.classList.toggle('is-hidden', container.scrollLeft >= container.scrollWidth - container.clientWidth - 10);
+    };
+    container.addEventListener('scroll', updateArrows, { passive: true });
+    window.addEventListener('resize', updateArrows, { passive: true });
+    setTimeout(updateArrows, 150); // Initial check
+  }
+
   function triggerBoomerang(element) {
     if (!element) return;
     element.classList.remove('is-popping');
@@ -1987,7 +2063,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     return `<article class="product-card ${layoutClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <div class="product-card__image-container">
         <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu8rppw9')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
           ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
         </a>
         <button type="button" class="quick-add-btn pop-click" data-card-action="${isCanvas ? 'choose' : 'add'}" aria-label="${isCanvas ? 'Choose size' : 'Quick add'}">
@@ -2041,6 +2117,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   let productEventsBound = false;
 
   function initialiseProduct(urlProductId = null) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
     const productId = urlProductId || new URLSearchParams(window.location.search).get('pid');
     const product = state.products.find((item) => String(item.id) === String(productId));
     if (!product) return showProductError();
@@ -2068,7 +2145,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mu8rppw9`;
+      `${window.location.origin}/assets/share-icon.png?v=mucuubi0`;
 
     const shareDescription =
       String(
@@ -2181,6 +2258,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
         const cleanText = line.replace(/<svg.*?<\/svg>/gi, '').trim();
         return `<li style="display: flex; align-items: flex-start; gap: 8px;"><span style="flex-shrink: 0; margin-top: 1px;">${getCareIcon(cleanText)}</span> <span>${Utils.escapeHTML(cleanText)}</span></li>`;
       }).join('');
+      
+      const careLink = document.getElementById('product-care-link');
+      if (careLink && product.main_category) {
+        careLink.href = `/?view=care#care-${Utils.slugify(product.main_category)}`;
+      }
     }
     setText('product-vip-text', vipProductNudge());
     document.getElementById('product-loading')?.classList.add('hidden');
@@ -2189,7 +2271,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mu8rppw9'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mucuubi0'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2495,8 +2577,11 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     section.classList.remove('hidden');
     grid.innerHTML = related.map((item) => productCard(item, '')).join(''); // Removed swimlane class so it acts like the home grid
 
-    // Trigger reveal observer so the cards animate into view
-    requestAnimationFrame(() => observeReveal(grid));
+    // Trigger reveal observer and bind scroll arrows
+    requestAnimationFrame(() => {
+      observeReveal(grid);
+      bindScrollArrows(grid);
+    });
   }
 
   async function fetchProductReviews(productId) {
@@ -2669,7 +2754,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mu8rppw9',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mucuubi0',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2748,7 +2833,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu8rppw9')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mucuubi0')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -3004,7 +3089,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mu8rppw9')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -3163,7 +3248,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mu8rppw9')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mucuubi0')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
