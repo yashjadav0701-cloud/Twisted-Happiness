@@ -50,6 +50,12 @@
 
   const supabaseClient = window.supabase ? window.supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_ANON_KEY) : null;
 
+  // 🔥 INSTANT PREFETCH: Kick off database queries the millisecond the script parses, skipping the DOM wait!
+  const NetworkPrefetch = {
+    config: supabaseClient ? supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle() : null,
+    products: supabaseClient ? supabaseClient.from('products').select('id,title,slug,actual_price,fake_price,main_category,sub_category,preparation_days,attributes,images,description,care_instructions,sort_order,created_at').eq('is_active', true).order('sort_order', { ascending: true }).order('created_at', { ascending: false }).limit(1000) : null
+  };
+
   const Utils = {
     parseJSON(value, fallback = null) { try { return typeof value === 'string' ? JSON.parse(value) : (value ?? fallback); } catch { return fallback; } },
     escapeHTML(value = '') { return String(value).replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[c]); },
@@ -391,10 +397,16 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       setCurrentYear();
       bindRouter();
       
-      try { await fetchStoreConfiguration(); } catch (e) { console.warn('Store config warning:', e); }
-      try { applyStoreConfiguration(); } catch (e) { console.warn('Apply config warning:', e); }
+      // 🔥 FAST PARALLEL DATA FETCHING (Cuts load time in half)
+      const configPromise = fetchStoreConfiguration()
+        .then(() => applyStoreConfiguration())
+        .catch(e => console.warn('Store config warning:', e));
+        
+      const productsPromise = fetchProducts();
+
+      // Wait for both independent network requests to finish simultaneously
+      await Promise.all([configPromise, productsPromise]);
       
-      await fetchProducts();
       renderCart();
       renderHeavyCategories();
 
@@ -449,7 +461,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: item.key || cartKey(productId, selectedSize, orientation, note),
       productId,
       title: String(item.title),
-      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mucuubi0'),
+      image: Utils.safeImageURL(item.image || item.thumbImg || '', '/assets/th_logo.svg?v=mufjomt7'),
       estimatedPrice: Utils.roundMoney(item.estimatedPrice ?? item.price ?? 0),
       quantity: Math.floor(Utils.clamp(item.quantity || item.qty || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize,
@@ -475,15 +487,22 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     
     let row = null;
     
-    // 1. Attempt direct fetch to guarantee we grab all newly added image columns
-    const { data: directData, error: directError } = await supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle();
+    // 1. Consume the instant prefetch if available
+    if (NetworkPrefetch.config) {
+      const { data, error } = await NetworkPrefetch.config;
+      if (!error && data) row = data;
+      NetworkPrefetch.config = null; // Free memory
+    }
     
-    if (!directError && directData) {
-      row = directData;
-    } else {
-      // 2. Fallback to the original RPC if direct access is restricted by Supabase RLS
-      const { data: rpcData, error: rpcError } = await supabaseClient.rpc(APP_CONFIG.RPC.storefrontSettings);
-      if (!rpcError && rpcData) row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+    // 2. Fallback to direct fetch or RPC if prefetch missed or failed
+    if (!row) {
+      const { data: directData, error: directError } = await supabaseClient.from('store_settings').select('*').eq('id', 1).maybeSingle();
+      if (!directError && directData) {
+        row = directData;
+      } else {
+        const { data: rpcData, error: rpcError } = await supabaseClient.rpc(APP_CONFIG.RPC.storefrontSettings);
+        if (!rpcError && rpcData) row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      }
     }
     
     if (!row) return console.warn('Store settings fallback used: No data');
@@ -498,13 +517,24 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   async function fetchProducts() {
     if (!supabaseClient) return showCatalogError('The catalog connection is unavailable.');
-    const { data, error } = await supabaseClient
-      .from('products')
-      .select('id,title,slug,actual_price,fake_price,main_category,sub_category,preparation_days,attributes,images,description,care_instructions,sort_order,created_at')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false })
-      .limit(1000);
+    
+    let data = null, error = null;
+    
+    // Consume instant prefetch
+    if (NetworkPrefetch.products) {
+      const res = await NetworkPrefetch.products;
+      data = res.data; error = res.error;
+      NetworkPrefetch.products = null;
+    } else {
+      const res = await supabaseClient
+        .from('products')
+        .select('id,title,slug,actual_price,fake_price,main_category,sub_category,preparation_days,attributes,images,description,care_instructions,sort_order,created_at')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      data = res.data; error = res.error;
+    }
 
     if (error) {
       console.error('Catalog load failed:', error);
@@ -695,7 +725,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     });
 
     // Apply Dynamic Care Guide Images
-    const defaultImg = '/assets/th_logo.svg?v=mucuubi0';
+    const defaultImg = '/assets/th_logo.svg?v=mufjomt7';
     
     const heroImg = document.getElementById('care-img-hero');
     if (heroImg) heroImg.src = state.store.care_hero_image || defaultImg;
@@ -1001,7 +1031,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     host.innerHTML = results.map((result, index) => `
       <button class="search-suggestion ${index === state.searchSuggestionIndex ? 'is-active' : ''}" type="button" role="option" aria-selected="${index === state.searchSuggestionIndex ? 'true' : 'false'}" data-search-product="${Utils.escapeHTML(result.product.id)}">
-        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt="" loading="lazy" decoding="async">
+        <img src="${Utils.escapeHTML(result.product.images?.[0] || '/assets/th_logo.svg?v=mufjomt7')}" alt="" loading="lazy" decoding="async">
         <span>
           <strong>${Utils.escapeHTML(result.product.title)}</strong>
           <small>${Utils.escapeHTML(result.reasons[0] || result.product.sub_category || result.product.main_category || 'Handcrafted')}</small>
@@ -1742,18 +1772,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       const collageProducts = [...catProducts].filter(p => p.images && p.images.length > 0).sort(() => 0.5 - Math.random()).slice(0, 12);
       
       const collageTrackHtml = collageProducts.map(p => {
-        const img1 = p.images[0];
-        const img2 = p.images[1] || p.images[0]; // fallback if < 3 images
-        const img3 = p.images[2] || p.images[0];
-        return `
-          <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
-            <div class="hc-img-main"><img src="${Utils.escapeHTML(img1)}" alt="" loading="lazy"></div>
-            <div class="hc-img-side">
-              <img src="${Utils.escapeHTML(img2)}" alt="" loading="lazy">
-              <img src="${Utils.escapeHTML(img3)}" alt="" loading="lazy">
-            </div>
-          </a>
-        `;
+         const img1 = p.images[0];
+         const img2 = p.images[1] || p.images[0]; 
+         const img3 = p.images[2] || p.images[0];
+         // 🔥 Removed loading="lazy" to dramatically improve LCP (Largest Contentful Paint) speed
+         return `
+           <a href="/product/${Utils.escapeHTML(p.id)}" class="hc-collage-group pop-click">
+             <div class="hc-img-main img-loading-wrap"><img src="${Utils.escapeHTML(img1)}" alt="" onload="this.parentElement.classList.add('is-loaded')"></div>
+             <div class="hc-img-side">
+               <div class="img-loading-wrap"><img src="${Utils.escapeHTML(img2)}" alt="" onload="this.parentElement.classList.add('is-loaded')"></div>
+               <div class="img-loading-wrap"><img src="${Utils.escapeHTML(img3)}" alt="" onload="this.parentElement.classList.add('is-loaded')"></div>
+             </div>
+           </a>
+         `;
       }).join('');
       
       const shuffledProducts = [...catProducts].sort(() => 0.5 - Math.random());
@@ -1761,17 +1792,19 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
       const lore = CATEGORY_LORE[cat] || { story: "Handcrafted creations made with love and patience.", tags: ["Handmade", "Art", "Unique"] };
 
+      // Build Visual Sub-category cards (Restricted to 6 for the perfect 3x2 grid)
       const subCatHtml = subCategories.slice(0, 6).map(sub => {
         const subProduct = catProducts.find(p => p.sub_category === sub && p.images && p.images.length > 0);
-        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mucuubi0';
+        const thumb = subProduct ? subProduct.images[0] : '/assets/th_logo.svg?v=mufjomt7';
         return `
-          <div class="heavy-subcat-card pop-click" data-set-search="${Utils.escapeHTML(sub)}">
-            <img src="${Utils.escapeHTML(thumb)}" alt="" loading="lazy">
+          <div class="heavy-subcat-card pop-click img-loading-wrap" data-set-search="${Utils.escapeHTML(sub)}">
+            <img src="${Utils.escapeHTML(thumb)}" alt="" onload="this.parentElement.classList.add('is-loaded')">
             <span>${Utils.escapeHTML(sub)}</span>
           </div>
         `;
       }).join('');
 
+      // Build the highlight product cards
       const highlightsHtml = highlightProducts.map(p => productCard(p, '')).join('');
 
       html += `
@@ -2062,8 +2095,8 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     // Removed static revealedClass so the bi-directional IntersectionObserver always triggers the entrance
     return `<article class="product-card ${layoutClass}" data-product-id="${Utils.escapeHTML(product.id)}">
       <div class="product-card__image-container">
-        <a class="product-card__image" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
-          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async">
+        <a class="product-card__image img-loading-wrap" href="${Utils.escapeHTML(productURL(product))}" aria-label="View ${Utils.escapeHTML(product.title)}">
+          <img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mufjomt7')}" alt="${Utils.escapeHTML(product.title)}" loading="lazy" decoding="async" onload="this.parentElement.classList.add('is-loaded')">
           ${product.sub_category ? `<span class="product-card__badge">${Utils.escapeHTML(product.sub_category)}</span>` : ''}
         </a>
         <button type="button" class="quick-add-btn pop-click" data-card-action="${isCanvas ? 'choose' : 'add'}" aria-label="${isCanvas ? 'Choose size' : 'Quick add'}">
@@ -2145,7 +2178,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
     const primaryImage =
       product.images?.[0] ||
-      `${window.location.origin}/assets/share-icon.png?v=mucuubi0`;
+      `${window.location.origin}/assets/share-icon.png?v=mufjomt7`;
 
     const shareDescription =
       String(
@@ -2271,7 +2304,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   }
 
   function renderGallery(product) {
-    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mucuubi0'];
+    const images = product.images.length ? product.images : ['/assets/th_logo.svg?v=mufjomt7'];
     state.gallery.images = images;
     const track = document.getElementById('gallery-track');
     const thumbs = document.getElementById('gallery-thumbnails');
@@ -2754,7 +2787,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
       key: cartKey(product.id, selectedSize, orientation, note),
       productId: String(product.id),
       title: product.title,
-      image: product.images?.[0] || '/assets/th_logo.svg?v=mucuubi0',
+      image: product.images?.[0] || '/assets/th_logo.svg?v=mufjomt7',
       estimatedPrice: Utils.roundMoney(selections.estimatedPrice ?? product.actual_price),
       quantity: Math.floor(Utils.clamp(selections.quantity || 1, 1, APP_CONFIG.MAX_ITEM_QUANTITY)),
       selectedSize, orientation, note,
@@ -2833,7 +2866,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
   function cartItemMarkup(item, location) {
     const actionPrefix = location === 'checkout' ? 'checkout' : 'cart';
     return `<article class="${location === 'checkout' ? 'checkout-item' : 'cart-item'}" data-cart-key="${Utils.escapeHTML(item.key)}" style="display: flex; gap: 12px; align-items: center; position: relative;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mucuubi0')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mufjomt7')}" alt="" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 56px;">
         <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
           <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">${Utils.escapeHTML(item.title)}</h3>
@@ -3089,7 +3122,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
     const choices = state.products.filter((product) => !inCart.has(String(product.id))).sort((a, b) => Number(categories.has(b.main_category)) - Number(categories.has(a.main_category)) || a.actual_price - b.actual_price).slice(0, 4);
     if (!choices.length) { wrapper.classList.add('hidden'); return; }
     wrapper.classList.remove('hidden');
-    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mucuubi0')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
+    host.innerHTML = choices.map((product) => `<article class="recommendation-card" data-recommendation-id="${Utils.escapeHTML(product.id)}"><img src="${Utils.escapeHTML(product.images[0] || '/assets/th_logo.svg?v=mufjomt7')}" alt=""><strong>${Utils.escapeHTML(product.title)}</strong><span>${Utils.formatCurrency(product.actual_price)}</span><button type="button" data-recommendation-action="${isCanvasProduct(product) ? 'choose' : 'add'}">${isCanvasProduct(product) ? 'Choose size' : 'Quick add'}</button></article>`).join('');
   }
 
   function handleRecommendationClick(event) {
@@ -3248,7 +3281,7 @@ const CATALOG_REFRESH_SEED = `${Date.now()}-${Math.random()}`;
 
   function checkoutCompactItemMarkup(item) {
     return `<div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: start;">
-      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mucuubi0')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
+      <img src="${Utils.escapeHTML(item.image || '/assets/th_logo.svg?v=mufjomt7')}" alt="" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--beige); flex-shrink: 0; border: 1px solid var(--line);">
       <div style="flex: 1; min-width: 0;">
         <h4 style="margin: 0 0 2px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--charcoal); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${Utils.escapeHTML(item.title)}</h4>
         ${item.selectedSize ? `<p style="margin: 0; font-size: 0.7rem; color: var(--muted);">${Utils.escapeHTML(item.selectedSize.label)}${item.orientation ? ` · ${Utils.escapeHTML(item.orientation)}` : ''}</p>` : ''}
